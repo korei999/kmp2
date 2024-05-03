@@ -1,8 +1,7 @@
 MAKEFLAGS := --jobs=$(shell nproc) --output-sync=target 
 
-# CXX := c++ -fdiagnostics-color=always
+# CXX := g++ -fdiagnostics-color=always
 CXX := clang++ -fcolor-diagnostics -fansi-escape-codes -fdiagnostics-format=msvc
-# compile wayland glue code with c compiler due to linkage issues
 
 WARNINGS := -Wall -Wextra -fms-extensions -Wno-missing-field-initializers
 
@@ -14,10 +13,6 @@ PKG_LIB := $(shell pkg-config --libs $(PKGS))
 
 CXXFLAGS := -std=c++23 $(PKG)
 LDFLAGS := $(PKG_LIB)
-
-XDG_SHELL := $(WAYLAND_PROTOCOLS_DIR)/stable/xdg-shell/xdg-shell.xml
-POINTER_CONSTRAINTS := $(WAYLAND_PROTOCOLS_DIR)/unstable/pointer-constraints/pointer-constraints-unstable-v1.xml
-RELATIVE_POINTER := $(WAYLAND_PROTOCOLS_DIR)/unstable/relative-pointer/relative-pointer-unstable-v1.xml
 
 SRCD := ./src
 BD := ./build
