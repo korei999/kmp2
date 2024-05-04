@@ -72,9 +72,7 @@ Curses::drawPlaylist()
     long maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
     long cursesY = listYPos;
-    long firstSong = 0;
     long sel = p->term.selected;
-    long curr = p->currSongIdx;
 
     long lastInList = firstInList + maxy - cursesY;
 
@@ -159,9 +157,9 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 
 
     spa_audio_info_raw info {
-        .format = SPA_AUDIO_FORMAT_S16,
-        .rate = app::def::sampleRate,
-        .channels = app::def::channels
+        .format = format,
+        .rate = sampleRate,
+        .channels = channels
     };
 
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &info);

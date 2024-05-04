@@ -38,6 +38,7 @@ input::read(app::PipeWirePlayer* p)
 
             case '0':
                 p->volume += 0.04;
+                [[fallthrough]];
             case ')':
                 p->volume += 0.01;
                 if (p->volume > app::def::maxVolume)
@@ -46,6 +47,7 @@ input::read(app::PipeWirePlayer* p)
 
             case '9':
                 p->volume -= 0.04;
+                [[fallthrough]];
             case '(':
                 p->volume -= 0.01;
                 if (p->volume < app::def::minVolume)
