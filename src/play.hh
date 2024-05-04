@@ -3,6 +3,6 @@
 namespace play
 {
 
-void onProcess(void* userData);
+void onProcess(void* data);
 
 } /* namespace play */

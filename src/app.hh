@@ -2,7 +2,9 @@
 #include "ultratypes.h"
 
 #include <condition_variable>
+#include <ncurses.h>
 #include <pipewire/pipewire.h>
+#include <spa/param/audio/format-utils.h>
 #include <vector>
 
 namespace app
@@ -10,45 +12,63 @@ namespace app
 
 #define M_PI_M2 (M_PI + M_PI)
 
-#define DEFAULT_RATE 48000
-#define DEFAULT_CHANNELS 2
-
-namespace defaults
+namespace def
 {
 
 constexpr f64 maxVolume = 1.4;
 constexpr f64 minVolume = 0.0;
 constexpr int step = 100000;
+constexpr int sampleRate = 44100;
+constexpr int channels = 2;
 
 };
 
-struct PwData
+struct PipeWireData
 {
     pw_main_loop* loop {};
     pw_stream* stream {};
-    pw_core* core {};
-    u8* buffer[1024];
+    enum spa_audio_format format = SPA_AUDIO_FORMAT_S16;
+    u32 sampleRate = app::def::sampleRate;
+    u32 channels = app::def::channels;
 };
 
-struct App
+struct PipeWirePlayer;
+
+struct Curses
+{
+    PipeWirePlayer* p;
+    WINDOW* plWin;
+
+    void updateUI();
+    void drawTime();
+    void drawPlaylist();
+};
+
+struct PipeWirePlayer
 {
     std::vector<std::string> songs;
+    long currSongIdx;
     s16* pcmData {};
     size_t pcmSize = 0;
     long pcmPos = 0;
-    f64 volume = 0.5;
-    PwData pw;
-
+    f64 volume = 0.3;
+    PipeWireData pw;
+    Curses term;
     bool paused = false;
-    bool songFinished = false;
+    bool next = false;
+    bool prev = false;
+    bool repeatAll = false;
+    bool finished = false;
     std::mutex pauseMtx;
     std::condition_variable pauseCnd;
 
-    App(int argc, char* argv[]);
-    ~App();
+    PipeWirePlayer(int argc, char** argv);
+    ~PipeWirePlayer();
 
-    void setupPW(int argc, char* argv[]);
+    void setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 channels);
     void playAll();
+    void playCurrent();
+    std::string_view currSongName() { return songs[currSongIdx]; }
 };
 
 } /* namespace app */

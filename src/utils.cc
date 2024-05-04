@@ -6,11 +6,10 @@
 #include <mutex>
 #include <climits>
 
-std::mutex logMtx;
-
 static std::mt19937 rngCreate();
 
 static std::mt19937 mt {rngCreate()};
+std::mutex logMtx;
 
 static std::mt19937
 rngCreate()
@@ -50,7 +49,7 @@ loadFileToCharArray(std::string_view path, size_t addBytes)
 
     std::ifstream file(path.data(), std::ios::in | std::ios::ate | std::ios::binary);
     if (!file.is_open())
-        LOG(FATAL, "failed to open file: '{}'\n", path);
+        LOG(sev::fatal, "failed to open file: '{}'\n", path);
 
     size_t fileSize = (size_t)file.tellg();
     std::vector<char> buffer(fileSize + addBytes, '\0');

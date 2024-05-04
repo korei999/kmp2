@@ -1,66 +1,87 @@
 #include "input.hh"
-#include "utils.hh"
 
 #include <ncurses.h>
 
 void
-readInput(app::App* app)
+input::read(app::PipeWirePlayer* p)
 {
     int c;
     bool volumeChanged = false;
+    bool refreshUI = false;
 
     while ((c = getch()))
     {
         switch (c)
         {
             case 'q':
-                pw_main_loop_quit(app->pw.loop);
+                pw_main_loop_quit(p->pw.loop);
+                if (p->paused)
+                {
+                    p->paused = false;
+                    p->pauseCnd.notify_all();
+                }
+                p->finished = true;
                 return;
                 break;
 
-            case '+':
-            case '=':
-                app->volume += 0.05;
-                volumeChanged = true;
+            case '0':
+                p->volume += 0.04;
+            case ')':
+                p->volume += 0.01;
+                if (p->volume > app::def::maxVolume)
+                    p->volume = app::def::maxVolume;
                 break;
 
-            case '_':
-            case '-':
-                app->volume -= 0.05;
-                volumeChanged = true;
+            case '9':
+                p->volume -= 0.04;
+            case '(':
+                p->volume -= 0.01;
+                if (p->volume < app::def::minVolume)
+                    p->volume = app::def::minVolume;
                 break;
 
             case 'l':
-                app->pcmPos += app::defaults::step;
-                if (app->pcmPos >= (long)app->pcmSize - 1)
-                    app->pcmPos = app->pcmSize - 1;
+                {
+                    /* trying to modify pcmPos directly causes bad data race */
+                    long newPos = p->pcmPos += app::def::step;
+                    if (newPos > (long)p->pcmSize - 1)
+                        newPos = p->pcmSize - 1;
+                    p->pcmPos = newPos;
+                }
                 break;
 
             case 'h':
-                app->pcmPos -= app::defaults::step;
-                if (app->pcmPos < 0)
-                    app->pcmPos = 0;
+                {
+                    /* trying to modify pcmPos directly causes bad data race */
+                    long newPos = p->pcmPos -= app::def::step;
+                    if (newPos < 0)
+                        newPos = 0;
+                    p->pcmPos = newPos;
+                }
+                break;
+
+            case 'o':
+                p->next = true;
+                break;
+
+            case 'i':
+                p->prev = true;
                 break;
 
             case ' ':
-                app->paused = !app->paused;
-                LOG(WARN, "paused: {}\n", app->paused);
-
-                if (!app->paused)
-                    app->pauseCnd.notify_one();
-
+                p->paused = !p->paused;
+                if (!p->paused)
+                    p->pauseCnd.notify_one();
                 break;
 
             default:
                 break;
         }
 
-        if (volumeChanged)
+        if (refreshUI)
         {
-            volumeChanged = false;
-            app->volume = std::clamp(app->volume, app::defaults::minVolume, app::defaults::maxVolume);
-            LOG(OK, "volume: '{:.02f}'\n", app->volume);
         }
+
+        p->term.updateUI();
     }
 }
-

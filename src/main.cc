@@ -19,12 +19,12 @@ main(int argc, char* argv[])
     keypad(stdscr, true);
     refresh();
 
-    app::App app(argc, argv);
+    app::PipeWirePlayer p(argc, argv);
 
-    std::thread inputThread(readInput, &app);
+    std::thread inputThread(input::read, &p);
     inputThread.detach();
 
-    app.playAll();
+    p.playAll();
 
     endwin();
     fflush(stderr);

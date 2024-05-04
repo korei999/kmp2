@@ -1,13 +1,16 @@
 #include "play.hh"
 #include "app.hh"
+#include "utils.hh"
+
+/* https://docs.pipewire.org/page_tutorial4.html */
 
 void
-play::onProcess(void* userData)
+play::onProcess(void* data)
 {
-    app::App* app = (app::App*)userData;
+    app::PipeWirePlayer* p = (app::PipeWirePlayer*)data;
     pw_buffer* b;
 
-    if ((b = pw_stream_dequeue_buffer(app->pw.stream)) == nullptr)
+    if ((b = pw_stream_dequeue_buffer(p->pw.stream)) == nullptr)
     {
         pw_log_warn("out of buffers: %m");
         return;
@@ -17,26 +20,31 @@ play::onProcess(void* userData)
     s16* dst;
 
     if ((dst = (s16*)buf->datas[0].data) == nullptr)
+    {
+        CERR("dst == nullptr\n");
         return;
+    }
 
-    int stride = sizeof(*dst) * DEFAULT_CHANNELS;
+    int stride = sizeof(*dst) * app::def::channels;
     int nFrames = buf->datas[0].maxsize / stride;
     if (b->requested)
         nFrames = SPA_MIN(b->requested, (u64)nFrames);
 
     for (int i = 0; i < nFrames; i++)
     {
-        for (int j = 0; j < DEFAULT_CHANNELS; j++)
+        for (int j = 0; j < app::def::channels; j++)
         {
-            if (app->pcmPos >= app->pcmSize - 1)
+            if (p->pcmPos > (long)p->pcmSize - 1)
             {
-                pw_main_loop_quit(app->pw.loop);
+                pw_main_loop_quit(p->pw.loop);
                 return;
             }
 
-            s16 val = app->pcmData[app->pcmPos] * app->volume;
+            /* modify each sample here */
+
+            s16 val = p->pcmData[p->pcmPos] * p->volume;
             *dst++ = val;
-            app->pcmPos++;
+            p->pcmPos++;
         }
     }
 
@@ -44,11 +52,17 @@ play::onProcess(void* userData)
     buf->datas[0].chunk->stride = stride;
     buf->datas[0].chunk->size = nFrames * stride;
 
-    if (app->paused)
+    pw_stream_queue_buffer(p->pw.stream, b);
+
+    if (p->paused)
     {
-        std::unique_lock lock(app->pauseMtx);
-        app->pauseCnd.wait(lock);
+        std::unique_lock lock(p->pauseMtx);
+        p->pauseCnd.wait(lock);
     }
 
-    pw_stream_queue_buffer(app->pw.stream, b);
+    if (p->next || p->prev)
+    {
+        pw_main_loop_quit(p->pw.loop);
+        return;
+    }
 }

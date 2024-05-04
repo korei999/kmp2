@@ -7,13 +7,13 @@
 #include <iostream>
 #include <format>
 
-enum LogSeverity : int
+enum class sev : int
 {
-    OK,
-    GOOD,
-    WARN,
-    BAD,
-    FATAL
+    ok,
+    good,
+    warn,
+    bad,
+    fatal
 };
 
 std::vector<char> loadFileToCharArray(std::string_view path, size_t addBytes = 1);
@@ -23,7 +23,7 @@ int rngGet();
 f32 rngGet(f32 min, f32 max);
 std::string replaceFileSuffixInPath(std::string_view str, std::string* suffix);
 
-const std::string_view severityStr[FATAL + 1] {
+const std::string_view severityStr[(int)sev::fatal + 1] {
     "",
     "[GOOD]",
     "[WARNING]",
@@ -46,15 +46,15 @@ extern std::mutex logMtx;
         do                                                                                                             \
         {                                                                                                              \
             std::lock_guard printLock(logMtx);                                                                         \
-            CERR("{}({}): {} ", __FILE__, __LINE__, severityStr[severity]);                                            \
+            CERR("{}({}): {} ", __FILE__, __LINE__, severityStr[(int)severity]);                                       \
             CERR(__VA_ARGS__);                                                                                         \
-            switch (severity)                                                                                          \
+            switch ((int)severity)                                                                                     \
             {                                                                                                          \
-                case FATAL:                                                                                            \
+                case (int)sev::fatal:                                                                                  \
                     abort();                                                                                           \
                     break;                                                                                             \
                                                                                                                        \
-                case BAD:                                                                                              \
+                case (int)sev::bad:                                                                                    \
                     exit(1);                                                                                           \
                     break;                                                                                             \
                                                                                                                        \
@@ -63,7 +63,7 @@ extern std::mutex logMtx;
             }                                                                                                          \
         } while (0)
 #else
-#    define LOG(severity, ...) NOP /* noop */
+#    define LOG(severity, ...) NOP
 #endif
 
 constexpr inline u64

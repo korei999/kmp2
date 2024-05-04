@@ -26,12 +26,12 @@ INC_DIRS := $(shell find $(SRCS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CPPFLAGS := $(INC_FLAGS) -MMD -MP
 
-all: CXX += -flto=auto $(SAFE_STACK) -DFPS_COUNTER
+all: CXX += -flto=auto $(SAFE_STACK)
 all: CXXFLAGS += -g -O3 -march=native -ffast-math $(WARNINGS) -DNDEBUG
 all: $(EXEC)
 
-debug: CXX += $(ASAN)
-debug: CXXFLAGS += -g -O0 $(DEBUG) $(WARNINGS) $(WNO)
+debug: CXX += $(ASAN) $(SAFE_STACK)
+debug: CXXFLAGS += -g3 -O0 $(DEBUG) $(WARNINGS) $(WNO)
 debug: LDFLAGS += -fuse-ld=mold
 debug: $(EXEC)
 

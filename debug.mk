@@ -5,7 +5,6 @@ ASAN :=
 ASAN += -fno-omit-frame-pointer -fsanitize=address -fsanitize-recover=address -fsanitize=undefined
 
 DEBUG :=
-DEBUG += -DDEBUG 
 DEBUG += -DLOGS
 
 WNO := 

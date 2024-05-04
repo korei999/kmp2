@@ -1,4 +1,9 @@
 #pragma once
 #include "app.hh"
 
-void readInput(app::App* app);
+namespace input
+{
+
+void read(app::PipeWirePlayer* app);
+
+} /* namespace input */
