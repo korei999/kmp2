@@ -15,9 +15,9 @@ namespace app
 namespace def
 {
 
-constexpr f64 maxVolume = 1.4;
+constexpr f64 maxVolume = 1.3;
 constexpr f64 minVolume = 0.0;
-constexpr int step = 100000;
+constexpr int step = 150000;
 constexpr int sampleRate = 44100;
 constexpr int channels = 2;
 
@@ -36,28 +36,46 @@ struct PipeWirePlayer;
 
 struct Curses
 {
-    PipeWirePlayer* p;
-    WINDOW* plWin;
+    enum color : int
+    {
+        termdef = -1, /* -1 should preserve terminal default color due to use_default_colors() */
+        green = 1,
+        yellow = 2,
+        blue = 3,
+        cyan = 4,
+        red = 5
+    };
+
+    PipeWirePlayer* p {};
+    WINDOW* plWin {};
+    long selected = 0;
+    long firstInList = 0;
+    long listYPos = 5;
+    bool listDown = false;
+    bool listUp = false;
 
     void updateUI();
     void drawTime();
     void drawPlaylist();
+    long maxListSize() const { return getmaxy(stdscr) - listYPos; }
 };
 
 struct PipeWirePlayer
 {
-    std::vector<std::string> songs;
-    long currSongIdx;
+    PipeWireData pw {};
+    std::vector<std::string> songs {};
+    long currSongIdx = 0;
     s16* pcmData {};
     size_t pcmSize = 0;
     long pcmPos = 0;
-    f64 volume = 0.3;
-    PipeWireData pw;
+    f64 volume = 0.05;
     Curses term;
     bool paused = false;
     bool next = false;
     bool prev = false;
+    bool newSongSelected = false;
     bool repeatAll = false;
+    bool wrapSelection = true;
     bool finished = false;
     std::mutex pauseMtx;
     std::condition_variable pauseCnd;
@@ -68,7 +86,7 @@ struct PipeWirePlayer
     void setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 channels);
     void playAll();
     void playCurrent();
-    std::string_view currSongName() { return songs[currSongIdx]; }
+    const std::string_view currSongName() const { return songs[currSongIdx]; }
 };
 
 } /* namespace app */

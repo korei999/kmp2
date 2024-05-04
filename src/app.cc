@@ -10,31 +10,35 @@ static const pw_stream_events streamEvents {
     .process = play::onProcess, /* attached playback function */
 };
 
-static std::mutex cursesLock;
+static std::mutex cursesMtx;
 
 void
 Curses::updateUI()
 {
     /* ncurses is not thread safe */
-    std::lock_guard lock(cursesLock);
+    std::lock_guard lock(cursesMtx);
 
-    int maxx = getmaxx(stdscr);
+    int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
-    drawTime();
+    if (maxy >= 5 && maxx >= 5)
+    {
+        drawTime();
 
-    auto volumeStr = std::format("volume: {:.2f}\n", p->volume);
-    move(2, 0);
-    addstr(volumeStr.data());
+        auto volumeStr = std::format("volume: {:.2f}\n", p->volume);
+        move(2, 0);
+        addstr(volumeStr.data());
 
-    auto songNameStr = std::format("{} / {}: {}", p->currSongIdx + 1, p->songs.size(), p->currSongName());
-    songNameStr.resize(maxx);
-    move(3, 0);
-    clrtoeol();
-    addstr(songNameStr.data());
+        auto songNameStr = std::format("{} / {}: {}", p->currSongIdx + 1, p->songs.size(), p->currSongName());
+        if (p->repeatAll) { songNameStr = "(R) " + songNameStr; }
+        songNameStr.resize(maxx);
+        move(3, 0);
+        clrtoeol();
+        addstr(songNameStr.data());
 
-    drawPlaylist();
+        drawPlaylist();
 
-    refresh();
+        refresh();
+    }
 }
 
 void
@@ -42,20 +46,19 @@ Curses::drawTime()
 {
     int maxx = getmaxx(stdscr);
 
-    size_t t = (p->pcmPos/sizeof(s16)) / p->pw.sampleRate;
-    auto len = (p->pcmSize/sizeof(s16)) / p->pw.sampleRate;
+    u64 t = (p->pcmPos/sizeof(s16)) / p->pw.sampleRate;
+    u64 len = (p->pcmSize/sizeof(s16)) / p->pw.sampleRate;
 
     f64 mF = t / 60.0;
-    size_t m = (size_t)mF;
+    u64 m = (u64)mF;
     int frac = 60 * (mF - m);
 
     f64 mFMax = len / 60.0;
-    size_t mMax = (size_t)mFMax;
+    u64 mMax = (u64)mFMax;
     int fracMax = 60 * (mFMax - mMax);
 
     auto timeStr = std::format("{}:{:02d} / {}:{:02d} min", m, frac, mMax, fracMax);
-    if (p->paused)
-        timeStr = "(paused) " + timeStr;
+    if (p->paused) { timeStr = "(paused) " + timeStr; }
     timeStr.resize(maxx);
 
     move(0, 0);
@@ -66,12 +69,58 @@ Curses::drawTime()
 void
 Curses::drawPlaylist()
 {
+    long maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
+
+    long cursesY = listYPos;
+    long firstSong = 0;
+    long sel = p->term.selected;
+    long curr = p->currSongIdx;
+
+    long lastInList = firstInList + maxy - cursesY;
+
+    if (listDown && selected > lastInList - 1)
+    {
+        listDown = false;
+
+        if (selected < (long)p->songs.size())
+            firstInList++;
+    }
+
+    if (listUp && selected < firstInList)
+    {
+        listUp = false;
+        firstInList--;
+    }
+
+    for (long i = firstInList; i < (long)p->songs.size(); i++, cursesY++)
+    {
+        if (cursesY < maxy)
+        {
+            auto lineStr = std::format("{}", p->songs[i]);
+            size_t lastSlash = lineStr.find_last_of("/");
+            lineStr = {lineStr.begin() + lastSlash + 1, lineStr.begin() + lineStr.size()};
+            lineStr.resize(maxx);
+
+            if (i == sel)
+                attron(A_REVERSE);
+            if (i == p->currSongIdx)
+                attron(A_BOLD | COLOR_PAIR(app::Curses::yellow));
+
+            move(cursesY, 0);
+            clrtoeol();
+            addstr(lineStr.data());
+
+            attroff(A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
+        }
+    }
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
 {
     pw_init(&argc, &argv);
     term.p = this;
+    term.firstInList = 0;
+    term.listYPos = 5;
 
     for (int i = 1; i < argc; i++)
     {
@@ -131,23 +180,18 @@ void
 PipeWirePlayer::playAll()
 {
     while (!finished)
-    {
-        if (currSongIdx > (long)songs.size() - 1)
-            break;
-
         playCurrent();
-    }
 }
 
 void
 PipeWirePlayer::playCurrent()
 {
+    /* TODO: read file headers somewhere here */
     auto wave = loadFileToCharArray(songs[currSongIdx]);
     pcmData = (s16*)wave.data();
     pcmSize = wave.size() / sizeof(s16);
     pcmPos = 0;
 
-    /* TODO: move these to class fields maybe */
     pw.format = SPA_AUDIO_FORMAT_S16;
     pw.sampleRate = app::def::sampleRate;
     pw.channels = app::def::channels;
@@ -161,7 +205,12 @@ PipeWirePlayer::playCurrent()
     pw_stream_destroy(pw.stream);
     pw_main_loop_destroy(pw.loop);
 
-    if (next || repeatAll)
+    if (newSongSelected)
+    {
+        newSongSelected = false;
+        currSongIdx = term.selected;
+    }
+    else if (next)
     {
         next = false;
         currSongIdx++;
@@ -179,7 +228,12 @@ PipeWirePlayer::playCurrent()
         currSongIdx++;
 
     if (currSongIdx > (long)songs.size() - 1)
-        finished = true;
+    {
+        if (repeatAll)
+            currSongIdx = 0;
+        else
+            finished = true;
+    }
 }
 
 } /* namespace app */

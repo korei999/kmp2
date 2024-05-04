@@ -41,9 +41,11 @@ play::onProcess(void* data)
             }
 
             /* modify each sample here */
+            s32 val = p->pcmData[p->pcmPos] * p->volume;
+            val = std::clamp(val, SHRT_MIN, SHRT_MAX);
 
-            s16 val = p->pcmData[p->pcmPos] * p->volume;
             *dst++ = val;
+
             p->pcmPos++;
         }
     }
@@ -60,7 +62,7 @@ play::onProcess(void* data)
         p->pauseCnd.wait(lock);
     }
 
-    if (p->next || p->prev)
+    if (p->next || p->prev || p->newSongSelected || p->finished)
     {
         pw_main_loop_quit(p->pw.loop);
         return;
