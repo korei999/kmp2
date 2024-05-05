@@ -4,6 +4,7 @@
 #include <condition_variable>
 #include <ncurses.h>
 #include <pipewire/pipewire.h>
+#include <sndfile.hh>
 #include <spa/param/audio/format-utils.h>
 #include <vector>
 
@@ -75,9 +76,10 @@ struct Curses
 struct PipeWirePlayer
 {
     PipeWireData pw {};
+    SndfileHandle hSnd {};
     std::vector<std::string> songs {};
     long currSongIdx = 0;
-    s16* pcmData {};
+    f32* pcmData {};
     size_t pcmSize = 0;
     long pcmPos = 0;
     f64 volume = 0.05;

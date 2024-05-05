@@ -161,8 +161,12 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
     {
         std::string s = argv[i];
 
-        if (s.ends_with(".wav"))
+        if (s.ends_with(".wav")  ||
+            s.ends_with(".opus") ||
+            s.ends_with(".mp3"))
+        {
             songs.push_back(std::move(s));
+        }
     }
 }
 
@@ -182,12 +186,11 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 
     pw.stream = pw_stream_new_simple(pw_main_loop_get_loop(pw.loop),
                                          "audio-src",
-                                         pw_properties_new(PW_KEY_MEDIA_TYPE,
-                                                           "Audio",
-                                                           PW_KEY_MEDIA_CATEGORY,
-                                                           "Playback",
-                                                           PW_KEY_MEDIA_ROLE,
-                                                           "Music",
+                                         pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
+                                                           PW_KEY_MEDIA_CATEGORY, "Playback",
+                                                           PW_KEY_MEDIA_ROLE, "Music",
+                                                           PW_KEY_STREAM_LATENCY_MIN, "20000",
+                                                           PW_KEY_STREAM_LATENCY_MAX, "40000",
                                                            nullptr),
                                          &streamEvents,
                                          this);
@@ -207,8 +210,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
                       (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT |
                                              PW_STREAM_FLAG_MAP_BUFFERS |
                                              PW_STREAM_FLAG_ASYNC),
-                      params,
-                      1);
+                      params, LEN(params));
 }
 
 void
@@ -222,14 +224,34 @@ void
 PipeWirePlayer::playCurrent()
 {
     /* TODO: read file headers somewhere here */
-    auto wave = utils::loadFileToCharArray(songs[currSongIdx]);
-    pcmData = (s16*)wave.data();
-    pcmSize = wave.size() / sizeof(s16);
-    pcmPos = 0;
+    hSnd = SndfileHandle(currSongName().data(), SFM_READ);
 
-    pw.format = SPA_AUDIO_FORMAT_S16;
-    pw.sampleRate = app::def::sampleRate;
-    pw.channels = app::def::channels;
+    pw.format = SPA_AUDIO_FORMAT_F32;
+    pw.sampleRate = hSnd.samplerate();
+    pw.channels = hSnd.channels();
+
+    pcmPos = 0;
+    pcmSize = hSnd.frames() * pw.channels;
+
+#ifndef NDEBUG
+    CERR("samplerate: {}\n", pw.sampleRate);
+    CERR("channels: {}\n", pw.channels);
+    CERR("frames: {}\n", hSnd.frames());
+#endif
+
+    std::vector<f32> sndPcm(pcmSize);
+    hSnd.readf(sndPcm.data(), pcmSize);
+    pcmData = sndPcm.data();
+
+    // sndPcm.resize(hSnd.frames() * sizeof(s16));
+
+    // sf_count_t read = 0;
+    // int off = 0;
+    // for (size_t i = 0; i < sndPcm.size()*2; i += 1024)
+    // {
+        // hSnd.read(&sndPcm[i], 1024);
+        // CERR("read: {}\n", read);
+    // }
 
     setupPlayer(pw.format, pw.sampleRate, pw.channels);
 

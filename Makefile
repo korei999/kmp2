@@ -6,7 +6,7 @@ WARNINGS := -Wall -Wextra -fms-extensions -Wno-missing-field-initializers
 
 include debug.mk
 
-PKGS := libpipewire-0.3 ncurses
+PKGS := libpipewire-0.3 ncursesw sndfile 
 PKG := $(shell pkg-config --cflags $(PKGS))
 PKG_LIB := $(shell pkg-config --libs $(PKGS))
 
@@ -25,7 +25,7 @@ INC_DIRS := $(shell find $(SRCS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CPPFLAGS := $(INC_FLAGS) -MMD -MP
 
-all: CXX := g++ -fdiagnostics-color=always -flto=auto $(SAFE_STACK)
+all: CXX := g++ -fdiagnostics-color=always -flto=auto
 all: CXXFLAGS += -g -O3 -march=native -ffast-math $(WARNINGS) -DNDEBUG
 all: $(EXEC)
 

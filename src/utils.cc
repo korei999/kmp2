@@ -90,8 +90,7 @@ replaceFileSuffixInPath(std::string_view path, std::string* suffix)
 std::string
 removePath(std::string_view str)
 {
-    auto lastSlash = str.find_last_of("/");
-    return {str.begin() + lastSlash + 1, str.begin() + str.size()};
+    return std::string(str.substr(str.find_last_of("/") + 1, str.size()));
 }
 
 } /* namespace utils */
