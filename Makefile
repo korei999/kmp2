@@ -41,6 +41,15 @@ $(BD)/%.cc.o: %.cc Makefile debug.mk
 	mkdir -p $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
+PREFIX = /usr/local
+
+install: $(EXEC)
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	cp -f $(EXEC) $(DESTDIR)$(PREFIX)/bin
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/$(BIN)
+uninstall:
+	rm -f $(DESTDIR)$(PREFIX)/bin/$(BIN)
+
 .PHONY: clean tags
 clean:
 	rm -rf $(BD)
