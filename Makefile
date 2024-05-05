@@ -6,7 +6,7 @@ WARNINGS := -Wall -Wextra -fms-extensions -Wno-missing-field-initializers
 
 include debug.mk
 
-PKGS := libpipewire-0.3 ncursesw sndfile 
+PKGS := libpipewire-0.3 ncursesw sndfile icu-io
 PKG := $(shell pkg-config --cflags $(PKGS))
 PKG_LIB := $(shell pkg-config --libs $(PKGS))
 

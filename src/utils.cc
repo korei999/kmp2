@@ -1,5 +1,6 @@
 #include "utils.hh"
 
+#include <cstring>
 #include <fstream>
 #include <chrono>
 #include <random>

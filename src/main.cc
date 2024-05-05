@@ -4,7 +4,7 @@
 int
 main(int argc, char* argv[])
 {
-    setlocale(LC_ALL, "");
+    std::locale::global(std::locale(""));
 
     /* TODO: move to class */
     initscr();

@@ -183,10 +183,12 @@ input::read(app::PipeWirePlayer* p)
                 }
                 break;
 
+            case 46:
             case '/':
                 p->subStringSearch(search::dir::forward);
                 break;
 
+            case 44:
             case '?':
                 p->subStringSearch(search::dir::backwards);
                 break;
