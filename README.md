@@ -6,3 +6,6 @@ Supports: wav, opus, ogg, mp3, flac.
 Navigate with vim-like keybinds.
 Searching with `/`.
 `9` and `0` volume.
+
+#### Dependencies:
+fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel icu`
