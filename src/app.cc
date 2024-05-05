@@ -223,7 +223,6 @@ PipeWirePlayer::playAll()
 void
 PipeWirePlayer::playCurrent()
 {
-    /* TODO: read file headers somewhere here */
     hSnd = SndfileHandle(currSongName().data(), SFM_READ, SFC_GET_NORM_FLOAT);
 
     pw.format = SPA_AUDIO_FORMAT_F32;
@@ -239,7 +238,7 @@ PipeWirePlayer::playCurrent()
     CERR("frames: {}\n", hSnd.frames());
 #endif
 
-    /* TODO: this takes too long and takes tons of ram */
+    /* TODO: this takes too long and tons of ram, better to stream in chunks */
     std::vector<f32> sndPcm(pcmSize);
     hSnd.readf(sndPcm.data(), pcmSize);
     pcmData = sndPcm.data();
@@ -313,7 +312,6 @@ PipeWirePlayer::jumpToFound(enum search::dir direction)
             currFoundIdx = foundIndices.size() - 1;
 
         auto newSel = foundIndices[currFoundIdx];
-        auto newFirst = term.firstInList;
 
         if (newSel > term.firstInList + ((long)term.maxListSize() - 1))
             term.firstInList = newSel;

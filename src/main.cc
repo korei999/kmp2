@@ -6,6 +6,7 @@ main(int argc, char* argv[])
 {
     setlocale(LC_ALL, "");
 
+    /* TODO: move to class */
     initscr();
     start_color();
     use_default_colors();
@@ -31,5 +32,4 @@ main(int argc, char* argv[])
     p.playAll();
 
     endwin();
-    fflush(stderr);
 }

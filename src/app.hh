@@ -56,7 +56,8 @@ struct Curses
         bool playList = true;
     } update;
     PipeWirePlayer* p {};
-    WINDOW* plWin {};
+    WINDOW* pStd = stdscr;
+    WINDOW* plWin = nullptr;
     long selected = 0;
     long firstInList = 0;
     const long listYPos = 7;
