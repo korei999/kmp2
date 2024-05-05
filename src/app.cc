@@ -161,9 +161,11 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
     {
         std::string s = argv[i];
 
-        if (s.ends_with(".wav")  ||
-            s.ends_with(".opus") ||
-            s.ends_with(".mp3"))
+        if (s.ends_with(".wav")   ||
+            s.ends_with(".opus")  ||
+            s.ends_with(".ogg")   ||
+            s.ends_with(".mp3")   ||
+            s.ends_with(".flac"))
         {
             songs.push_back(std::move(s));
         }
@@ -224,7 +226,7 @@ void
 PipeWirePlayer::playCurrent()
 {
     /* TODO: read file headers somewhere here */
-    hSnd = SndfileHandle(currSongName().data(), SFM_READ);
+    hSnd = SndfileHandle(currSongName().data(), SFM_READ, SFC_GET_NORM_FLOAT);
 
     pw.format = SPA_AUDIO_FORMAT_F32;
     pw.sampleRate = hSnd.samplerate();

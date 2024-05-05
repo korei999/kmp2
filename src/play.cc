@@ -66,9 +66,9 @@ play::onProcess(void* data)
     if (p->paused)
     {
         std::unique_lock lock(p->pauseMtx);
-        pw_stream_set_active(p->pw.stream, false);
+        // pw_stream_set_active(p->pw.stream, false);
         p->pauseCnd.wait(lock);
-        pw_stream_set_active(p->pw.stream, true);
+        // pw_stream_set_active(p->pw.stream, true);
     }
 
     if (p->next || p->prev || p->newSongSelected || p->finished)
