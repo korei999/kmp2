@@ -210,7 +210,7 @@ input::read(app::PipeWirePlayer* p)
                 break;
 
             default:
-#ifndef DDEBUG
+#ifndef NDEBUG
                 CERR("pressed: '{}'\n", c);
 #endif
                 break;
