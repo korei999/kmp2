@@ -1,10 +1,6 @@
 #include "input.hh"
 #include "app.hh"
 
-#include <ncurses.h>
-#include <thread>
-#include <spa/param/audio/format-utils.h>
-
 int
 main(int argc, char* argv[])
 {

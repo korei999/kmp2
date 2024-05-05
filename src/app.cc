@@ -24,10 +24,10 @@ Curses::updateUI()
 
     if (maxy >= 5 && maxx >= 5)
     {
-        if (update.time)     { update.time     = false; drawTime(); }
-        if (update.volume)   { update.volume   = false; drawVolume(); }
-        if (update.songName) { update.songName = false; drawSongName(); }
-        if (update.playList) { update.playList = false; drawPlaylist(); }
+        if (update.time)        { update.time     = false; drawTime(); }
+        if (update.volume)      { update.volume   = false; drawVolume(); }
+        if (update.songName)    { update.songName = false; drawSongName(); drawSongCounter(); }
+        if (update.playList)    { update.playList = false; drawPlaylist(); }
 
         refresh();
     }
@@ -61,7 +61,10 @@ Curses::drawTime()
 void 
 Curses::drawVolume()
 {
+    auto maxx = getmaxx(stdscr);
+
     auto volumeStr = std::format("volume: {:.2f}\n", p->volume);
+    volumeStr.resize(maxx);
     move(2, 0);
     attron(A_BOLD | COLOR_PAIR(green));
     addstr(volumeStr.data());
@@ -69,17 +72,33 @@ Curses::drawVolume()
 }
 
 void
+Curses::drawSongCounter()
+{
+    auto maxx = getmaxx(stdscr);
+
+    auto songCounterStr = std::format("{} / {}", p->currSongIdx + 1, p->songs.size());
+    if (p->repeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
+    songCounterStr.resize(maxx);
+    move(4, 0);
+    clrtoeol();
+    attron(A_ITALIC);
+    addstr(songCounterStr.data());
+    attroff(A_ITALIC);
+}
+
+void
 Curses::drawSongName()
 {
     auto maxx = getmaxx(stdscr);
-    auto songNameStr = std::format("{} / {}: {}", p->currSongIdx + 1, p->songs.size(), p->currSongName());
-    if (p->repeatAll) { songNameStr = "(R) " + songNameStr; }
+
+    auto songNameStr = std::format("{}", p->currSongName());
+    songNameStr = "playing: " + utils::removePath(songNameStr);
     songNameStr.resize(maxx);
-    move(3, 0);
+    move(5, 0);
     clrtoeol();
-    attron(A_BOLD | COLOR_PAIR(yellow));
+    attron(COLOR_PAIR(yellow));
     addstr(songNameStr.data());
-    attroff(A_BOLD | COLOR_PAIR(yellow));
+    attroff(COLOR_PAIR(yellow));
 }
 
 void
@@ -109,15 +128,13 @@ Curses::drawPlaylist()
     {
         if (cursesY < maxy)
         {
-            auto lineStr = std::format("{}", p->songs[i]);
-            size_t lastSlash = lineStr.find_last_of("/");
-            lineStr = {lineStr.begin() + lastSlash + 1, lineStr.begin() + lineStr.size()};
+            auto lineStr = utils::removePath(std::format("{}", p->songs[i]));
             lineStr.resize(maxx);
 
             if (i == sel)
-                attron(A_BOLD | A_REVERSE);
+                attron(A_REVERSE);
             if (i == p->currSongIdx)
-                attron(COLOR_PAIR(app::Curses::yellow));
+                attron(A_BOLD | COLOR_PAIR(app::Curses::yellow));
 
             move(cursesY, 0);
             clrtoeol();
@@ -139,7 +156,6 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
     pw_init(&argc, &argv);
     term.p = this;
     term.firstInList = 0;
-    term.listYPos = 5;
 
     for (int i = 1; i < argc; i++)
     {
@@ -249,7 +265,7 @@ PipeWirePlayer::playCurrent()
 
     if (currSongIdx > (long)songs.size() - 1)
     {
-        if (repeatAll)
+        if (repeatAfterLast)
             currSongIdx = 0;
         else
             finished = true;

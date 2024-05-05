@@ -58,13 +58,14 @@ struct Curses
     WINDOW* plWin {};
     long selected = 0;
     long firstInList = 0;
-    long listYPos = 5;
+    const long listYPos = 7;
     bool goDown = false;
     bool goUp = false;
 
     void updateUI();
     void drawTime();
     void drawVolume();
+    void drawSongCounter();
     void drawSongName();
     void drawPlaylist();
     void updateAll();
@@ -85,7 +86,7 @@ struct PipeWirePlayer
     bool next = false;
     bool prev = false;
     bool newSongSelected = false;
-    bool repeatAll = false;
+    bool repeatAfterLast = false;
     bool wrapSelection = true;
     bool finished = false;
     std::mutex pauseMtx;

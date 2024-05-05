@@ -6,8 +6,6 @@ void
 input::read(app::PipeWirePlayer* p)
 {
     int c;
-    bool volumeChanged = false;
-    bool refreshUI = false;
 
     auto goTop = [p]() -> void
     {
@@ -142,7 +140,7 @@ input::read(app::PipeWirePlayer* p)
                 break;
 
             case 'r':
-                p->repeatAll = !p->repeatAll;
+                p->repeatAfterLast = !p->repeatAfterLast;
                 p->term.update.songName = true;
                 break;
 

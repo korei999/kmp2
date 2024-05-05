@@ -25,6 +25,7 @@ int rngGet(int min, int max);
 int rngGet();
 f32 rngGet(f32 min, f32 max);
 std::string replaceFileSuffixInPath(std::string_view str, std::string* suffix);
+std::string removePath(std::string_view str);
 
 const std::string_view severityStr[(int)sev::fatal + 1] {
     "",
