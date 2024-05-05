@@ -149,6 +149,8 @@ input::read(app::PipeWirePlayer* p)
 
                     if (newFirst > (long)(p->songs.size() - 1) - (p->term.maxListSize() - 1))
                         newFirst = (p->songs.size() - 1) - (p->term.maxListSize() - 1);
+                    if (newFirst < 0)
+                        newFirst = 0;
                     if (newSel > (long)(p->songs.size() - 1))
                         newSel = (p->songs.size() - 1);
 
