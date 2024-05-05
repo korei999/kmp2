@@ -7,6 +7,9 @@
 #include <iostream>
 #include <format>
 
+namespace utils
+{
+
 enum class sev : int
 {
     ok,
@@ -35,6 +38,7 @@ const std::string_view severityStr[(int)sev::fatal + 1] {
 #define LEN(A) (sizeof(A) / sizeof(A[0]))
 #define ODD(A) (A & 1)
 #define EVEN(A) (!ODD(A))
+#define ROUND(A) ((int)((A < 0) ? (A - 0.5) : (A + 0.5)))
 
 #define COUT std::cout << std::format
 #define CERR std::cerr << std::format
@@ -45,16 +49,16 @@ extern std::mutex logMtx;
 #    define LOG(severity, ...)                                                                                         \
         do                                                                                                             \
         {                                                                                                              \
-            std::lock_guard printLock(logMtx);                                                                         \
-            CERR("{}({}): {} ", __FILE__, __LINE__, severityStr[(int)severity]);                                       \
+            std::lock_guard printLock(utils::logMtx);                                                                  \
+            CERR("{}({}): {} ", __FILE__, __LINE__, utils::severityStr[(int)severity]);                                \
             CERR(__VA_ARGS__);                                                                                         \
             switch ((int)severity)                                                                                     \
             {                                                                                                          \
-                case (int)sev::fatal:                                                                                  \
+                case (int)utils::sev::fatal:                                                                           \
                     abort();                                                                                           \
                     break;                                                                                             \
                                                                                                                        \
-                case (int)sev::bad:                                                                                    \
+                case (int)utils::sev::bad:                                                                             \
                     exit(1);                                                                                           \
                     break;                                                                                             \
                                                                                                                        \
@@ -74,3 +78,5 @@ hashFNV(std::string_view str)
         hash = (hash ^ (u64)str[i]) * 0x100000001B3;
     return hash;
 }
+
+} /* namespace utils */

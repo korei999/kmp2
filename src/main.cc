@@ -20,7 +20,7 @@ main(int argc, char* argv[])
     keypad(stdscr, true);
     refresh();
 
-    int td =  app::Curses::termdef;
+    int td = (app::Curses::termdef);
     init_pair(app::Curses::green, COLOR_GREEN, td);
     init_pair(app::Curses::yellow, COLOR_YELLOW, td);
     init_pair(app::Curses::blue, COLOR_BLUE, td);

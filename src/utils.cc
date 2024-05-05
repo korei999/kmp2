@@ -6,6 +6,9 @@
 #include <mutex>
 #include <climits>
 
+namespace utils
+{
+
 static std::mt19937 rngCreate();
 
 static std::mt19937 mt {rngCreate()};
@@ -83,3 +86,5 @@ replaceFileSuffixInPath(std::string_view path, std::string* suffix)
 
     return {pathToMtl + "/" + (*suffix)};
 }
+
+} /* namespace utils */

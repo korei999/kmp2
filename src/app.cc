@@ -2,6 +2,8 @@
 #include "play.hh"
 #include "utils.hh"
 
+#include <cmath>
+
 namespace app
 {
 
@@ -22,20 +24,10 @@ Curses::updateUI()
 
     if (maxy >= 5 && maxx >= 5)
     {
-        drawTime();
-
-        auto volumeStr = std::format("volume: {:.2f}\n", p->volume);
-        move(2, 0);
-        addstr(volumeStr.data());
-
-        auto songNameStr = std::format("{} / {}: {}", p->currSongIdx + 1, p->songs.size(), p->currSongName());
-        if (p->repeatAll) { songNameStr = "(R) " + songNameStr; }
-        songNameStr.resize(maxx);
-        move(3, 0);
-        clrtoeol();
-        addstr(songNameStr.data());
-
-        drawPlaylist();
+        if (update.time)     { update.time     = false; drawTime(); }
+        if (update.volume)   { update.volume   = false; drawVolume(); }
+        if (update.songName) { update.songName = false; drawSongName(); }
+        if (update.playList) { update.playList = false; drawPlaylist(); }
 
         refresh();
     }
@@ -47,15 +39,15 @@ Curses::drawTime()
     int maxx = getmaxx(stdscr);
 
     u64 t = (p->pcmPos/sizeof(s16)) / p->pw.sampleRate;
-    u64 len = (p->pcmSize/sizeof(s16)) / p->pw.sampleRate;
+    u64 maxT = (p->pcmSize/sizeof(s16)) / p->pw.sampleRate;
 
     f64 mF = t / 60.0;
-    u64 m = (u64)mF;
-    int frac = 60 * (mF - m);
+    u64 m = u64(mF);
+    u64 frac = 60 * (mF - m);
 
-    f64 mFMax = len / 60.0;
-    u64 mMax = (u64)mFMax;
-    int fracMax = 60 * (mFMax - mMax);
+    f64 mFMax = maxT / 60.0;
+    u64 mMax = u64(mFMax);
+    u64 fracMax = 60 * (mFMax - mMax);
 
     auto timeStr = std::format("{}:{:02d} / {}:{:02d} min", m, frac, mMax, fracMax);
     if (p->paused) { timeStr = "(paused) " + timeStr; }
@@ -64,6 +56,30 @@ Curses::drawTime()
     move(0, 0);
     clrtoeol();
     addstr(timeStr.data());
+}
+
+void 
+Curses::drawVolume()
+{
+    auto volumeStr = std::format("volume: {:.2f}\n", p->volume);
+    move(2, 0);
+    attron(A_BOLD | COLOR_PAIR(green));
+    addstr(volumeStr.data());
+    attroff(A_BOLD | COLOR_PAIR(green));
+}
+
+void
+Curses::drawSongName()
+{
+    auto maxx = getmaxx(stdscr);
+    auto songNameStr = std::format("{} / {}: {}", p->currSongIdx + 1, p->songs.size(), p->currSongName());
+    if (p->repeatAll) { songNameStr = "(R) " + songNameStr; }
+    songNameStr.resize(maxx);
+    move(3, 0);
+    clrtoeol();
+    attron(A_BOLD | COLOR_PAIR(yellow));
+    addstr(songNameStr.data());
+    attroff(A_BOLD | COLOR_PAIR(yellow));
 }
 
 void
@@ -76,17 +92,16 @@ Curses::drawPlaylist()
 
     long lastInList = firstInList + maxy - cursesY;
 
-    if (listDown && selected > lastInList - 1)
+    if (goDown && selected > lastInList - 1)
     {
-        listDown = false;
+        goDown = false;
 
         if (selected < (long)p->songs.size())
             firstInList++;
     }
-
-    if (listUp && selected < firstInList)
+    else if (goUp && selected < firstInList)
     {
-        listUp = false;
+        goUp = false;
         firstInList--;
     }
 
@@ -100,9 +115,9 @@ Curses::drawPlaylist()
             lineStr.resize(maxx);
 
             if (i == sel)
-                attron(A_REVERSE);
+                attron(A_BOLD | A_REVERSE);
             if (i == p->currSongIdx)
-                attron(A_BOLD | COLOR_PAIR(app::Curses::yellow));
+                attron(COLOR_PAIR(app::Curses::yellow));
 
             move(cursesY, 0);
             clrtoeol();
@@ -111,6 +126,12 @@ Curses::drawPlaylist()
             attroff(A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
         }
     }
+}
+
+void
+Curses::updateAll()
+{
+    update.ui = update.time = update.volume = update.songName = update.playList = true;
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
@@ -185,7 +206,7 @@ void
 PipeWirePlayer::playCurrent()
 {
     /* TODO: read file headers somewhere here */
-    auto wave = loadFileToCharArray(songs[currSongIdx]);
+    auto wave = utils::loadFileToCharArray(songs[currSongIdx]);
     pcmData = (s16*)wave.data();
     pcmSize = wave.size() / sizeof(s16);
     pcmPos = 0;
@@ -196,6 +217,7 @@ PipeWirePlayer::playCurrent()
 
     setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
+    term.updateAll();
     term.updateUI();
     pw_main_loop_run(pw.loop);
 

@@ -36,27 +36,38 @@ struct PipeWirePlayer;
 
 struct Curses
 {
-    enum color : int
+    enum color : short
     {
         termdef = -1, /* -1 should preserve terminal default color due to use_default_colors() */
         green = 1,
-        yellow = 2,
-        blue = 3,
-        cyan = 4,
-        red = 5
+        yellow,
+        blue,
+        cyan,
+        red
     };
 
+    struct
+    {
+        bool ui = true;
+        bool time = true;
+        bool volume = true;
+        bool songName = true;
+        bool playList = true;
+    } update;
     PipeWirePlayer* p {};
     WINDOW* plWin {};
     long selected = 0;
     long firstInList = 0;
     long listYPos = 5;
-    bool listDown = false;
-    bool listUp = false;
+    bool goDown = false;
+    bool goUp = false;
 
     void updateUI();
     void drawTime();
+    void drawVolume();
+    void drawSongName();
     void drawPlaylist();
+    void updateAll();
     long maxListSize() const { return getmaxy(stdscr) - listYPos; }
 };
 

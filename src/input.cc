@@ -43,6 +43,7 @@ input::read(app::PipeWirePlayer* p)
                 p->volume += 0.01;
                 if (p->volume > app::def::maxVolume)
                     p->volume = app::def::maxVolume;
+                p->term.update.volume = true;
                 break;
 
             case '9':
@@ -52,8 +53,10 @@ input::read(app::PipeWirePlayer* p)
                 p->volume -= 0.01;
                 if (p->volume < app::def::minVolume)
                     p->volume = app::def::minVolume;
+                p->term.update.volume = true;
                 break;
 
+            case KEY_RIGHT:
             case 'l':
                 {
                     /* bad data race */
@@ -64,6 +67,7 @@ input::read(app::PipeWirePlayer* p)
                 }
                 break;
 
+            case KEY_LEFT:
             case 'h':
                 {
                     /* bad data race */
@@ -82,6 +86,7 @@ input::read(app::PipeWirePlayer* p)
                 p->prev = true;
                 break;
 
+            case KEY_DOWN:
             case 'j':
                 {
                     auto newSel = p->term.selected + 1;
@@ -99,10 +104,12 @@ input::read(app::PipeWirePlayer* p)
                     }
 
                     p->term.selected = newSel;
-                    p->term.listDown = true;
+                    p->term.goDown = true;
+                    p->term.update.playList = true;
                 }
                 break;
 
+            case KEY_UP:
             case 'k':
                 {
                     auto newSel = p->term.selected - 1;
@@ -119,20 +126,24 @@ input::read(app::PipeWirePlayer* p)
                         }
                     }
                     p->term.selected = newSel;
-                    p->term.listUp = true;
+                    p->term.goUp = true;
+                    p->term.update.playList = true;
                 }
                 break;
 
             case 'g':
                 goTop();
+                p->term.update.playList = true;
                 break;
 
             case 'G':
                 goBot();
+                p->term.update.playList = true;
                 break;
 
             case 'r':
                 p->repeatAll = !p->repeatAll;
+                p->term.update.songName = true;
                 break;
 
             case ' ':
@@ -144,10 +155,12 @@ input::read(app::PipeWirePlayer* p)
             case '\n':
                 p->currSongIdx = p->term.selected;
                 p->newSongSelected = true;
+                p->term.updateAll();
                 break;
 
             case KEY_RESIZE:
             case 12: /* C-l */
+                p->term.updateAll();
                 redrawwin(stdscr);
                 break;
 
@@ -155,9 +168,7 @@ input::read(app::PipeWirePlayer* p)
                 break;
         }
 
-        if (refreshUI)
-        {
-        }
+        p->term.update.time = true;
 
         p->term.updateUI();
     }
