@@ -1,4 +1,5 @@
 #pragma once
+#include "search.hh"
 #include "ultratypes.h"
 
 #include <condition_variable>
@@ -6,7 +7,6 @@
 #include <pipewire/pipewire.h>
 #include <sndfile.hh>
 #include <spa/param/audio/format-utils.h>
-#include <vector>
 
 namespace app
 {
@@ -70,7 +70,7 @@ struct Curses
     void drawSongName();
     void drawPlaylist();
     void updateAll();
-    long maxListSize() const { return getmaxy(stdscr) - listYPos; }
+    size_t maxListSize() const { return getmaxy(stdscr) - listYPos; }
 };
 
 struct PipeWirePlayer
@@ -78,7 +78,9 @@ struct PipeWirePlayer
     PipeWireData pw {};
     SndfileHandle hSnd {};
     std::vector<std::string> songs {};
+    std::vector<int> foundIndices {};
     long currSongIdx = 0;
+    long currFoundIdx = 0;
     f32* pcmData {};
     size_t pcmSize = 0;
     long pcmPos = 0;
@@ -101,6 +103,14 @@ struct PipeWirePlayer
     void playAll();
     void playCurrent();
     const std::string_view currSongName() const { return songs[currSongIdx]; }
+    void subStringSearch(enum search::dir direction);
+    void jumpToFound(enum search::dir direction);
 };
+
+inline void
+limitStringToMaxX(std::string* str)
+{
+    str->resize(getmaxx(stdscr));
+}
 
 } /* namespace app */

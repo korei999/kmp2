@@ -17,7 +17,7 @@ input::read(app::PipeWirePlayer* p)
     auto goBot = [p]() -> void
     {
         p->term.selected = p->songs.size() - 1;
-        auto off = std::min(p->term.maxListSize(), (long)p->songs.size());
+        auto off = std::min(p->term.maxListSize(), p->songs.size());
         p->term.firstInList = p->term.selected - (off - 1);
     };
 
@@ -147,7 +147,7 @@ input::read(app::PipeWirePlayer* p)
                     long newSel = p->term.selected + 22;
                     long newFirst = p->term.firstInList + 22;
 
-                    if (newFirst > (long)(p->songs.size() - 1) - (p->term.maxListSize() - 1))
+                    if (newFirst > ((long)p->songs.size() - 1) - ((long)p->term.maxListSize() - 1))
                         newFirst = (p->songs.size() - 1) - (p->term.maxListSize() - 1);
                     if (newFirst < 0)
                         newFirst = 0;
@@ -181,6 +181,24 @@ input::read(app::PipeWirePlayer* p)
 
                     p->term.update.playList = true;
                 }
+                break;
+
+            case '/':
+                p->subStringSearch(search::dir::forward);
+                break;
+
+            case '?':
+                p->subStringSearch(search::dir::backwards);
+                break;
+
+            case 'n':
+                p->jumpToFound(search::dir::forward);
+                p->term.update.playList = true;
+                break;
+
+            case 'N':
+                p->jumpToFound(search::dir::backwards);
+                p->term.update.playList = true;
                 break;
 
             case 'r':

@@ -4,8 +4,11 @@
 #include "app.hh"
 #include "utils.hh"
 
+namespace play
+{
+
 void
-play::onProcess(void* data)
+onProcess(void* data)
 {
     auto* p = (app::PipeWirePlayer*)data;
     pw_buffer* b;
@@ -30,11 +33,6 @@ play::onProcess(void* data)
     if (b->requested)
         nFrames = SPA_MIN(b->requested, (u64)nFrames);
 
-    // static f32 chunk[30000];
-    // p->hSnd.readf(chunk, nFrames);
-    // int pos = 0;
-    // auto vol = p->volume;
-
     for (int i = 0; i < nFrames; i++)
     {
         for (int j = 0; j < (int)p->pw.channels; j++)
@@ -46,13 +44,10 @@ play::onProcess(void* data)
             }
 
             /* modify each sample here */
-            // f32 val = chunk[pos] * vol;
             f32 val = p->pcmData[p->pcmPos] * p->volume;
-            // val = std::clamp(val, SHRT_MIN, SHRT_MAX);
 
             *dst++ = val;
 
-            // pos++;
             p->pcmPos++;
         }
     }
@@ -66,9 +61,7 @@ play::onProcess(void* data)
     if (p->paused)
     {
         std::unique_lock lock(p->pauseMtx);
-        // pw_stream_set_active(p->pw.stream, false);
         p->pauseCnd.wait(lock);
-        // pw_stream_set_active(p->pw.stream, true);
     }
 
     if (p->next || p->prev || p->newSongSelected || p->finished)
@@ -77,3 +70,5 @@ play::onProcess(void* data)
         return;
     }
 }
+
+} /* namespace play */
