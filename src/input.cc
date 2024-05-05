@@ -1,4 +1,5 @@
 #include "input.hh"
+#include "utils.hh"
 
 #include <ncurses.h>
 
@@ -139,6 +140,47 @@ input::read(app::PipeWirePlayer* p)
                 p->term.update.playList = true;
                 break;
 
+            case 6:
+            case KEY_NPAGE:
+            case 4: /* C-d */
+                {
+                    long newSel = p->term.selected + 22;
+                    long newFirst = p->term.firstInList + 22;
+
+                    if (newFirst > (long)(p->songs.size() - 1) - (p->term.maxListSize() - 1))
+                        newFirst = (p->songs.size() - 1) - (p->term.maxListSize() - 1);
+                    if (newSel > (long)(p->songs.size() - 1))
+                        newSel = (p->songs.size() - 1);
+
+                    p->term.selected = newSel;
+                    p->term.firstInList = newFirst;
+                    p->term.update.playList = true;
+                }
+                break;
+
+            case 2:
+            case KEY_PPAGE:
+            case 21: /* C-u */
+                {
+                    long newSel = p->term.selected - 22;
+                    long newFirst = p->term.firstInList - 22;
+
+                    if (newSel < 0)
+                    {
+                        goTop();
+                    }
+                    else
+                    {
+                        if (newFirst < 0) newFirst = 0;
+
+                        p->term.selected = newSel;
+                        p->term.firstInList = newFirst;
+                    }
+
+                    p->term.update.playList = true;
+                }
+                break;
+
             case 'r':
                 p->repeatAfterLast = !p->repeatAfterLast;
                 p->term.update.songName = true;
@@ -162,7 +204,13 @@ input::read(app::PipeWirePlayer* p)
                 redrawwin(stdscr);
                 break;
 
+            case -1:
+                break;
+
             default:
+#ifndef DDEBUG
+                CERR("pressed: '{}'\n", c);
+#endif
                 break;
         }
 
