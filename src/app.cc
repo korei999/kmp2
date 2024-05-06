@@ -8,7 +8,10 @@ namespace app
 {
 
 static void
-ioChangedCB(void *data, uint32_t id, void *area, uint32_t size)
+ioChangedCB([[maybe_unused]] void* data,
+            [[maybe_unused]] uint32_t id,
+            [[maybe_unused]] void* area,
+            [[maybe_unused]] uint32_t size)
 {
     //
 }
