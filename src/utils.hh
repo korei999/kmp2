@@ -40,6 +40,7 @@ const std::string_view severityStr[(int)sev::fatal + 1] {
 #define ODD(A) (A & 1)
 #define EVEN(A) (!ODD(A))
 #define ROUND(A) ((int)((A < 0) ? (A - 0.5) : (A + 0.5)))
+#define SQ(A) (A * A)
 
 #define COUT std::cout << std::format
 #define CERR std::cerr << std::format

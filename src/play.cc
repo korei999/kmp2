@@ -49,11 +49,12 @@ onProcessCB(void* data)
             }
 
             /* modify each sample here */
-            f32 val = p->chunk[chunkPos] * p->volume;
+            f32 val = p->chunk[chunkPos] * SQ(p->volume);
 
             *dst++ = val;
 
-            chunkPos++; p->pcmPos++;
+            chunkPos++;
+            p->pcmPos++;
         }
     }
 
