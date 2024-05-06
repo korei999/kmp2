@@ -55,7 +55,7 @@ Curses::drawUI()
     /* ncurses is not thread safe */
     std::lock_guard lock(mtx);
 
-    int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
+    int maxy = getmaxy(pStd), maxx = getmaxx(pStd);
 
     if (maxy >= 5 && maxx >= 5)
     {
@@ -134,7 +134,7 @@ Curses::drawSongName()
 void
 Curses::drawPlaylist()
 {
-    long maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
+    long maxy = getmaxy(pStd);
 
     long cursesY = listYPos;
     long sel = p->term.selected;
@@ -162,8 +162,8 @@ Curses::drawPlaylist()
 
     for (long i = firstInList; i < (long)p->songs.size() && cursesY < maxy; i++, cursesY++)
     {
-        auto lineStr = utils::removePath(std::format("{}", p->songs[i]));
-        lineStr.resize(maxx);
+        auto lineStr = utils::removePath(std::format("{}", p->songs[i].data()));
+        limitStringToMaxX(&lineStr);
 
         if (i == sel)
             attron(A_REVERSE);

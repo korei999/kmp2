@@ -8,4 +8,4 @@ Searching with `/`.
 `9` and `0` volume.
 
 #### Dependencies:
-fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel icu`
+fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel`

@@ -1,8 +1,6 @@
 #include "search.hh"
 #include "utils.hh"
 
-#include <unicode/unistr.h>
-
 namespace search
 {
 
@@ -15,19 +13,18 @@ getIndexList(const std::vector<std::string>& a, std::string_view key, enum dir d
     int start = direction == dir::forward ? 0 : a.size() - 1;
     int cond = direction == dir::forward ? a.size() : -1;
 
+    const std::ctype<wchar_t>& f = std::use_facet<std::ctype<wchar_t>>(std::locale());
+
     for (int i = start; i != cond; i += inc)
     {
-        std::string s(a.size(), 0);
-        std::string k(key.size(), 0);
+        auto s = utils::removePath(a[i]);
 
-        icu::UnicodeString ss = utils::removePath(a[i].data()).data();
-        ss.toUpper();
-        icu::UnicodeString ff = key.data();
-        ff.toUpper();
-        ss.extract(0, ss.length(), s.data());
-        ff.extract(0, ff.length(), k.data());
+        std::wstring sw(s.begin(), s.end());
+        std::wstring fw(key.begin(), key.end());
+        f.toupper(&sw[0], &sw[0] + sw.size());
+        f.toupper(&fw[0], &fw[0] + fw.size());
 
-        if (s.find(k) != std::string::npos)
+        if (sw.find(fw) != std::string::npos)
             ret.push_back(i);
     }
 

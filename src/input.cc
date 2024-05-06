@@ -61,7 +61,7 @@ input::read(app::PipeWirePlayer* p)
                     std::lock_guard lock(p->pw.mtx);
 
                     timeout(50);
-                    while (c == 'l')
+                    while (c == 'l' || c == KEY_RIGHT)
                     {
                         p->hSnd.seek(app::def::step, SEEK_CUR);
                         p->term.update.time = true;
@@ -79,7 +79,7 @@ input::read(app::PipeWirePlayer* p)
                     std::lock_guard lock(p->pw.mtx);
 
                     timeout(50);
-                    while (c == 'h')
+                    while (c == 'h' || c == KEY_LEFT)
                     {
                         p->hSnd.seek(-app::def::step, SEEK_CUR);
                         p->term.update.time = true;
@@ -153,9 +153,9 @@ input::read(app::PipeWirePlayer* p)
                 p->term.update.playList = true;
                 break;
 
-            case 6:
             case KEY_NPAGE:
             case 4: /* C-d */
+            case 6: /* C-f */
                 {
                     long newSel = p->term.selected + 22;
                     long newFirst = p->term.firstInList + 22;
@@ -173,8 +173,8 @@ input::read(app::PipeWirePlayer* p)
                 }
                 break;
 
-            case 2:
             case KEY_PPAGE:
+            case 2: /* C-b */
             case 21: /* C-u */
                 {
                     long newSel = p->term.selected - 22;
@@ -236,7 +236,7 @@ input::read(app::PipeWirePlayer* p)
             case KEY_RESIZE:
             case 12: /* C-l */
                 p->term.updateAll();
-                redrawwin(stdscr);
+                redrawwin(p->term.pStd);
                 break;
 
             case -1:
