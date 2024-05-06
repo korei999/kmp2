@@ -232,6 +232,12 @@ input::read(app::PipeWirePlayer* p)
                 p->newSongSelected = true;
                 p->term.updateAll();
                 break;
+                
+            case 'z':
+                p->term.selected = p->currSongIdx;
+                p->term.firstInList = (p->term.selected - (p->term.maxListSize() - 1) / 2);
+                p->term.update.playList = true;
+                break;
 
             case KEY_RESIZE:
             case 12: /* C-l */

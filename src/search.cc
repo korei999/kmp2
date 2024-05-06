@@ -13,7 +13,7 @@ getIndexList(const std::vector<std::string>& a, std::string_view key, enum dir d
     int start = direction == dir::forward ? 0 : a.size() - 1;
     int cond = direction == dir::forward ? a.size() : -1;
 
-    const std::ctype<wchar_t>& f = std::use_facet<std::ctype<wchar_t>>(std::locale());
+    const auto& f = std::use_facet<std::ctype<wchar_t>>(std::locale());
 
     for (int i = start; i != cond; i += inc)
     {

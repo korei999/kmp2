@@ -144,6 +144,8 @@ Curses::drawPlaylist()
         firstInList = (p->songs.size() - 1) - (maxListSize() - 1);
     if (p->songs.size() < maxListSize())
         firstInList = 0;
+    if (firstInList < 0)
+        firstInList = 0;
 
     long lastInList = firstInList + maxy - cursesY;
 
