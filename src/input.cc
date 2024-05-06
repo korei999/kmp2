@@ -8,19 +8,6 @@ input::read(app::PipeWirePlayer* p)
 {
     int c;
 
-    auto goTop = [p]() -> void
-    {
-        p->term.selected = 0;
-        p->term.firstInList = 0;
-    };
-
-    auto goBot = [p]() -> void
-    {
-        p->term.selected = p->songs.size() - 1;
-        auto off = std::min(p->term.maxListSize(), p->songs.size());
-        p->term.firstInList = p->term.selected - (off - 1);
-    };
-
     while ((c = getch()))
     {
         switch (c)
@@ -106,17 +93,11 @@ input::read(app::PipeWirePlayer* p)
                     if (newSel > (long)p->songs.size() - 1)
                     {
                         if (p->wrapSelection)
-                        {
                             newSel = 0;
-                            goTop();
-                        }
                         else
-                        {
                             newSel = p->songs.size() - 1;
-                        }
                     }
                     p->term.selected = newSel;
-                    p->term.goDown = true;
                     p->term.update.playList = true;
                 }
                 break;
@@ -127,29 +108,21 @@ input::read(app::PipeWirePlayer* p)
                     auto newSel = p->term.selected - 1;
                     if (newSel < 0)
                     {
-                        if (p->wrapSelection)
-                        {
-                            newSel = p->songs.size() - 1;
-                            goBot();
-                        }
-                        else
-                        {
-                            newSel = 0;
-                        }
+                        if (p->wrapSelection) newSel = p->songs.size() - 1;
+                        else newSel = 0;
                     }
                     p->term.selected = newSel;
-                    p->term.goUp = true;
                     p->term.update.playList = true;
                 }
                 break;
 
             case 'g':
-                goTop();
+                p->term.selected = 0;
                 p->term.update.playList = true;
                 break;
 
             case 'G':
-                goBot();
+                p->term.selected = p->songs.size() - 1;
                 p->term.update.playList = true;
                 break;
 
@@ -158,17 +131,10 @@ input::read(app::PipeWirePlayer* p)
             case 6: /* C-f */
                 {
                     long newSel = p->term.selected + 22;
-                    long newFirst = p->term.firstInList + 22;
-
-                    if (newFirst > ((long)p->songs.size() - 1) - ((long)p->term.maxListSize() - 1))
-                        newFirst = (p->songs.size() - 1) - (p->term.maxListSize() - 1);
-                    if (newFirst < 0)
-                        newFirst = 0;
-                    if (newSel > (long)(p->songs.size() - 1))
-                        newSel = (p->songs.size() - 1);
+                    if (newSel >= (long)p->songs.size())
+                        newSel = p->songs.size() - 1;
 
                     p->term.selected = newSel;
-                    p->term.firstInList = newFirst;
                     p->term.update.playList = true;
                 }
                 break;
@@ -178,20 +144,9 @@ input::read(app::PipeWirePlayer* p)
             case 21: /* C-u */
                 {
                     long newSel = p->term.selected - 22;
-                    long newFirst = p->term.firstInList - 22;
+                    if (newSel < 0) newSel = 0;
 
-                    if (newSel < 0)
-                    {
-                        goTop();
-                    }
-                    else
-                    {
-                        if (newFirst < 0) newFirst = 0;
-
-                        p->term.selected = newSel;
-                        p->term.firstInList = newFirst;
-                    }
-
+                    p->term.selected = newSel;
                     p->term.update.playList = true;
                 }
                 break;

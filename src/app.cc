@@ -139,7 +139,6 @@ Curses::drawPlaylist()
     long cursesY = listYPos;
     long sel = p->term.selected;
 
-    /* dirty fixes for out of range or incomplete draws at the end of the list */
     if ((p->songs.size() - 1) - firstInList < maxListSize())
         firstInList = (p->songs.size() - 1) - (maxListSize() - 1);
     if (p->songs.size() < maxListSize())
@@ -149,18 +148,10 @@ Curses::drawPlaylist()
 
     long lastInList = firstInList + maxy - cursesY;
 
-    if (goDown && selected > lastInList - 1)
-    {
-        goDown = false;
-
-        if (selected < (long)p->songs.size())
-            firstInList++;
-    }
-    else if (goUp && selected < firstInList)
-    {
-        goUp = false;
-        firstInList--;
-    }
+    if (selected > lastInList - 1)
+        firstInList = selected - (maxListSize() - 1);
+    else if (selected < firstInList)
+        firstInList = selected;
 
     for (long i = firstInList; i < (long)p->songs.size() && cursesY < maxy; i++, cursesY++)
     {
