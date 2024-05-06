@@ -8,11 +8,13 @@ namespace play
 {
 
 void
-onProcess(void* data)
+onProcessCB(void* data)
 {
     auto* p = (app::PipeWirePlayer*)data;
-    pw_buffer* b;
 
+    std::lock_guard lock(p->pw.mtx);
+
+    pw_buffer* b;
     if ((b = pw_stream_dequeue_buffer(p->pw.stream)) == nullptr)
     {
         pw_log_warn("out of buffers: %m");
@@ -33,6 +35,9 @@ onProcess(void* data)
     if (b->requested)
         nFrames = SPA_MIN(b->requested, (u64)nFrames);
 
+    p->hSnd.readf(p->chunk, nFrames);
+    int chunkPos = 0;
+
     for (int i = 0; i < nFrames; i++)
     {
         for (int j = 0; j < (int)p->pw.channels; j++)
@@ -44,13 +49,15 @@ onProcess(void* data)
             }
 
             /* modify each sample here */
-            f32 val = p->pcmData[p->pcmPos] * p->volume;
+            f32 val = p->chunk[chunkPos] * p->volume;
 
             *dst++ = val;
 
-            p->pcmPos++;
+            chunkPos++; p->pcmPos++;
         }
     }
+
+    p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
 
     buf->datas[0].chunk->offset = 0;
     buf->datas[0].chunk->stride = stride;
@@ -58,7 +65,7 @@ onProcess(void* data)
 
     pw_stream_queue_buffer(p->pw.stream, b);
 
-    if (p->paused)
+    while (p->paused)
     {
         std::unique_lock lock(p->pauseMtx);
         p->pauseCnd.wait(lock);

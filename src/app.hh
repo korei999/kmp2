@@ -18,8 +18,8 @@ namespace def
 
 constexpr f64 maxVolume = 1.3;
 constexpr f64 minVolume = 0.0;
-constexpr int step = 150000;
-constexpr int sampleRate = 44100;
+constexpr int step = 100000;
+constexpr int sampleRate = 48000;
 constexpr int channels = 2;
 
 };
@@ -31,6 +31,7 @@ struct PipeWireData
     enum spa_audio_format format = SPA_AUDIO_FORMAT_S16;
     u32 sampleRate = app::def::sampleRate;
     u32 channels = app::def::channels;
+    std::mutex mtx;
 };
 
 struct PipeWirePlayer;
@@ -71,7 +72,7 @@ struct Curses
     void drawSongName();
     void drawPlaylist();
     void updateAll();
-    size_t maxListSize() const { return getmaxy(stdscr) - listYPos; }
+    size_t maxListSize() const { return getmaxy(pStd) - listYPos; }
 };
 
 struct PipeWirePlayer
@@ -80,9 +81,10 @@ struct PipeWirePlayer
     SndfileHandle hSnd {};
     std::vector<std::string> songs {};
     std::vector<int> foundIndices {};
+    static f32 chunk[16384];
     long currSongIdx = 0;
     long currFoundIdx = 0;
-    f32* pcmData {};
+    f32* pPcm {};
     size_t pcmSize = 0;
     long pcmPos = 0;
     f64 volume = 0.05;

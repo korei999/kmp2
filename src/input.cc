@@ -58,22 +58,16 @@ input::read(app::PipeWirePlayer* p)
             case KEY_RIGHT:
             case 'l':
                 {
-                    /* bad data race */
-                    long newPos = p->pcmPos += app::def::step;
-                    if (newPos > (long)p->pcmSize - 1)
-                        newPos = p->pcmSize - 1;
-                    p->pcmPos = newPos;
+                    std::lock_guard lock(p->pw.mtx);
+                    p->hSnd.seek(app::def::step, SEEK_CUR);
                 }
                 break;
 
             case KEY_LEFT:
             case 'h':
                 {
-                    /* bad data race */
-                    long newPos = p->pcmPos -= app::def::step;
-                    if (newPos < 0)
-                        newPos = 0;
-                    p->pcmPos = newPos;
+                    std::lock_guard lock(p->pw.mtx);
+                    p->hSnd.seek(-app::def::step, SEEK_CUR);
                 }
                 break;
 
@@ -101,7 +95,6 @@ input::read(app::PipeWirePlayer* p)
                             newSel = p->songs.size() - 1;
                         }
                     }
-
                     p->term.selected = newSel;
                     p->term.goDown = true;
                     p->term.update.playList = true;

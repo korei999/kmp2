@@ -7,12 +7,21 @@
 namespace app
 {
 
+static void
+ioChangedCB(void *data, uint32_t id, void *area, uint32_t size)
+{
+    //
+}
+
 static const pw_stream_events streamEvents {
     .version = PW_VERSION_STREAM_EVENTS,
-    .process = play::onProcess, /* attached playback function */
+    .io_changed = ioChangedCB,
+    .process = play::onProcessCB /* attached playback function */
 };
 
 static std::mutex cursesMtx;
+
+f32 PipeWirePlayer::chunk[16384] {};
 
 void
 Curses::updateUI()
@@ -185,7 +194,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
     pw.loop = pw_main_loop_new(nullptr);
 
     pw.stream = pw_stream_new_simple(pw_main_loop_get_loop(pw.loop),
-                                         "audio-src",
+                                         "kmpSource",
                                          pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
                                                            PW_KEY_MEDIA_CATEGORY, "Playback",
                                                            PW_KEY_MEDIA_ROLE, "Music",
@@ -223,7 +232,7 @@ PipeWirePlayer::playAll()
 void
 PipeWirePlayer::playCurrent()
 {
-    hSnd = SndfileHandle(currSongName().data(), SFM_READ, SFC_GET_NORM_FLOAT);
+    hSnd = SndfileHandle(currSongName().data(), SFM_READ);
 
     pw.format = SPA_AUDIO_FORMAT_F32;
     pw.sampleRate = hSnd.samplerate();
@@ -231,17 +240,6 @@ PipeWirePlayer::playCurrent()
 
     pcmPos = 0;
     pcmSize = hSnd.frames() * pw.channels;
-
-#ifndef NDEBUG
-    CERR("samplerate: {}\n", pw.sampleRate);
-    CERR("channels: {}\n", pw.channels);
-    CERR("frames: {}\n", hSnd.frames());
-#endif
-
-    /* TODO: this takes too long and tons of ram, better to stream in chunks */
-    std::vector<f32> sndPcm(pcmSize);
-    hSnd.readf(sndPcm.data(), pcmSize);
-    pcmData = sndPcm.data();
 
     setupPlayer(pw.format, pw.sampleRate, pw.channels);
 

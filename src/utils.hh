@@ -67,6 +67,11 @@ extern std::mutex logMtx;
                     break;                                                                                             \
             }                                                                                                          \
         } while (0)
+#    define LOG_OK(...) LOG(utils::sev::ok, __VA_ARGS__)
+#    define LOG_GOOD(...) LOG(utils::sev::good, __VA_ARGS__)
+#    define LOG_WARN(...) LOG(utils::sev::warn, __VA_ARGS__)
+#    define LOG_BAD(...) LOG(utils::sev::bad, __VA_ARGS__)
+#    define LOG_FATAL(...) LOG(utils::sev::fatal, __VA_ARGS__)
 #else
 #    define LOG(severity, ...) NOP
 #endif
