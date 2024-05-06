@@ -66,7 +66,7 @@ input::read(app::PipeWirePlayer* p)
                         p->hSnd.seek(app::def::step, SEEK_CUR);
                         p->term.update.time = true;
                         p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
-                        p->term.updateUI();
+                        p->term.drawUI();
                         c = getch();
                     }
                     timeout(1000);
@@ -84,7 +84,7 @@ input::read(app::PipeWirePlayer* p)
                         p->hSnd.seek(-app::def::step, SEEK_CUR);
                         p->term.update.time = true;
                         p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
-                        p->term.updateUI();
+                        p->term.drawUI();
                         c = getch();
                     }
                     timeout(1000);
@@ -251,6 +251,6 @@ input::read(app::PipeWirePlayer* p)
 
         p->term.update.time = true;
 
-        p->term.updateUI();
+        p->term.drawUI();
     }
 }

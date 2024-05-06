@@ -4,6 +4,8 @@
 #include "app.hh"
 #include "utils.hh"
 
+#include <cmath>
+
 namespace play
 {
 
@@ -37,6 +39,7 @@ onProcessCB(void* data)
 
     p->hSnd.readf(p->chunk, nFrames);
     int chunkPos = 0;
+    f32 vol = std::pow(p->volume, 1.5);
 
     for (int i = 0; i < nFrames; i++)
     {
@@ -49,7 +52,7 @@ onProcessCB(void* data)
             }
 
             /* modify each sample here */
-            f32 val = p->chunk[chunkPos] * SQ(p->volume);
+            f32 val = p->chunk[chunkPos] * vol;
 
             *dst++ = val;
 
@@ -68,12 +71,14 @@ onProcessCB(void* data)
 
     while (p->paused)
     {
+        /* FIXME: this blocks systems sound on device change */
         std::unique_lock lock(p->pauseMtx);
         p->pauseCnd.wait(lock);
     }
 
     if (p->next || p->prev || p->newSongSelected || p->finished)
     {
+        p->pw.mtx.unlock();
         pw_main_loop_quit(p->pw.loop);
         return;
     }

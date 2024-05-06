@@ -16,7 +16,7 @@ namespace app
 namespace def
 {
 
-constexpr f64 maxVolume = 1.3;
+constexpr f64 maxVolume = 1.2;
 constexpr f64 minVolume = 0.0;
 constexpr int step = 100000;
 constexpr int sampleRate = 48000;
@@ -31,7 +31,7 @@ struct PipeWireData
     enum spa_audio_format format = SPA_AUDIO_FORMAT_S16;
     u32 sampleRate = app::def::sampleRate;
     u32 channels = app::def::channels;
-    std::mutex mtx;
+    static std::mutex mtx;
 };
 
 struct PipeWirePlayer;
@@ -58,7 +58,7 @@ struct Curses
     } update;
     PipeWirePlayer* p {};
     WINDOW* pStd = stdscr;
-    WINDOW* plWin = nullptr;
+    WINDOW* pPlayList {};
     long selected = 0;
     long firstInList = 0;
     const long listYPos = 7;
@@ -66,14 +66,19 @@ struct Curses
     bool goUp = false;
     std::mutex mtx;
 
-    void updateUI();
+    Curses();
+    ~Curses() { endwin(); }
+
+    void drawUI();
+    void updateAll();
+    size_t maxListSize() const { return getmaxy(pStd) - listYPos; }
+
+private:
     void drawTime();
     void drawVolume();
     void drawSongCounter();
     void drawSongName();
     void drawPlaylist();
-    void updateAll();
-    size_t maxListSize() const { return getmaxy(pStd) - listYPos; }
 };
 
 struct PipeWirePlayer
@@ -85,10 +90,9 @@ struct PipeWirePlayer
     static f32 chunk[16384];
     long currSongIdx = 0;
     long currFoundIdx = 0;
-    f32* pPcm {};
     size_t pcmSize = 0;
     long pcmPos = 0;
-    f64 volume = 0.05;
+    f64 volume = 0.20;
     Curses term;
     bool paused = false;
     bool next = false;

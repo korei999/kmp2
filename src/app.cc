@@ -1,4 +1,5 @@
 #include "app.hh"
+#include "input.hh"
 #include "play.hh"
 #include "utils.hh"
 
@@ -22,10 +23,34 @@ static const pw_stream_events streamEvents {
     .process = play::onProcessCB /* attached playback function */
 };
 
+
+std::mutex PipeWireData::mtx;
 f32 PipeWirePlayer::chunk[16384] {};
 
+Curses::Curses()
+{
+    initscr();
+    start_color();
+    use_default_colors();
+    curs_set(0);
+    noecho();
+    cbreak();
+    timeout(1000);
+    keypad(stdscr, true);
+    refresh();
+
+    int td = (Curses::termdef);
+    init_pair(Curses::green, COLOR_GREEN, td);
+    init_pair(Curses::yellow, COLOR_YELLOW, td);
+    init_pair(Curses::blue, COLOR_BLUE, td);
+    init_pair(Curses::cyan, COLOR_CYAN, td);
+    init_pair(Curses::red, COLOR_RED, td);
+
+    pStd = stdscr;
+}
+
 void
-Curses::updateUI()
+Curses::drawUI()
 {
     /* ncurses is not thread safe */
     std::lock_guard lock(mtx);
@@ -161,8 +186,10 @@ Curses::updateAll()
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
 {
-    pw_init(&argc, &argv);
     term.p = this;
+
+    pw_init(&argc, &argv);
+
     term.firstInList = 0;
 
     for (int i = 1; i < argc; i++)
@@ -178,11 +205,23 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
             songs.push_back(std::move(s));
         }
     }
+
+    if (songs.empty())
+    {
+        finished = true;
+        return;
+    }
+
+    std::thread inputThread(input::read, this);
+    inputThread.detach();
 }
 
 PipeWirePlayer::~PipeWirePlayer()
 {
     pw_deinit();
+
+    if (songs.empty())
+        COUT("kmp: no input provided\n");
 }
 
 void
@@ -245,7 +284,7 @@ PipeWirePlayer::playCurrent()
     setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
     term.updateAll();
-    term.updateUI();
+    term.drawUI();
     pw_main_loop_run(pw.loop);
 
     /* in this order */
