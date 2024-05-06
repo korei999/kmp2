@@ -59,7 +59,17 @@ input::read(app::PipeWirePlayer* p)
             case 'l':
                 {
                     std::lock_guard lock(p->pw.mtx);
-                    p->hSnd.seek(app::def::step, SEEK_CUR);
+
+                    timeout(50);
+                    while (c == 'l')
+                    {
+                        p->hSnd.seek(app::def::step, SEEK_CUR);
+                        p->term.update.time = true;
+                        p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
+                        p->term.updateUI();
+                        c = getch();
+                    }
+                    timeout(1000);
                 }
                 break;
 
@@ -67,7 +77,17 @@ input::read(app::PipeWirePlayer* p)
             case 'h':
                 {
                     std::lock_guard lock(p->pw.mtx);
-                    p->hSnd.seek(-app::def::step, SEEK_CUR);
+
+                    timeout(50);
+                    while (c == 'h')
+                    {
+                        p->hSnd.seek(-app::def::step, SEEK_CUR);
+                        p->term.update.time = true;
+                        p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
+                        p->term.updateUI();
+                        c = getch();
+                    }
+                    timeout(1000);
                 }
                 break;
 

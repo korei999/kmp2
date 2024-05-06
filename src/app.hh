@@ -64,6 +64,7 @@ struct Curses
     const long listYPos = 7;
     bool goDown = false;
     bool goUp = false;
+    std::mutex mtx;
 
     void updateUI();
     void drawTime();

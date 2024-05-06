@@ -22,15 +22,13 @@ static const pw_stream_events streamEvents {
     .process = play::onProcessCB /* attached playback function */
 };
 
-static std::mutex cursesMtx;
-
 f32 PipeWirePlayer::chunk[16384] {};
 
 void
 Curses::updateUI()
 {
     /* ncurses is not thread safe */
-    std::lock_guard lock(cursesMtx);
+    std::lock_guard lock(mtx);
 
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
