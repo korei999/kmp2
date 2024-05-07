@@ -1,4 +1,4 @@
-![kmp](https://github.com/korei999/kmp2/assets/93387739/c0f52d2b-0e24-4610-8675-44a450484701)
+![kmp3](https://github.com/korei999/kmp2/assets/93387739/5ecc41fa-ce13-4a06-abd8-2863f0742168)
 
 Supports: wav, opus, ogg, mp3, flac.
 ### Usage:
