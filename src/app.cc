@@ -103,27 +103,36 @@ Curses::drawTime()
 void 
 Curses::drawVolume()
 {
-    auto volumeStr = std::format("volume: {:3.0f}%\n", 100*p->volume);
+    auto volumeStr = std::format("volume: {:3.0f}%\n", 100.0 * p->volume);
+    size_t seg = (p->volume / def::maxVolume) * std::size(volumeLevels);
+    constexpr s8 volumeColors[] {color::green, color::yellow, color::red};
+    size_t max = std::min(seg, std::size(volumeLevels));
+
+    auto calcColor = [&](int i) -> int {
+        /* normilize * max number (aka size(volumeColors) */
+        return (((f32)(i) / std::size(volumeLevels))) * std::size(volumeColors);
+    };
+
+    int strColOff = max - 3;
+    int strCol = calcColor(strColOff);
+    if (strCol < 0) strCol = 0;
 
     move(2, 0);
     clrtoeol();
-    attron(A_BOLD | COLOR_PAIR(green));
+    attron(A_BOLD | COLOR_PAIR(volumeColors[strCol]));
     mvaddstr(2, 1, volumeStr.data());
-    attroff(A_BOLD | COLOR_PAIR(green));
+    attroff(A_BOLD | COLOR_PAIR(volumeColors[strCol]));
 
-    size_t seg = (p->volume / def::maxVolume) * std::size(volumeLevels);
-
-    constexpr s8 volColors[] {color::green, color::yellow, color::red};
-    for (size_t i = 0; i < std::min(seg, std::size(volumeLevels)) + 1; i++)
+    for (size_t i = 0; i < max + 1; i++)
     {
         long off = i - 3;
         if (off < 0) off = 0;
 
-        int segCol = (((f32)(off) / std::size(volumeLevels))) * std::size(volColors);
+        int segCol = calcColor(off);
 
-        attron(COLOR_PAIR(volColors[segCol]));
+        attron(COLOR_PAIR(volumeColors[segCol]));
         mvaddwstr(2, i + 14, volumeLevels[i]);
-        attroff(COLOR_PAIR(volColors[segCol]));
+        attroff(COLOR_PAIR(volumeColors[segCol]));
     }
 
     move(3, 0);
