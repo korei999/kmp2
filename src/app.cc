@@ -47,6 +47,8 @@ Curses::Curses()
     init_pair(Curses::red, COLOR_RED, td);
 
     pStd = stdscr;
+
+    pPlayList = subwin(pStd, getmaxy(pStd) - listYPos - 1, getmaxx(pStd), listYPos, 0);
 }
 
 void
@@ -59,13 +61,23 @@ Curses::drawUI()
 
     if (maxy >= 5 && maxx >= 5)
     {
-        if (update.time)        { update.time     = false; drawTime(); }
-        if (update.volume)      { update.volume   = false; drawVolume(); }
-        if (update.songName)    { update.songName = false; drawSongName(); drawSongCounter(); }
-        if (update.playList)    { update.playList = false; drawPlaylist(); }
+        if (update.time)     { update.time     = false; drawTime(); }
+        if (update.volume)   { update.volume   = false; drawVolume(); }
+        if (update.songName) { update.songName = false; drawSongName(); drawSongCounter(); }
+        if (update.playList) { update.playList = false; drawPlaylist(); }
+
+        /* TODO: use bottom line for search */
+        move(maxy - 1, 0);
+        clrtoeol();
 
         refresh();
     }
+}
+
+void
+Curses::resizePlayListWindow()
+{
+    wresize(pPlayList, getmaxy(pStd) - listYPos - 1, getmaxx(pStd));
 }
 
 void
@@ -134,47 +146,44 @@ Curses::drawSongName()
 void
 Curses::drawPlaylist()
 {
-    long maxy = getmaxy(pStd);
+    long maxy = getmaxy(pPlayList);
 
-    long cursesY = listYPos;
+    long startFromY = 1; /* offset from border */
     long sel = p->term.selected;
 
-    if ((p->songs.size() - 1) - firstInList < maxListSize())
-        firstInList = (p->songs.size() - 1) - (maxListSize() - 1);
-    if (p->songs.size() < maxListSize())
+    if ((long)(p->songs.size() - 1) - firstInList < maxy)
+        firstInList = (p->songs.size() - 1) - (maxy - 2);
+    if ((long)p->songs.size() < maxy)
         firstInList = 0;
     if (firstInList < 0)
         firstInList = 0;
 
-    long lastInList = firstInList + maxy - cursesY;
+    long listSizeBound = firstInList + (maxy - 2); /* - 2*borders */
 
-    if (selected > lastInList - 1)
-        firstInList = selected - (maxListSize() - 1);
+    if (selected > listSizeBound - 1)
+        firstInList = selected - (maxy - 3); /* -3 == (2*borders - 1) */
     else if (selected < firstInList)
         firstInList = selected;
 
-    for (long i = firstInList; i < (long)p->songs.size() && cursesY < maxy; i++, cursesY++)
+    for (long i = firstInList; i < (long)p->songs.size() && startFromY < maxy - 1; i++, startFromY++)
     {
         auto lineStr = utils::removePath(std::format("{}", p->songs[i].data()));
         limitStringToMaxX(&lineStr);
 
         if (i == sel)
-            attron(A_REVERSE);
+            wattron(pPlayList, A_REVERSE);
         if (i == p->currSongIdx)
-            attron(A_BOLD | COLOR_PAIR(app::Curses::yellow));
+            wattron(pPlayList, A_BOLD | COLOR_PAIR(app::Curses::yellow));
 
-        move(cursesY, 0);
-        clrtoeol();
-        addstr(lineStr.data());
+        wmove(pPlayList, startFromY, getbegx(pPlayList) + 1);
+        wclrtoeol(pPlayList);
+        waddstr(pPlayList, lineStr.data());
 
-        attroff(A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
+        wattroff(pPlayList, A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
     }
-}
 
-void
-Curses::updateAll()
-{
-    update.ui = update.time = update.volume = update.songName = update.playList = true;
+    box(pPlayList, 0, 0);
+    touchwin(pStd);
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
@@ -227,15 +236,13 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
     pw.loop = pw_main_loop_new(nullptr);
 
     pw.stream = pw_stream_new_simple(pw_main_loop_get_loop(pw.loop),
-                                         "kmpSource",
-                                         pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
-                                                           PW_KEY_MEDIA_CATEGORY, "Playback",
-                                                           PW_KEY_MEDIA_ROLE, "Music",
-                                                           PW_KEY_STREAM_LATENCY_MIN, "20000",
-                                                           PW_KEY_STREAM_LATENCY_MAX, "40000",
-                                                           nullptr),
-                                         &streamEvents,
-                                         this);
+                                     "kmpMusicPlayback",
+                                     pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
+                                                       PW_KEY_MEDIA_CATEGORY, "Playback",
+                                                       PW_KEY_MEDIA_ROLE, "Music",
+                                                       nullptr),
+                                     &streamEvents,
+                                     this);
 
 
     spa_audio_info_raw info {
@@ -344,7 +351,7 @@ PipeWirePlayer::jumpToFound(enum search::dir direction)
 
         auto newSel = foundIndices[currFoundIdx];
 
-        if (newSel > term.firstInList + ((long)term.maxListSize() - 1))
+        if (newSel > term.firstInList + ((long)term.getMaxY() - 1))
             term.firstInList = newSel;
         else if (newSel < term.firstInList)
             term.firstInList = newSel;

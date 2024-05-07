@@ -3,10 +3,11 @@
 #include "ultratypes.h"
 
 #include <condition_variable>
-#include <ncurses.h>
 #include <pipewire/pipewire.h>
 #include <sndfile.hh>
+#include <ncurses.h>
 #include <spa/param/audio/format-utils.h>
+
 
 namespace app
 {
@@ -61,7 +62,7 @@ struct Curses
     WINDOW* pPlayList {};
     long selected = 0;
     long firstInList = 0;
-    const long listYPos = 7;
+    const long listYPos = 6;
     bool goDown = false;
     bool goUp = false;
     std::mutex mtx;
@@ -70,8 +71,9 @@ struct Curses
     ~Curses() { endwin(); }
 
     void drawUI();
-    void updateAll();
-    size_t maxListSize() const { return getmaxy(pStd) - listYPos; }
+    void updateAll() { update.ui = update.time = update.volume = update.songName = update.playList = true; }
+    size_t getMaxY() const { return getmaxy(pPlayList); }
+    void resizePlayListWindow();
 
 private:
     void drawTime();
