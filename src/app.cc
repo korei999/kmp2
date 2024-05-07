@@ -110,15 +110,23 @@ Curses::drawVolume()
     attron(A_BOLD | COLOR_PAIR(green));
     mvaddstr(2, 1, volumeStr.data());
     attroff(A_BOLD | COLOR_PAIR(green));
-    size_t seg = ((100*p->volume) / std::size(volumeLevels)) / 2;
+    size_t seg = ((std::size(volumeLevels) + 1) * (1.0 - (def::maxVolume - 1.0))) * p->volume;
 
     constexpr s8 volColors[] {color::green, color::yellow, color::red};
-    for (size_t i = 0; i < std::min(seg, std::size(volumeLevels)) + 1; i++)
+    size_t max = std::min(seg, std::size(volumeLevels)) + 1;
+    for (size_t i = 0; i < max; i++)
     {
-        attron(COLOR_PAIR(volColors[ i / std::size(volColors) ]));
+        auto segCol = std::clamp((int)(((f64)(i) / std::size(volumeLevels))*std::size(volColors)),
+                                 0,
+                                 (int)std::size(volColors));
+
+        attron(COLOR_PAIR(volColors[segCol]));
         mvaddwstr(2, i + 14, volumeLevels[i]);
-        attroff(COLOR_PAIR(volColors[ i / std::size(volColors)] ));
+        attroff(COLOR_PAIR(volColors[segCol]));
     }
+    CERR("\n");
+
+
     move(3, 0);
     clrtoeol();
 }
