@@ -154,12 +154,16 @@ input::read(app::PipeWirePlayer* p)
             case 46:
             case '/':
                 p->subStringSearch(search::dir::forward);
+                if (!p->foundIndices.empty())
+                    p->term.selected = p->currFoundIdx;
                 p->term.update.bPlayList = true;
                 break;
 
             case 44:
             case '?':
                 p->subStringSearch(search::dir::backwards);
+                if (!p->foundIndices.empty())
+                    p->term.selected = p->currFoundIdx;
                 p->term.update.bPlayList = true;
                 break;
 

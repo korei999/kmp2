@@ -121,7 +121,7 @@ struct PipeWirePlayer
 inline void
 limitStringToMaxX(std::string* str)
 {
-    /* FIXME: it's probably safe to remove since wrapped lines get overritten anyway */
+    /* TODO: find proper way to resize non asciis */
     // str->resize(getmaxx(stdscr));
 }
 
