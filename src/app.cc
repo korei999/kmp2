@@ -95,7 +95,7 @@ Curses::drawTime()
 
     move(0, 0);
     clrtoeol();
-    addstr(timeStr.data());
+    mvaddstr(0, 1, timeStr.data());
 }
 
 void 
@@ -105,7 +105,7 @@ Curses::drawVolume()
 
     move(2, 0);
     attron(A_BOLD | COLOR_PAIR(green));
-    addstr(volumeStr.data());
+    mvaddstr(2, 1, volumeStr.data());
     attroff(A_BOLD | COLOR_PAIR(green));
 }
 
@@ -118,7 +118,7 @@ Curses::drawSongCounter()
     move(4, 0);
     clrtoeol();
     attron(A_ITALIC);
-    addstr(songCounterStr.data());
+    mvaddstr(4, 1, songCounterStr.data());
     attroff(A_ITALIC);
 }
 
@@ -131,7 +131,7 @@ Curses::drawSongName()
     move(5, 0);
     clrtoeol();
     attron(A_BOLD | A_ITALIC | COLOR_PAIR(yellow));
-    addstr(songNameStr.data());
+    mvaddstr(5, 1, songNameStr.data());
     attroff(A_BOLD | A_ITALIC | COLOR_PAIR(yellow));
 }
 
