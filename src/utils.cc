@@ -87,10 +87,4 @@ replaceFileSuffixInPath(std::string_view path, std::string* suffix)
     return {pathToMtl + "/" + (*suffix)};
 }
 
-std::string
-removePath(std::string_view str)
-{
-    return std::string(str.substr(str.find_last_of("/") + 1, str.size()));
-}
-
 } /* namespace utils */

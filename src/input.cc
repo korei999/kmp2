@@ -157,6 +157,7 @@ input::read(app::PipeWirePlayer* p)
                 if (!p->foundIndices.empty())
                     p->term.selected = p->foundIndices[p->currFoundIdx];
                 p->term.update.bPlayList = true;
+                p->term.update.bBottomLine = true;
                 break;
 
             case 44:
@@ -165,16 +166,19 @@ input::read(app::PipeWirePlayer* p)
                 if (!p->foundIndices.empty())
                     p->term.selected = p->foundIndices[p->currFoundIdx];
                 p->term.update.bPlayList = true;
+                p->term.update.bBottomLine = true;
                 break;
 
             case 'n':
                 p->jumpToFound(search::dir::forward);
                 p->term.update.bPlayList = true;
+                p->term.update.bBottomLine = true;
                 break;
 
             case 'N':
                 p->jumpToFound(search::dir::backwards);
                 p->term.update.bPlayList = true;
+                p->term.update.bBottomLine = true;
                 break;
 
             case 'r':
@@ -198,6 +202,10 @@ input::read(app::PipeWirePlayer* p)
                 p->term.selected = p->currSongIdx;
                 p->term.firstInList = (p->term.selected - (p->term.playListMaxY() - 3) / 2);
                 p->term.update.bPlayList = true;
+                break;
+
+            case '`':
+            case 39:
                 break;
 
             case KEY_RESIZE:

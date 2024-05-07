@@ -42,7 +42,7 @@ struct Curses
 {
     enum color : short
     {
-        termdef = -1, /* -1 should preserve terminal default color due to use_default_colors() */
+        termdef = -1, /* -1 should preserve terminal default color when use_default_colors() */
         green = 1,
         yellow,
         blue,
@@ -50,12 +50,14 @@ struct Curses
         red
     };
 
+    /* mark which to update on drawUI */
     struct
     {
         bool bTime = true;
         bool bVolume = true;
         bool bSongName = true;
         bool bPlayList = true;
+        bool bBottomLine = true;
     } update;
     PipeWirePlayer* p {};
     WINDOW* pPlayList {};
@@ -68,24 +70,30 @@ struct Curses
     ~Curses() { endwin(); }
 
     void drawUI();
-    void updateAll() { update.bTime = update.bVolume = update.bSongName = update.bPlayList = true; }
+    void updateAll() { update.bTime = update.bVolume = update.bSongName = update.bPlayList = update.bBottomLine = true; }
     size_t playListMaxY() const { return getmaxy(pPlayList); }
     void resizePlayListWindow();
 
 private:
     void drawTime();
     void drawVolume();
-    void drawSongCounter();
-    void drawSongName();
-    void drawPlaylist();
+    void drawPlayListCounter();
+    void drawTitle();
+    void drawPlayList();
     void drawBorder();
     void drawBottomLine();
+};
+
+struct SongInfo
+{
+    std::string title;
 };
 
 struct PipeWirePlayer
 {
     PipeWireData pw {};
     SndfileHandle hSnd {};
+    SongInfo info {};
     std::vector<std::string> songs {};
     std::vector<int> foundIndices {};
     std::wstring searchingNow {};
@@ -116,12 +124,5 @@ struct PipeWirePlayer
     void subStringSearch(enum search::dir direction);
     void jumpToFound(enum search::dir direction);
 };
-
-// inline void
-// limitStringToMaxX(std::string* str)
-// {
-    // /* TODO: find proper way to resize non asciis */
-    // // str->resize(getmaxx(stdscr));
-// }
 
 } /* namespace app */

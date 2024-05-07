@@ -25,7 +25,6 @@ int rngGet(int min, int max);
 int rngGet();
 f32 rngGet(f32 min, f32 max);
 std::string replaceFileSuffixInPath(std::string_view str, std::string* suffix);
-std::string removePath(std::string_view str);
 
 const std::string_view severityStr[(int)sev::fatal + 1] {
     "",
@@ -84,6 +83,12 @@ hashFNV(std::string_view str)
     for (u64 i = 0; i < (u64)str.size(); i++)
         hash = (hash ^ (u64)str[i]) * 0x100000001B3;
     return hash;
+}
+
+constexpr std::string
+removePath(std::string_view str)
+{
+    return std::string(str.substr(str.find_last_of("/") + 1, str.size()));
 }
 
 } /* namespace utils */
