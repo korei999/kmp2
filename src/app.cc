@@ -45,6 +45,7 @@ Curses::Curses()
     init_pair(Curses::blue, COLOR_BLUE, td);
     init_pair(Curses::cyan, COLOR_CYAN, td);
     init_pair(Curses::red, COLOR_RED, td);
+    init_pair(Curses::white, COLOR_WHITE, td);
 
     pPlayList = subwin(stdscr, getmaxy(stdscr) - listYPos - 1, getmaxx(stdscr), listYPos, 0);
 }
@@ -102,13 +103,22 @@ Curses::drawTime()
 void 
 Curses::drawVolume()
 {
-    auto volumeStr = std::format("volume: {:3.0f}%\n", 100 * p->volume);
+    auto volumeStr = std::format("volume: {:3.0f}%\n", 100*p->volume);
 
     move(2, 0);
     clrtoeol();
     attron(A_BOLD | COLOR_PAIR(green));
     mvaddstr(2, 1, volumeStr.data());
     attroff(A_BOLD | COLOR_PAIR(green));
+    size_t seg = ((100*p->volume) / std::size(volumeLevels)) / 2;
+
+    constexpr s8 volColors[] {color::green, color::yellow, color::red};
+    for (size_t i = 0; i < std::min(seg, std::size(volumeLevels)) + 1; i++)
+    {
+        attron(COLOR_PAIR(volColors[ i / std::size(volColors) ]));
+        mvaddwstr(2, i + 14, volumeLevels[i]);
+        attroff(COLOR_PAIR(volColors[ i / std::size(volColors)] ));
+    }
     move(3, 0);
     clrtoeol();
 }
@@ -285,7 +295,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
                       (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT |
                                              PW_STREAM_FLAG_MAP_BUFFERS |
                                              PW_STREAM_FLAG_ASYNC),
-                      params, LEN(params));
+                      params, std::size(params));
 }
 
 void
@@ -368,7 +378,7 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
     noecho();
     timeout(1000);
 
-    if (wcsnlen((wchar_t*)wb, LEN(wb)) > 0)
+    if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
         searchingNow = (wchar_t*)wb;
 
     if (!searchingNow.empty())

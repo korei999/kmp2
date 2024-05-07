@@ -8,7 +8,6 @@
 #include <ncurses.h>
 #include <spa/param/audio/format-utils.h>
 
-
 namespace app
 {
 
@@ -17,13 +16,17 @@ namespace app
 namespace def
 {
 
-constexpr f64 maxVolume = 1.2;
+constexpr f64 maxVolume = 1.3;
 constexpr f64 minVolume = 0.0;
 constexpr int step = 100000;
 constexpr int sampleRate = 48000;
 constexpr int channels = 2;
 constexpr f64 volume = 0.15;
 
+};
+
+constexpr wchar_t volumeLevels[9][2] {
+    L" ", L"▁", L"▂", L"▃", L"▄", L"▅", L"▆", L"▇", L"█"
 };
 
 struct PipeWireData
@@ -43,7 +46,8 @@ struct Curses
     enum color : short
     {
         termdef = -1, /* -1 should preserve terminal default color when use_default_colors() */
-        green = 1,
+        white = 1,
+        green,
         yellow,
         blue,
         cyan,
