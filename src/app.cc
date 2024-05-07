@@ -118,7 +118,7 @@ Curses::drawVolume()
     {
         auto segCol = std::clamp((int)(((f64)(i-2) / std::size(volumeLevels))*std::size(volColors)),
                                  0,
-                                 (int)std::size(volColors));
+                                 (int)std::size(volColors) - 1);
 
         attron(COLOR_PAIR(volColors[segCol]));
         mvaddwstr(2, i + 14, volumeLevels[i]);
