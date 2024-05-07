@@ -110,7 +110,8 @@ Curses::drawVolume()
     attron(A_BOLD | COLOR_PAIR(green));
     mvaddstr(2, 1, volumeStr.data());
     attroff(A_BOLD | COLOR_PAIR(green));
-    size_t seg = ((std::size(volumeLevels) + 1) * (1.0 - (def::maxVolume - 1.0))) * p->volume;
+
+    size_t seg = (p->volume / def::maxVolume) * std::size(volumeLevels);
 
     constexpr s8 volColors[] {color::green, color::yellow, color::red};
     for (size_t i = 0; i < std::min(seg, std::size(volumeLevels)) + 1; i++)
