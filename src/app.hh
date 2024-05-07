@@ -16,7 +16,7 @@ namespace app
 namespace def
 {
 
-constexpr f64 maxVolume = 1.3;
+constexpr f64 maxVolume = 1.2;
 constexpr f64 minVolume = 0.0;
 constexpr int step = 100000;
 constexpr int sampleRate = 48000;
