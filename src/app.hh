@@ -82,6 +82,7 @@ private:
     void drawSongCounter();
     void drawSongName();
     void drawPlaylist();
+    void drawFancyBorder();
 };
 
 struct PipeWirePlayer

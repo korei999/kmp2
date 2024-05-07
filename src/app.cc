@@ -182,8 +182,23 @@ Curses::drawPlaylist()
         wattroff(pPlayList, A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
     }
 
-    box(pPlayList, 0, 0);
+    drawFancyBorder();
     touchwin(pStd);
+}
+
+void
+Curses::drawFancyBorder()
+{
+    cchar_t ls, rs, ts, bs, tl, tr, bl, br;
+    setcchar(&ls, L"│", 0, color::blue, nullptr);
+    setcchar(&rs, L"│", 0, color::blue, nullptr);
+    setcchar(&ts, L"─", 0, color::blue, nullptr);
+    setcchar(&bs, L"─", 0, color::blue, nullptr);
+    setcchar(&tl, L"╭", 0, color::blue, nullptr);
+    setcchar(&tr, L"╮", 0, color::blue, nullptr);
+    setcchar(&bl, L"╰", 0, color::blue, nullptr);
+    setcchar(&br, L"╯", 0, color::blue, nullptr);
+    wborder_set(pPlayList, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
