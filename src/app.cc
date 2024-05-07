@@ -408,14 +408,7 @@ PipeWirePlayer::jumpToFound(enum search::dir direction)
         else if (currFoundIdx < 0)
             currFoundIdx = foundIndices.size() - 1;
 
-        auto newSel = foundIndices[currFoundIdx];
-
-        if (newSel > term.firstInList + ((long)term.playListMaxY() - 1))
-            term.firstInList = newSel;
-        else if (newSel < term.firstInList)
-            term.firstInList = newSel;
-
-        term.selected = newSel;
+        term.selected = foundIndices[currFoundIdx];
     }
 }
 
