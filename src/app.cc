@@ -116,7 +116,7 @@ Curses::drawVolume()
     size_t max = std::min(seg, std::size(volumeLevels)) + 1;
     for (size_t i = 0; i < max; i++)
     {
-        auto segCol = std::clamp((int)(((f64)(i-2) / std::size(volumeLevels))*std::size(volColors)),
+        auto segCol = std::clamp((int)(((f32)(i-2) / std::size(volumeLevels))*std::size(volColors)),
                                  0,
                                  (int)std::size(volColors) - 1);
 
@@ -124,8 +124,6 @@ Curses::drawVolume()
         mvaddwstr(2, i + 14, volumeLevels[i]);
         attroff(COLOR_PAIR(volColors[segCol]));
     }
-    CERR("\n");
-
 
     move(3, 0);
     clrtoeol();
