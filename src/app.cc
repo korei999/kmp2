@@ -113,14 +113,12 @@ Curses::drawVolume()
     size_t seg = ((std::size(volumeLevels) + 1) * (1.0 - (def::maxVolume - 1.0))) * p->volume;
 
     constexpr s8 volColors[] {color::green, color::yellow, color::red};
-    size_t max = std::min(seg, std::size(volumeLevels)) + 1;
-    for (size_t i = 0; i < max; i++)
+    for (size_t i = 0; i < std::min(seg, std::size(volumeLevels)) + 1; i++)
     {
         long off = i - 3;
         if (off < 0) off = 0;
 
-        auto segCol = (int)(((f32)(off) / std::size(volumeLevels))*std::size(volColors));
-        if (segCol >= (int)std::size(volColors)) segCol = std::size(volColors) - 1;
+        int segCol = (((f32)(off) / std::size(volumeLevels))) * std::size(volColors);
 
         attron(COLOR_PAIR(volColors[segCol]));
         mvaddwstr(2, i + 14, volumeLevels[i]);
