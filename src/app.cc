@@ -46,9 +46,9 @@ Curses::Curses()
     init_pair(Curses::cyan, COLOR_CYAN, td);
     init_pair(Curses::red, COLOR_RED, td);
 
-    pStd = stdscr;
+    // stdscr = stdscr;
 
-    pPlayList = subwin(pStd, getmaxy(pStd) - listYPos - 1, getmaxx(pStd), listYPos, 0);
+    pPlayList = subwin(stdscr, getmaxy(stdscr) - listYPos - 1, getmaxx(stdscr), listYPos, 0);
 }
 
 void
@@ -57,7 +57,7 @@ Curses::drawUI()
     /* ncurses is not thread safe */
     std::lock_guard lock(mtx);
 
-    int maxy = getmaxy(pStd), maxx = getmaxx(pStd);
+    int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
     if (maxy >= 5 && maxx >= 5)
     {
@@ -73,7 +73,7 @@ Curses::drawUI()
 void
 Curses::resizePlayListWindow()
 {
-    wresize(pPlayList, getmaxy(pStd) - listYPos - 1, getmaxx(pStd));
+    pPlayList = subwin(stdscr, getmaxy(stdscr) - listYPos - 1, getmaxx(stdscr), listYPos, 0);
 }
 
 void
@@ -92,7 +92,6 @@ Curses::drawTime()
 
     auto timeStr = std::format("{}:{:02d} / {}:{:02d} min", m, frac, mMax, fracMax);
     if (p->bPaused) { timeStr = "(paused) " + timeStr; }
-    limitStringToMaxX(&timeStr);
 
     move(0, 0);
     clrtoeol();
@@ -103,7 +102,6 @@ void
 Curses::drawVolume()
 {
     auto volumeStr = std::format("volume: {:.2f}\n", p->volume);
-    limitStringToMaxX(&volumeStr);
 
     move(2, 0);
     attron(A_BOLD | COLOR_PAIR(green));
@@ -116,7 +114,6 @@ Curses::drawSongCounter()
 {
     auto songCounterStr = std::format("{} / {}", p->currSongIdx + 1, p->songs.size());
     if (p->bRepeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
-    limitStringToMaxX(&songCounterStr);
 
     move(4, 0);
     clrtoeol();
@@ -130,7 +127,6 @@ Curses::drawSongName()
 {
     auto songNameStr = std::format("{}", p->currSongName());
     songNameStr = "playing: " + utils::removePath(songNameStr);
-    limitStringToMaxX(&songNameStr);
 
     move(5, 0);
     clrtoeol();
@@ -164,7 +160,6 @@ Curses::drawPlaylist()
     for (long i = firstInList; i < (long)p->songs.size() && startFromY < maxy - 1; i++, startFromY++)
     {
         auto lineStr = utils::removePath(std::format("{}", p->songs[i].data()));
-        limitStringToMaxX(&lineStr);
 
         if (i == sel)
             wattron(pPlayList, A_REVERSE);
@@ -178,16 +173,16 @@ Curses::drawPlaylist()
         wattroff(pPlayList, A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
     }
 
-    drawFancyBorder();
-    touchwin(pStd);
+    drawBorder();
+    touchwin(stdscr);
 }
 
 void
 Curses::drawBottomLine()
 {
-    move(getmaxy(pStd) - 1, 0);
+    move(getmaxy(stdscr) - 1, 0);
     clrtoeol();
-    move(getmaxy(pStd) - 1, 1);
+    move(getmaxy(stdscr) - 1, 1);
     if (!p->searchingNow.empty() && !p->foundIndices.empty())
     {
         auto ss = std::format(" [{}/{}]", p->currFoundIdx + 1, p->foundIndices.size());
@@ -197,7 +192,7 @@ Curses::drawBottomLine()
 }
 
 void
-Curses::drawFancyBorder()
+Curses::drawBorder()
 {
     cchar_t ls, rs, ts, bs, tl, tr, bl, br;
     setcchar(&ls, L"┃", 0, color::blue, nullptr);
@@ -355,7 +350,7 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
     wint_t wb[30] {};
     timeout(5000);
     echo();
-    move(getmaxy(term.pStd) - 1, 0);
+    move(getmaxy(stdscr) - 1, 0);
     clrtoeol();
     addch(firstChar);
 
@@ -388,7 +383,7 @@ PipeWirePlayer::jumpToFound(enum search::dir direction)
 
         auto newSel = foundIndices[currFoundIdx];
 
-        if (newSel > term.firstInList + ((long)term.getMaxY() - 1))
+        if (newSel > term.firstInList + ((long)term.playListMaxY() - 1))
             term.firstInList = newSel;
         else if (newSel < term.firstInList)
             term.firstInList = newSel;

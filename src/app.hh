@@ -58,7 +58,6 @@ struct Curses
         bool bPlayList = true;
     } update;
     PipeWirePlayer* p {};
-    WINDOW* pStd = stdscr;
     WINDOW* pPlayList {};
     long selected = 0;
     long firstInList = 0;
@@ -70,7 +69,7 @@ struct Curses
 
     void drawUI();
     void updateAll() { update.bTime = update.bVolume = update.bSongName = update.bPlayList = true; }
-    size_t getMaxY() const { return getmaxy(pPlayList); }
+    size_t playListMaxY() const { return getmaxy(pPlayList); }
     void resizePlayListWindow();
 
 private:
@@ -79,7 +78,7 @@ private:
     void drawSongCounter();
     void drawSongName();
     void drawPlaylist();
-    void drawFancyBorder();
+    void drawBorder();
     void drawBottomLine();
 };
 
@@ -118,11 +117,11 @@ struct PipeWirePlayer
     void jumpToFound(enum search::dir direction);
 };
 
-inline void
-limitStringToMaxX(std::string* str)
-{
-    /* TODO: find proper way to resize non asciis */
-    // str->resize(getmaxx(stdscr));
-}
+// inline void
+// limitStringToMaxX(std::string* str)
+// {
+    // /* TODO: find proper way to resize non asciis */
+    // // str->resize(getmaxx(stdscr));
+// }
 
 } /* namespace app */

@@ -196,7 +196,7 @@ input::read(app::PipeWirePlayer* p)
                 
             case 'z':
                 p->term.selected = p->currSongIdx;
-                p->term.firstInList = (p->term.selected - (p->term.getMaxY() - 3) / 2);
+                p->term.firstInList = (p->term.selected - (p->term.playListMaxY() - 3) / 2);
                 p->term.update.bPlayList = true;
                 break;
 
@@ -204,7 +204,7 @@ input::read(app::PipeWirePlayer* p)
             case 12: /* C-l */
                 p->term.resizePlayListWindow();
                 p->term.updateAll();
-                redrawwin(p->term.pStd);
+                redrawwin(stdscr);
                 break;
 
             case -1:
