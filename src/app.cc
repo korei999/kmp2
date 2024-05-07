@@ -61,14 +61,10 @@ Curses::drawUI()
 
     if (maxy >= 5 && maxx >= 5)
     {
-        if (update.time)     { update.time     = false; drawTime(); }
-        if (update.volume)   { update.volume   = false; drawVolume(); }
-        if (update.songName) { update.songName = false; drawSongName(); drawSongCounter(); }
-        if (update.playList) { update.playList = false; drawPlaylist(); }
-
-        /* TODO: use bottom line for search */
-        move(maxy - 1, 0);
-        clrtoeol();
+        if (update.bTime)     { update.bTime     = false; drawTime(); }
+        if (update.bVolume)   { update.bVolume   = false; drawVolume(); }
+        if (update.bSongName) { update.bSongName = false; drawSongName(); drawSongCounter(); }
+        if (update.bPlayList) { update.bPlayList = false; drawPlaylist(); drawBottomLine(); }
 
         refresh();
     }
@@ -95,7 +91,7 @@ Curses::drawTime()
     u64 fracMax = 60 * (mFMax - mMax);
 
     auto timeStr = std::format("{}:{:02d} / {}:{:02d} min", m, frac, mMax, fracMax);
-    if (p->paused) { timeStr = "(paused) " + timeStr; }
+    if (p->bPaused) { timeStr = "(paused) " + timeStr; }
     limitStringToMaxX(&timeStr);
 
     move(0, 0);
@@ -119,7 +115,7 @@ void
 Curses::drawSongCounter()
 {
     auto songCounterStr = std::format("{} / {}", p->currSongIdx + 1, p->songs.size());
-    if (p->repeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
+    if (p->bRepeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
     limitStringToMaxX(&songCounterStr);
 
     move(4, 0);
@@ -187,17 +183,31 @@ Curses::drawPlaylist()
 }
 
 void
+Curses::drawBottomLine()
+{
+    move(getmaxy(pStd) - 1, 0);
+    clrtoeol();
+    move(getmaxy(pStd) - 1, 1);
+    if (!p->searchingNow.empty())
+    {
+        auto ss = std::format(" [{}/{}]", p->currFoundIdx, p->foundIndices.size());
+        auto s = L"'" + p->searchingNow + L"'" + std::wstring(ss.begin(), ss.end());
+        addwstr(s.data());
+    }
+}
+
+void
 Curses::drawFancyBorder()
 {
     cchar_t ls, rs, ts, bs, tl, tr, bl, br;
-    setcchar(&ls, L"│", 0, color::blue, nullptr);
-    setcchar(&rs, L"│", 0, color::blue, nullptr);
-    setcchar(&ts, L"─", 0, color::blue, nullptr);
-    setcchar(&bs, L"─", 0, color::blue, nullptr);
-    setcchar(&tl, L"╭", 0, color::blue, nullptr);
-    setcchar(&tr, L"╮", 0, color::blue, nullptr);
-    setcchar(&bl, L"╰", 0, color::blue, nullptr);
-    setcchar(&br, L"╯", 0, color::blue, nullptr);
+    setcchar(&ls, L"┃", 0, color::blue, nullptr);
+    setcchar(&rs, L"┃", 0, color::blue, nullptr);
+    setcchar(&ts, L"━", 0, color::blue, nullptr);
+    setcchar(&bs, L"━", 0, color::blue, nullptr);
+    setcchar(&tl, L"┏", 0, color::blue, nullptr);
+    setcchar(&tr, L"┓", 0, color::blue, nullptr);
+    setcchar(&bl, L"┗", 0, color::blue, nullptr);
+    setcchar(&br, L"┛", 0, color::blue, nullptr);
     wborder_set(pPlayList, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
 }
 
@@ -225,7 +235,7 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
 
     if (songs.empty())
     {
-        finished = true;
+        bFinished = true;
         return;
     }
 
@@ -280,7 +290,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 void
 PipeWirePlayer::playAll()
 {
-    while (!finished)
+    while (!bFinished)
         playCurrent();
 }
 
@@ -306,21 +316,21 @@ PipeWirePlayer::playCurrent()
     pw_stream_destroy(pw.stream);
     pw_main_loop_destroy(pw.loop);
 
-    if (newSongSelected)
+    if (bNewSongSelected)
     {
-        newSongSelected = false;
+        bNewSongSelected = false;
         currSongIdx = term.selected;
     }
-    else if (next)
+    else if (bNext)
     {
-        next = false;
+        bNext = false;
         currSongIdx++;
         if (currSongIdx > (long)songs.size() - 1)
             currSongIdx = 0;
     }
-    else if (prev)
+    else if (bPrev)
     {
-        prev = false;
+        bPrev = false;
         currSongIdx--;
         if (currSongIdx < 0)
             currSongIdx = songs.size() - 1;
@@ -330,23 +340,35 @@ PipeWirePlayer::playCurrent()
 
     if (currSongIdx > (long)songs.size() - 1)
     {
-        if (repeatAfterLast)
+        if (bRepeatAfterLast)
             currSongIdx = 0;
         else
-            finished = true;
+            bFinished = true;
     }
 }
 
 void
 PipeWirePlayer::subStringSearch(enum search::dir direction)
 {
-    char buff[25] {};
-    getnstr(buff, LEN(buff) - 1);
-    std::string s {buff};
+    char firstChar = direction == search::dir::forward ? '/' : '?';
 
-    if (!s.empty())
+    wint_t wb[30] {};
+    timeout(5000);
+    echo();
+    move(getmaxy(term.pStd) - 1, 0);
+    clrtoeol();
+    addch(firstChar);
+
+    getn_wstr(wb, 30);
+    noecho();
+    timeout(1000);
+
+    if (wcsnlen((wchar_t*)wb, LEN(wb)) > 0)
+        searchingNow = (wchar_t*)wb;
+
+    if (!searchingNow.empty())
     {
-        foundIndices = search::getIndexList(songs, buff, direction);
+        foundIndices = search::getIndexList(songs, searchingNow, direction);
         currFoundIdx = 0;
     }
 }

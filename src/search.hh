@@ -12,6 +12,6 @@ enum class dir : int
     backwards
 };
 
-std::vector<int> getIndexList(const std::vector<std::string>& a, std::string_view key, enum dir direction);
+std::vector<int> getIndexList(const std::vector<std::string>& a, std::wstring_view key, enum dir direction);
 
 } /* namespace search */

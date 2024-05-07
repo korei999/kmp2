@@ -52,11 +52,10 @@ struct Curses
 
     struct
     {
-        bool ui = true;
-        bool time = true;
-        bool volume = true;
-        bool songName = true;
-        bool playList = true;
+        bool bTime = true;
+        bool bVolume = true;
+        bool bSongName = true;
+        bool bPlayList = true;
     } update;
     PipeWirePlayer* p {};
     WINDOW* pStd = stdscr;
@@ -64,15 +63,13 @@ struct Curses
     long selected = 0;
     long firstInList = 0;
     const long listYPos = 6;
-    bool goDown = false;
-    bool goUp = false;
     std::mutex mtx;
 
     Curses();
     ~Curses() { endwin(); }
 
     void drawUI();
-    void updateAll() { update.ui = update.time = update.volume = update.songName = update.playList = true; }
+    void updateAll() { update.bTime = update.bVolume = update.bSongName = update.bPlayList = true; }
     size_t getMaxY() const { return getmaxy(pPlayList); }
     void resizePlayListWindow();
 
@@ -83,6 +80,7 @@ private:
     void drawSongName();
     void drawPlaylist();
     void drawFancyBorder();
+    void drawBottomLine();
 };
 
 struct PipeWirePlayer
@@ -91,6 +89,7 @@ struct PipeWirePlayer
     SndfileHandle hSnd {};
     std::vector<std::string> songs {};
     std::vector<int> foundIndices {};
+    std::wstring searchingNow {};
     static f32 chunk[16384];
     long currSongIdx = 0;
     long currFoundIdx = 0;
@@ -98,13 +97,13 @@ struct PipeWirePlayer
     long pcmPos = 0;
     f64 volume = def::volume;
     Curses term;
-    bool paused = false;
-    bool next = false;
-    bool prev = false;
-    bool newSongSelected = false;
-    bool repeatAfterLast = false;
-    bool wrapSelection = true;
-    bool finished = false;
+    bool bPaused = false;
+    bool bNext = false;
+    bool bPrev = false;
+    bool bNewSongSelected = false;
+    bool bRepeatAfterLast = false;
+    bool bWrapSelection = true;
+    bool bFinished = false;
     std::mutex pauseMtx;
     std::condition_variable pauseCnd;
 
@@ -122,7 +121,8 @@ struct PipeWirePlayer
 inline void
 limitStringToMaxX(std::string* str)
 {
-    str->resize(getmaxx(stdscr));
+    /* FIXME: it's probably safe to remove since wrapped lines get overritten anyway */
+    // str->resize(getmaxx(stdscr));
 }
 
 } /* namespace app */

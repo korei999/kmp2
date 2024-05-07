@@ -69,14 +69,14 @@ onProcessCB(void* data)
 
     pw_stream_queue_buffer(p->pw.stream, b);
 
-    while (p->paused)
+    while (p->bPaused)
     {
         /* FIXME: this blocks systems sound on device change */
         std::unique_lock lock(p->pauseMtx);
         p->pauseCnd.wait(lock);
     }
 
-    if (p->next || p->prev || p->newSongSelected || p->finished)
+    if (p->bNext || p->bPrev || p->bNewSongSelected || p->bFinished)
     {
         p->pw.mtx.unlock();
         pw_main_loop_quit(p->pw.loop);
