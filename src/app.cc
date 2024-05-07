@@ -151,8 +151,8 @@ Curses::drawPlaylist()
     long startFromY = 1; /* offset from border */
     long sel = p->term.selected;
 
-    if ((long)(p->songs.size() - 1) - firstInList < maxy)
-        firstInList = (p->songs.size() - 1) - (maxy - 2);
+    if ((long)(p->songs.size() - 1) - firstInList < maxy - 1)
+        firstInList = (p->songs.size() - 1) - (maxy - 3);
     if ((long)p->songs.size() < maxy)
         firstInList = 0;
     if (firstInList < 0)

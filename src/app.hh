@@ -22,6 +22,7 @@ constexpr f64 minVolume = 0.0;
 constexpr int step = 100000;
 constexpr int sampleRate = 48000;
 constexpr int channels = 2;
+constexpr f64 volume = 0.15;
 
 };
 
@@ -94,7 +95,7 @@ struct PipeWirePlayer
     long currFoundIdx = 0;
     size_t pcmSize = 0;
     long pcmPos = 0;
-    f64 volume = 0.20;
+    f64 volume = def::volume;
     Curses term;
     bool paused = false;
     bool next = false;
