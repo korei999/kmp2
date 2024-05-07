@@ -155,7 +155,7 @@ input::read(app::PipeWirePlayer* p)
             case '/':
                 p->subStringSearch(search::dir::forward);
                 if (!p->foundIndices.empty())
-                    p->term.selected = p->currFoundIdx;
+                    p->term.selected = p->foundIndices[p->currFoundIdx];
                 p->term.update.bPlayList = true;
                 break;
 
@@ -163,7 +163,7 @@ input::read(app::PipeWirePlayer* p)
             case '?':
                 p->subStringSearch(search::dir::backwards);
                 if (!p->foundIndices.empty())
-                    p->term.selected = p->currFoundIdx;
+                    p->term.selected = p->foundIndices[p->currFoundIdx];
                 p->term.update.bPlayList = true;
                 break;
 

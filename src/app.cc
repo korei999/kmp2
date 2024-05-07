@@ -188,7 +188,7 @@ Curses::drawBottomLine()
     move(getmaxy(pStd) - 1, 0);
     clrtoeol();
     move(getmaxy(pStd) - 1, 1);
-    if (!p->searchingNow.empty())
+    if (!p->searchingNow.empty() && !p->foundIndices.empty())
     {
         auto ss = std::format(" [{}/{}]", p->currFoundIdx + 1, p->foundIndices.size());
         auto s = L"'" + p->searchingNow + L"'" + std::wstring(ss.begin(), ss.end());
