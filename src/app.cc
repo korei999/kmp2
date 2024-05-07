@@ -146,7 +146,6 @@ Curses::drawPlayListCounter()
 void
 Curses::drawTitle()
 {
-    // auto ls = limitToSize("playing: " + p->info.title, getmaxx(stdscr) - 2);
     auto ls = "playing: " + p->info.title;
     ls.resize(getmaxx(pPlayList) - 1);
 
@@ -409,13 +408,15 @@ PipeWirePlayer::jumpToFound(enum search::dir direction)
             currFoundIdx = foundIndices.size() - 1;
 
         term.selected = foundIndices[currFoundIdx];
+        centerOn(term.selected);
     }
 }
 
-std::string limitToSize(std::string_view s) {
-  std::wstring ws{s.begin(), s.end()};
-  std::string ret = {ws.begin(), ws.begin() + (getmaxx(stdscr) - 2)};
-
-  return ret;
+void
+PipeWirePlayer::centerOn(size_t i)
+{
+    term.selected = i;
+    term.firstInList = (term.selected - (term.playListMaxY() - 3) / 2);
 }
+
 } /* namespace app */

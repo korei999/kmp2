@@ -199,8 +199,7 @@ input::read(app::PipeWirePlayer* p)
                 break;
                 
             case 'z':
-                p->term.selected = p->currSongIdx;
-                p->term.firstInList = (p->term.selected - (p->term.playListMaxY() - 3) / 2);
+                p->centerOn(p->currSongIdx);
                 p->term.update.bPlayList = true;
                 break;
 
