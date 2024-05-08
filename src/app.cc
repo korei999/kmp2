@@ -389,7 +389,7 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
     clrtoeol();
     addch(firstChar);
 
-    getn_wstr(wb, 30);
+    getn_wstr(wb, std::size(wb) - 1);
     noecho();
     timeout(1000);
 
