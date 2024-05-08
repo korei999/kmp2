@@ -23,10 +23,10 @@ read(app::PipeWirePlayer* p)
 
     auto seek = [&]() -> void {
         std::lock_guard lock(p->pw.mtx);
-
-        int step = (c == 'l' ? app::def::step : -app::def::step);
+        CERR("HELLO\n");
+        int step = (c == 'l' || c == KEY_RIGHT ? app::def::step : -app::def::step);
         int key0 = (c == 'l' ? 'l' : 'h');
-        int key1 = (c == 'l' ? KEY_RIGHT : KEY_LEFT);
+        int key1 = (c == 'l' || c == KEY_RIGHT ? KEY_RIGHT : KEY_LEFT);
 
         timeout(50);
         while (c == key0 || c == key1)
