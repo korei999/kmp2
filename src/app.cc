@@ -256,7 +256,7 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
             s.ends_with(".ogg")  ||
             s.ends_with(".wav")  ||
             s.ends_with(".caf")  ||
-            s.ends_with(".aif")
+            s.ends_with(".aif"))
         {
             songs.push_back(std::move(s));
         }
