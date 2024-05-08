@@ -226,9 +226,9 @@ Curses::drawBottomLine()
         addwstr(s.data());
     }
 
-    /* show selected idx */
+    /* draw selected index */
     auto sel = std::format("{}\n", p->term.selected + 1);
-    mvaddstr(maxy - 1, getmaxx(stdscr) - sel.size(), sel.data());
+    mvaddstr(maxy - 1, (getmaxx(stdscr) - 1) - sel.size(), sel.data());
 }
 
 void
