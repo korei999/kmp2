@@ -100,6 +100,7 @@ struct PipeWirePlayer
     PipeWireData pw {};
     SndfileHandle hSnd {};
     SongInfo info {};
+    Curses term;
     std::vector<std::string> songs {};
     std::vector<int> foundIndices {};
     std::wstring searchingNow {};
@@ -109,7 +110,7 @@ struct PipeWirePlayer
     size_t pcmSize = 0;
     long pcmPos = 0;
     f64 volume = def::volume;
-    Curses term;
+    bool bMuted = false;
     bool bPaused = false;
     bool bNext = false;
     bool bPrev = false;

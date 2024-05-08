@@ -105,7 +105,8 @@ Curses::drawVolume()
 {
     auto volumeStr = std::format("volume: {:3.0f}%\n", 100.0 * p->volume);
     size_t seg = (p->volume / def::maxVolume) * std::size(volumeLevels);
-    constexpr s8 volumeColors[] {color::green, color::yellow, color::red};
+    constexpr short volumeColors[] {color::green, color::yellow, color::red};
+    constexpr short mutedColor = color::blue;
     size_t max = std::min(seg, std::size(volumeLevels));
 
     /* normilize * max number (aka size(volumeColors) */
@@ -120,9 +121,10 @@ Curses::drawVolume()
 
     move(2, 0);
     clrtoeol();
-    attron(A_BOLD | COLOR_PAIR(volumeColors[strCol]));
+    int col = p->bMuted ? COLOR_PAIR(mutedColor) : A_BOLD | COLOR_PAIR(volumeColors[strCol]);
+    attron(col);
     mvaddstr(2, 1, volumeStr.data());
-    attroff(A_BOLD | COLOR_PAIR(volumeColors[strCol]));
+    attroff(col);
 
     for (size_t i = 0; i < max + 1; i++)
     {
@@ -130,10 +132,11 @@ Curses::drawVolume()
         if (off < 0) off = 0;
 
         int segCol = calcColor(off);
+        int imgCol = p->bMuted ? COLOR_PAIR(mutedColor) : COLOR_PAIR(volumeColors[segCol]);
 
-        attron(COLOR_PAIR(volumeColors[segCol]));
+        attron(imgCol);
         mvaddwstr(2, i + 14, volumeLevels[i]);
-        attroff(COLOR_PAIR(volumeColors[segCol]));
+        attroff(imgCol);
     }
 
     move(3, 0);

@@ -39,7 +39,7 @@ onProcessCB(void* data)
 
     p->hSnd.readf(p->chunk, nFrames);
     int chunkPos = 0;
-    f32 vol = std::pow(p->volume, 1.5);
+    f32 vol = p->bMuted ? 0.0 : std::pow(p->volume, 1.5);
 
     for (int i = 0; i < nFrames; i++)
     {

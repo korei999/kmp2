@@ -222,6 +222,11 @@ read(app::PipeWirePlayer* p)
                 p->term.update.bPlayList = true;
                 break;
 
+            case 'm':
+                p->bMuted = !p->bMuted;
+                p->term.update.bVolume = true;
+                break;
+
             case KEY_RESIZE:
             case 12: /* C-l */
                 p->term.resizePlayListWindow();
