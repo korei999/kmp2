@@ -391,15 +391,9 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
     char firstChar = direction == search::dir::forward ? '/' : '?';
 
     wint_t wb[30] {};
+
     timeout(5000);
-
     input::readStringEcho(wb, firstChar, std::size(wb));
-
-#ifndef NDEBUG
-    std::wcerr << "key: '" << (wchar_t*)wb << "'" << std::endl;
-    std::wcerr << "size: " << wcsnlen((wchar_t*)wb, std::size(wb)) << std::endl;
-#endif
-
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
