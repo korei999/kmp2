@@ -34,7 +34,6 @@ getIndexList(const std::vector<std::string>& a, std::wstring_view key, enum dir 
             ret.push_back(i);
     }
 
-    CERR("HELLO\n");
     return ret;
 }
 
