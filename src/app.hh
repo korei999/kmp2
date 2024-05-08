@@ -28,8 +28,8 @@ constexpr f64 volume = 0.15;
 constexpr wchar_t volumeLevels[17][2] {
     L" ", L"▁", L"▁", L"▂", L"▂", L"▃", L"▃", L"▄", L"▄", L"▅", L"▅", L"▆", L"▆", L"▇", L"▇", L"█", L"█"
 };
-
-constexpr wchar_t blockIcon = L'█';
+constexpr wchar_t blockIcon[2] = L"█";
+constexpr size_t chunkSize = 0x4000;
 
 struct PipeWireData
 {
@@ -103,7 +103,7 @@ struct PipeWirePlayer
     std::vector<std::string> songs {};
     std::vector<int> foundIndices {};
     std::wstring searchingNow {};
-    static f32 chunk[16384];
+    static f32 chunk[chunkSize];
     long currSongIdx = 0;
     long currFoundIdx = 0;
     size_t pcmSize = 0;

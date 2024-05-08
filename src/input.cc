@@ -236,20 +236,21 @@ read(app::PipeWirePlayer* p)
 
         /* TODO: each 1000ms time updates are not actually accurate */
         p->term.update.bTime = true;
-
         p->term.drawUI();
     }
 }
 
 void
-readWStringEcho(std::wstring_view prefix, wint_t* pBuff, int buffSize)
+readWString(std::wstring_view prefix, wint_t* pBuff, int buffSize)
 {
     auto displayString = [&]() -> void
     {
-        move(getmaxy(stdscr) - 1, 0);
+        int maxy = getmaxy(stdscr);
+        move(maxy - 1, 0);
         clrtoeol();
         addwstr(prefix.data());
-        mvaddwstr(getmaxy(stdscr) - 1, 1, (wchar_t*)pBuff);
+        mvaddwstr(maxy - 1, 1, (wchar_t*)pBuff);
+        mvaddwstr(maxy - 1, wcsnlen((wchar_t*)pBuff, buffSize) + 1, app::blockIcon);
     };
 
     displayString();
@@ -269,7 +270,7 @@ readWStringEcho(std::wstring_view prefix, wint_t* pBuff, int buffSize)
                 goto done;
                 break;
 
-            case 23:
+            case 23: /* C-w */
                 memset(pBuff, '\0', buffSize * sizeof(*pBuff));
                 i = 0;
                 break;
@@ -292,11 +293,6 @@ readWStringEcho(std::wstring_view prefix, wint_t* pBuff, int buffSize)
     }
 
 done:
-    pBuff[buffSize - 1] = '\0';
-
-#ifndef NDEBUG
-    std::wcerr << "key: '" << (wchar_t*)pBuff << "'\n";
-#endif
 }
 
 } /* namespace input */

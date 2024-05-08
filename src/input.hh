@@ -5,6 +5,6 @@ namespace input
 {
 
 void read(app::PipeWirePlayer* app);
-void readWStringEcho(std::wstring_view prefix, wint_t* pBuff, int buffSize);
+void readWString(std::wstring_view prefix, wint_t* pBuff, int buffSize);
 
 } /* namespace input */

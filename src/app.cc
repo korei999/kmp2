@@ -25,7 +25,7 @@ static const pw_stream_events streamEvents {
 
 
 std::mutex PipeWireData::mtx;
-f32 PipeWirePlayer::chunk[16384] {};
+f32 PipeWirePlayer::chunk[chunkSize] {};
 
 Curses::Curses()
 {
@@ -108,12 +108,13 @@ Curses::drawVolume()
     constexpr s8 volumeColors[] {color::green, color::yellow, color::red};
     size_t max = std::min(seg, std::size(volumeLevels));
 
+    /* normilize * max number (aka size(volumeColors) */
     auto calcColor = [&](int i) -> int {
-        /* normilize * max number (aka size(volumeColors) */
         return (((f32)(i) / std::size(volumeLevels))) * std::size(volumeColors);
     };
 
-    int strColOff = max - 3;
+    constexpr int colOff = 3;
+    int strColOff = max - colOff;
     int strCol = calcColor(strColOff);
     if (strCol < 0) strCol = 0;
 
@@ -125,7 +126,7 @@ Curses::drawVolume()
 
     for (size_t i = 0; i < max + 1; i++)
     {
-        long off = i - 3;
+        long off = i - colOff;
         if (off < 0) off = 0;
 
         int segCol = calcColor(off);
@@ -392,7 +393,7 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
     wint_t wb[30] {};
 
     timeout(5000);
-    input::readWStringEcho(prefix, wb, std::size(wb));
+    input::readWString(prefix, wb, std::size(wb));
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
@@ -436,7 +437,7 @@ PipeWirePlayer::setSeek()
     wint_t wb[10] {};
 
     timeout(5000);
-    input::readWStringEcho(L"`", wb, std::size(wb));
+    input::readWString(L"`", wb, std::size(wb));
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
@@ -454,10 +455,10 @@ PipeWirePlayer::setSeek()
 void
 PipeWirePlayer::jumpTo()
 {
-    wint_t wb[5] {};
+    wint_t wb[10] {};
 
     timeout(5000);
-    input::readWStringEcho(L":", wb, std::size(wb));
+    input::readWString(L":", wb, std::size(wb));
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
