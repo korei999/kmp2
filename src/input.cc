@@ -102,6 +102,7 @@ read(app::PipeWirePlayer* p)
                     }
                     p->term.selected = newSel;
                     p->term.update.bPlayList = true;
+                    p->term.update.bBottomLine = true;
                 }
                 break;
 
@@ -116,17 +117,20 @@ read(app::PipeWirePlayer* p)
                     }
                     p->term.selected = newSel;
                     p->term.update.bPlayList = true;
+                    p->term.update.bBottomLine = true;
                 }
                 break;
 
             case 'g':
                 p->term.selected = 0;
                 p->term.update.bPlayList = true;
+                p->term.update.bBottomLine = true;
                 break;
 
             case 'G':
                 p->term.selected = p->songs.size() - 1;
                 p->term.update.bPlayList = true;
+                p->term.update.bBottomLine = true;
                 break;
 
             case KEY_NPAGE:
@@ -139,6 +143,7 @@ read(app::PipeWirePlayer* p)
 
                     p->term.selected = newSel;
                     p->term.update.bPlayList = true;
+                    p->term.update.bBottomLine = true;
                 }
                 break;
 
@@ -151,6 +156,7 @@ read(app::PipeWirePlayer* p)
 
                     p->term.selected = newSel;
                     p->term.update.bPlayList = true;
+                    p->term.update.bBottomLine = true;
                 }
                 break;
 
@@ -204,6 +210,7 @@ read(app::PipeWirePlayer* p)
             case 'z':
                 p->centerOn(p->currSongIdx);
                 p->term.update.bPlayList = true;
+                p->term.update.bBottomLine = true;
                 break;
 
             case 't':

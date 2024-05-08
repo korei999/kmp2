@@ -86,7 +86,7 @@ private:
     void drawPlayListCounter();
     void drawTitle();
     void drawPlayList();
-    void drawBorder();
+    void drawBorders();
     void drawBottomLine();
 };
 
