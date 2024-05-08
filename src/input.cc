@@ -306,9 +306,8 @@ parseTimeString(std::wstring_view ts, app::PipeWirePlayer* p)
         return std::nullopt;
 
     std::vector<std::wstring> numbers {};
-    size_t ni = 0;
 
-    [[maybe_unused]] bool percent = false;
+    bool percent = false;
 
     int i = 0;
     wchar_t c;
