@@ -297,4 +297,63 @@ done:
     displayString(false);
 }
 
+std::optional<u64>
+parseTimeString(std::wstring_view ts, app::PipeWirePlayer* p)
+{
+    u64 ret = 0;
+
+    if (!std::isdigit(ts[0]))
+        return std::nullopt;
+
+    std::vector<std::wstring> numbers {};
+    size_t ni = 0;
+
+    [[maybe_unused]] bool percent = false;
+
+    int i = 0;
+    wchar_t c;
+
+    auto getNumber = [&]() -> std::wstring {
+        std::wstring ret;
+
+        while (std::isdigit(ts[i]))
+            ret.push_back(ts[i++]);
+
+        return ret;
+    };
+
+    while ((c = ts[i]) && i < (int)ts.size() && numbers.size() < 2)
+    {
+        if (std::isdigit(c))
+            numbers.push_back(getNumber());
+        else if (c == L':')
+            i++;
+        else if (c == L'%')
+        {
+            percent = true;
+            break;
+        }
+        else
+            i++;
+    }
+
+    constexpr int mul[2] {60, 1};
+    wchar_t* end;
+
+    if (numbers.size() == 1)
+    {
+        ret = wcstoul(numbers[0].data(), &end, 10);
+
+        if (percent)
+            ret = (p->pcmSize * ((f64)ret/100.0)) / p->pw.channels / p->pw.sampleRate;
+    }
+    else
+    {
+        for (size_t i = 0; i < 2; i++)
+            ret += wcstoul(numbers[i].data(), &end, 10) * (mul[i]);
+    }
+
+    return ret;
+}
+
 } /* namespace input */

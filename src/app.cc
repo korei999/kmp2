@@ -447,11 +447,13 @@ PipeWirePlayer::setSeek()
     {
         std::lock_guard lock(pw.mtx);
 
-        wchar_t* end;
-        u64 num = wcstoul((wchar_t*)wb, &end, 10);
-        num = num * pw.sampleRate;
-        hSnd.seek(num, SEEK_SET);
-        pcmPos = hSnd.seek(0, SEEK_CUR) * pw.channels;
+        auto n = input::parseTimeString((wchar_t*)wb, this);
+        if (n.has_value())
+        {
+            n.value() *= pw.sampleRate;
+            hSnd.seek(n.value(), SEEK_SET);
+            pcmPos = hSnd.seek(0, SEEK_CUR) * pw.channels;
+        }
     }
 }
 
