@@ -325,26 +325,34 @@ PipeWirePlayer::playCurrent()
 {
     hSnd = SndfileHandle(currSongName().data(), SFM_READ);
 
-    pw.format = SPA_AUDIO_FORMAT_F32;
-    pw.sampleRate = hSnd.samplerate();
-    pw.channels = hSnd.channels();
+    /* skip song on error */
+    if (hSnd.error() == 0)
+    {
+        pw.format = SPA_AUDIO_FORMAT_F32;
+        pw.sampleRate = hSnd.samplerate();
+        pw.channels = hSnd.channels();
 
-    pcmPos = 0;
-    pcmSize = hSnd.frames() * pw.channels;
+        pcmPos = 0;
+        pcmSize = hSnd.frames() * pw.channels;
 
-    auto title = hSnd.getString(SF_STR_TITLE);
-    if (title) info.title = title;
-    else info.title = utils::removePath(currSongName());
+        auto title = hSnd.getString(SF_STR_TITLE);
+        if (title) info.title = title;
+        else info.title = utils::removePath(currSongName());
 
-    setupPlayer(pw.format, pw.sampleRate, pw.channels);
+        setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
-    term.updateAll();
-    term.drawUI();
-    pw_main_loop_run(pw.loop);
+        term.updateAll();
+        term.drawUI();
+        pw_main_loop_run(pw.loop);
 
-    /* in this order */
-    pw_stream_destroy(pw.stream);
-    pw_main_loop_destroy(pw.loop);
+        /* in this order */
+        pw_stream_destroy(pw.stream);
+        pw_main_loop_destroy(pw.loop);
+    }
+    else
+    {
+        bNext = true;
+    }
 
     if (bNewSongSelected)
     {
@@ -384,13 +392,14 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
 
     wint_t wb[30] {};
     timeout(5000);
-    echo();
-    move(getmaxy(stdscr) - 1, 0);
-    clrtoeol();
-    addch(firstChar);
 
-    getn_wstr(wb, std::size(wb) - 1);
-    noecho();
+    input::readStringEcho(wb, firstChar, std::size(wb));
+
+#ifndef NDEBUG
+    std::wcerr << "key: '" << (wchar_t*)wb << "'" << std::endl;
+    std::wcerr << "size: " << wcsnlen((wchar_t*)wb, std::size(wb)) << std::endl;
+#endif
+
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)

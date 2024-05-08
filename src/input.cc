@@ -3,8 +3,11 @@
 
 #include <ncurses.h>
 
+namespace input
+{
+
 void
-input::read(app::PipeWirePlayer* p)
+read(app::PipeWirePlayer* p)
 {
     int c;
 
@@ -229,3 +232,65 @@ input::read(app::PipeWirePlayer* p)
         p->term.drawUI();
     }
 }
+
+void
+readStringEcho(wint_t* wb, char firstChar, int n)
+{
+    move(getmaxy(stdscr) - 1, 0);
+    clrtoeol();
+    addch(firstChar);
+
+    auto displayString = [&]() -> void
+    {
+        move(getmaxy(stdscr) - 1, 0);
+        clrtoeol();
+        addch(firstChar);
+        mvaddwstr(getmaxy(stdscr) - 1, 1, (wchar_t*)wb);
+    };
+
+    wint_t wc = 0;
+    int i = 0;
+    /* TODO: figure out extra last char bug */
+    while (get_wch(&wc) != ERR)
+    {
+        if (wc == '\n')
+            break;
+
+        if (i >= n - 1)
+        {
+            i = n - 2;
+        }
+
+        if (wc == 263 || wc == '\b')
+        {
+            if (--i < 0)
+                i = 0;
+
+            wb[i] = '\0';
+
+            displayString();
+            continue;
+        }
+        else if (wc == 27) /* Esc */
+        {
+            wb[0] = '\0';
+            displayString();
+            break;
+        }
+        else if (wc == 23) /* C-w */
+        {
+            memset(wb, 0, n*sizeof(wb[0]));
+            i = 0;
+            displayString();
+            continue;
+        }
+
+
+        wb[i] = wc;
+        displayString();
+
+        i++;
+    }
+}
+
+} /* namespace input */
