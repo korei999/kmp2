@@ -243,17 +243,18 @@ read(app::PipeWirePlayer* p)
 void
 readWString(std::wstring_view prefix, wint_t* pBuff, int buffSize)
 {
-    auto displayString = [&]() -> void
+    auto displayString = [&](bool curs) -> void
     {
         int maxy = getmaxy(stdscr);
         move(maxy - 1, 0);
         clrtoeol();
         addwstr(prefix.data());
-        mvaddwstr(maxy - 1, 1, (wchar_t*)pBuff);
-        mvaddwstr(maxy - 1, wcsnlen((wchar_t*)pBuff, buffSize) + 1, app::blockIcon);
+        mvaddwstr(maxy - 1, prefix.size(), (wchar_t*)pBuff);
+        if (curs)
+            mvaddwstr(maxy - 1, prefix.size() + wcsnlen((wchar_t*)pBuff, buffSize), app::blockIcon);
     };
 
-    displayString();
+    displayString(true);
 
     wint_t wc = 0;
     int i = 0;
@@ -289,10 +290,11 @@ readWString(std::wstring_view prefix, wint_t* pBuff, int buffSize)
         }
 
         pBuff[buffSize - 1] = '\0';
-        displayString();
+        displayString(true);
     }
 
 done:
+    displayString(false);
 }
 
 } /* namespace input */

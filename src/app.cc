@@ -389,7 +389,7 @@ PipeWirePlayer::playCurrent()
 void
 PipeWirePlayer::subStringSearch(enum search::dir direction)
 {
-    const wchar_t* prefix = direction == search::dir::forward ? L"/" : L"?";
+    const wchar_t* prefix = direction == search::dir::forward ? L"search: " : L"backwards-search: ";
     wint_t wb[30] {};
 
     timeout(5000);
@@ -437,7 +437,7 @@ PipeWirePlayer::setSeek()
     wint_t wb[10] {};
 
     timeout(5000);
-    input::readWString(L"`", wb, std::size(wb));
+    input::readWString(L"time: ", wb, std::size(wb));
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
@@ -458,7 +458,7 @@ PipeWirePlayer::jumpTo()
     wint_t wb[10] {};
 
     timeout(5000);
-    input::readWString(L":", wb, std::size(wb));
+    input::readWString(L"select: ", wb, std::size(wb));
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
