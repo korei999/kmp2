@@ -250,14 +250,13 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
     {
         std::string s = argv[i];
 
-        if (s.ends_with(".wav")   ||
-            s.ends_with(".aif")   ||
-            s.ends_with(".raw")   ||
-            s.ends_with(".caf")   ||
-            s.ends_with(".opus")  ||
-            s.ends_with(".ogg")   ||
-            s.ends_with(".mp3")   ||
-            s.ends_with(".flac"))
+        if (s.ends_with(".flac") ||
+            s.ends_with(".opus") ||
+            s.ends_with(".mp3")  ||
+            s.ends_with(".ogg")  ||
+            s.ends_with(".wav")  ||
+            s.ends_with(".caf")  ||
+            s.ends_with(".aif")
         {
             songs.push_back(std::move(s));
         }

@@ -1,6 +1,6 @@
 ![kmp4](https://github.com/korei999/kmp2/assets/93387739/4efc72ac-7af8-4518-a685-9e3ac65df406)
 
-Supports: wav, opus, ogg, mp3, flac.
+Formats supported: flac, opus, mp3, ogg, wav, caf, aif.
 ### Usage:
 `kmp *`, `kmp **`, `kmp $(find . | rg "\.mp3|\.wav")` or whatever your shell can do.
 Navigate with vim-like keybinds.
