@@ -252,46 +252,43 @@ readWStringEcho(wint_t* wb, char firstChar, int n)
 
     wint_t wc = 0;
     int i = 0;
-    /* TODO: figure out extra last char bug */
     while (get_wch(&wc) != ERR)
     {
-        if (wc == '\n')
-            break;
-
-        if (i >= n - 1)
+        switch (wc)
         {
-            i = n - 2;
-        }
+            case '\n':
+                goto done;
+                break;
 
-        if (wc == 263 || wc == '\b')
-        {
-            if (--i < 0)
+            case 23:
+                memset(wb, '\0', n*sizeof(wb[0]));
                 i = 0;
+                break;
 
-            wb[i] = '\0';
+            case 263:
+            case '\b':
+                --i;
+                if (i < 0) i = 0;
 
-            displayString();
-            continue;
-        }
-        else if (wc == 27) /* Esc */
-        {
-            wb[0] = '\0';
-            displayString();
-            break;
-        }
-        else if (wc == 23) /* C-w */
-        {
-            memset(wb, 0, n*sizeof(wb[0]));
-            i = 0;
-            displayString();
-            continue;
+                wb[i] = '\0';
+                break;
+
+            default:
+                wb[i++] = wc;
+                if (i >= n) i = n - 1;
+                break;
         }
 
-        wb[i] = wc;
+        wb[n - 1] = '\0';
         displayString();
-
-        i++;
     }
+
+done:
+    wb[n - 1] = '\0';
+
+#ifndef NDEBUG
+    std::wcerr << "key: '" << (wchar_t*)wb << "'\n";
+#endif
 }
 
 } /* namespace input */
