@@ -464,10 +464,8 @@ PipeWirePlayer::jumpTo()
     {
         wchar_t* end;
         long num = wcstol((wchar_t*)wb, &end, 10);
-        num = std::clamp((long)num, 0L, (long)songs.size() - 1);
-        term.selected = num;
-
-        std::wcerr << "num: " << num << "\n";
+        num = std::clamp((long)num, 1L, (long)songs.size());
+        term.selected = num - 1;
     }
 }
 
