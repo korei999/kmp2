@@ -21,6 +21,25 @@ read(app::PipeWirePlayer* p)
         }
     };
 
+    auto seek = [&]() -> void {
+        std::lock_guard lock(p->pw.mtx);
+
+        int step = (c == 'l' ? app::def::step : -app::def::step);
+        int key0 = (c == 'l' ? 'l' : 'h');
+        int key1 = (c == 'l' ? KEY_RIGHT : KEY_LEFT);
+
+        timeout(50);
+        while (c == key0 || c == key1)
+        {
+            p->hSnd.seek(step, SEEK_CUR);
+            p->term.update.bTime = true;
+            p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
+            p->term.drawUI();
+            c = getch();
+        }
+        timeout(1000);
+    };
+
     while ((c = getch()))
     {
         switch (c)
@@ -57,38 +76,12 @@ read(app::PipeWirePlayer* p)
 
             case KEY_RIGHT:
             case 'l':
-                {
-                    std::lock_guard lock(p->pw.mtx);
-
-                    timeout(50);
-                    while (c == 'l' || c == KEY_RIGHT)
-                    {
-                        p->hSnd.seek(app::def::step, SEEK_CUR);
-                        p->term.update.bTime = true;
-                        p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
-                        p->term.drawUI();
-                        c = getch();
-                    }
-                    timeout(1000);
-                }
+                seek();
                 break;
 
             case KEY_LEFT:
             case 'h':
-                {
-                    std::lock_guard lock(p->pw.mtx);
-
-                    timeout(50);
-                    while (c == 'h' || c == KEY_LEFT)
-                    {
-                        p->hSnd.seek(-app::def::step, SEEK_CUR);
-                        p->term.update.bTime = true;
-                        p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
-                        p->term.drawUI();
-                        c = getch();
-                    }
-                    timeout(1000);
-                }
+                seek();
                 break;
 
             case 'o':
@@ -255,8 +248,7 @@ read(app::PipeWirePlayer* p)
 void
 readWString(std::wstring_view prefix, wint_t* pBuff, int buffSize)
 {
-    auto displayString = [&](bool curs) -> void
-    {
+    auto displayString = [&](bool curs) -> void {
         int maxy = getmaxy(stdscr);
         move(maxy - 1, 0);
         clrtoeol();
