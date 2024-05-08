@@ -388,11 +388,11 @@ PipeWirePlayer::playCurrent()
 void
 PipeWirePlayer::subStringSearch(enum search::dir direction)
 {
-    char firstChar = direction == search::dir::forward ? '/' : '?';
+    const wchar_t* prefix = direction == search::dir::forward ? L"/" : L"?";
     wint_t wb[30] {};
 
     timeout(5000);
-    input::readWStringEcho(wb, firstChar, std::size(wb));
+    input::readWStringEcho(prefix, wb, std::size(wb));
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
@@ -436,7 +436,7 @@ PipeWirePlayer::setSeek()
     wint_t wb[10] {};
 
     timeout(5000);
-    input::readWStringEcho(wb, '`', std::size(wb));
+    input::readWStringEcho(L"`", wb, std::size(wb));
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
@@ -447,7 +447,29 @@ PipeWirePlayer::setSeek()
         u64 num = wcstoul((wchar_t*)wb, &end, 10);
         num = num * pw.sampleRate;
         hSnd.seek(num, SEEK_SET);
+        pcmPos = hSnd.seek(0, SEEK_CUR) * pw.channels;
     }
 }
+
+void
+PipeWirePlayer::jumpTo()
+{
+    wint_t wb[5] {};
+
+    timeout(5000);
+    input::readWStringEcho(L":", wb, std::size(wb));
+    timeout(1000);
+
+    if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
+    {
+        wchar_t* end;
+        long num = wcstol((wchar_t*)wb, &end, 10);
+        num = std::clamp((long)num, 0L, (long)songs.size() - 1);
+        term.selected = num;
+
+        std::wcerr << "num: " << num << "\n";
+    }
+}
+
 
 } /* namespace app */

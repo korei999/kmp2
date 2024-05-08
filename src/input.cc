@@ -212,6 +212,11 @@ read(app::PipeWirePlayer* p)
                 p->setSeek();
                 break;
 
+            case ':':
+                p->jumpTo();
+                p->term.update.bPlayList = true;
+                break;
+
             case KEY_RESIZE:
             case 12: /* C-l */
                 p->term.resizePlayListWindow();
@@ -219,7 +224,7 @@ read(app::PipeWirePlayer* p)
                 redrawwin(stdscr);
                 break;
 
-            case -1:
+            case ERR:
                 break;
 
             default:
@@ -229,6 +234,7 @@ read(app::PipeWirePlayer* p)
                 break;
         }
 
+        /* TODO: each 1000ms time updates are not actually accurate */
         p->term.update.bTime = true;
 
         p->term.drawUI();
@@ -236,19 +242,17 @@ read(app::PipeWirePlayer* p)
 }
 
 void
-readWStringEcho(wint_t* wb, char firstChar, int n)
+readWStringEcho(std::wstring_view prefix, wint_t* pBuff, int buffSize)
 {
-    move(getmaxy(stdscr) - 1, 0);
-    clrtoeol();
-    addch(firstChar);
-
     auto displayString = [&]() -> void
     {
         move(getmaxy(stdscr) - 1, 0);
         clrtoeol();
-        addch(firstChar);
-        mvaddwstr(getmaxy(stdscr) - 1, 1, (wchar_t*)wb);
+        addwstr(prefix.data());
+        mvaddwstr(getmaxy(stdscr) - 1, 1, (wchar_t*)pBuff);
     };
+
+    displayString();
 
     wint_t wc = 0;
     int i = 0;
@@ -260,34 +264,38 @@ readWStringEcho(wint_t* wb, char firstChar, int n)
                 goto done;
                 break;
 
+            case 27: /* escape */
+                memset(pBuff, '\0', buffSize * sizeof(*pBuff));
+                goto done;
+                break;
+
             case 23:
-                memset(wb, '\0', n*sizeof(wb[0]));
+                memset(pBuff, '\0', buffSize * sizeof(*pBuff));
                 i = 0;
                 break;
 
             case 263:
             case '\b':
-                --i;
-                if (i < 0) i = 0;
+                if (--i < 0) i = 0;
 
-                wb[i] = '\0';
+                pBuff[i] = '\0';
                 break;
 
             default:
-                wb[i++] = wc;
-                if (i >= n) i = n - 1;
+                pBuff[i++] = wc;
+                if (i >= buffSize) i = buffSize - 1;
                 break;
         }
 
-        wb[n - 1] = '\0';
+        pBuff[buffSize - 1] = '\0';
         displayString();
     }
 
 done:
-    wb[n - 1] = '\0';
+    pBuff[buffSize - 1] = '\0';
 
 #ifndef NDEBUG
-    std::wcerr << "key: '" << (wchar_t*)wb << "'\n";
+    std::wcerr << "key: '" << (wchar_t*)pBuff << "'\n";
 #endif
 }
 

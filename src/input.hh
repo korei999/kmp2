@@ -5,7 +5,6 @@ namespace input
 {
 
 void read(app::PipeWirePlayer* app);
-/* first char as prefix while echoing current input */
-void readWStringEcho(wint_t* wb, char firstChar, int n);
+void readWStringEcho(std::wstring_view prefix, wint_t* pBuff, int buffSize);
 
 } /* namespace input */

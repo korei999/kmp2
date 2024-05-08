@@ -29,6 +29,8 @@ constexpr wchar_t volumeLevels[17][2] {
     L" ", L"▁", L"▁", L"▂", L"▂", L"▃", L"▃", L"▄", L"▄", L"▅", L"▅", L"▆", L"▆", L"▇", L"▇", L"█", L"█"
 };
 
+constexpr wchar_t blockIcon = L'█';
+
 struct PipeWireData
 {
     pw_main_loop* loop {};
@@ -129,6 +131,7 @@ struct PipeWirePlayer
     void jumpToFound(enum search::dir direction);
     void centerOn(size_t i);
     void setSeek();
+    void jumpTo();
 };
 
 } /* namespace app */
