@@ -224,7 +224,7 @@ Curses::drawBottomLine()
     }
 
     /* show selected idx */
-    auto sel = std::format("{}\n", p->term.selected);
+    auto sel = std::format("{}\n", p->term.selected + 1);
     mvaddstr(maxy - 1, getmaxx(stdscr) - sel.size(), sel.data());
 }
 
