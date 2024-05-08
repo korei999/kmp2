@@ -66,7 +66,7 @@ Curses::drawUI()
 
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
-    if (maxy >= 5 && maxx >= 5)
+    if (maxy > 6 && maxx > 6)
     {
         if (update.bTime)       { update.bTime       = false; drawTime(); }
         if (update.bVolume)     { update.bVolume     = false; drawVolume(); }
