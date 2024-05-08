@@ -206,9 +206,7 @@ read(app::PipeWirePlayer* p)
                 p->term.update.bPlayList = true;
                 break;
 
-            case '`':
-            case 39:
-            case 188:
+            case 't':
                 p->setSeek();
                 break;
 
