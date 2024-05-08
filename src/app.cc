@@ -251,6 +251,9 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
         std::string s = argv[i];
 
         if (s.ends_with(".wav")   ||
+            s.ends_with(".aif")   ||
+            s.ends_with(".raw")   ||
+            s.ends_with(".caf")   ||
             s.ends_with(".opus")  ||
             s.ends_with(".ogg")   ||
             s.ends_with(".mp3")   ||
