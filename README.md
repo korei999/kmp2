@@ -12,6 +12,7 @@ Formats supported: flac, opus, mp3, ogg, wav, caf, aif.
 - `z` center around currently playing song.
 - `r` repeat after last song.
 - `m` mute.
+- `q` quit.
 
 ### Dependencies:
 fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel`
