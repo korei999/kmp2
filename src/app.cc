@@ -90,7 +90,7 @@ Curses::drawTime()
     u64 mMax = u64(mFMax);
     u64 fracMax = 60 * (mFMax - mMax);
 
-    auto timeStr = std::format("{}:{:02d} / {}:{:02d} min", m, frac, mMax, fracMax);
+    auto timeStr = std::format("{}:{:02d} / {}:{:02d} (min/sec)", m, frac, mMax, fracMax);
     if (p->bPaused) { timeStr = "(paused) " + timeStr; }
 
     move(0, 0);
