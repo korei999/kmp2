@@ -208,6 +208,8 @@ read(app::PipeWirePlayer* p)
 
             case '`':
             case 39:
+            case 188:
+                p->setSeek();
                 break;
 
             case KEY_RESIZE:
@@ -234,7 +236,7 @@ read(app::PipeWirePlayer* p)
 }
 
 void
-readStringEcho(wint_t* wb, char firstChar, int n)
+readWStringEcho(wint_t* wb, char firstChar, int n)
 {
     move(getmaxy(stdscr) - 1, 0);
     clrtoeol();
@@ -284,7 +286,6 @@ readStringEcho(wint_t* wb, char firstChar, int n)
             displayString();
             continue;
         }
-
 
         wb[i] = wc;
         displayString();

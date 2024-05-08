@@ -79,8 +79,8 @@ Curses::resizePlayListWindow()
 void
 Curses::drawTime()
 {
-    u64 t = (p->pcmPos/sizeof(s16)) / p->pw.sampleRate;
-    u64 maxT = (p->pcmSize/sizeof(s16)) / p->pw.sampleRate;
+    u64 t = (p->pcmPos/p->pw.channels) / p->pw.sampleRate;
+    u64 maxT = (p->pcmSize/p->pw.channels) / p->pw.sampleRate;
 
     f64 mF = t / 60.0;
     u64 m = u64(mF);
@@ -389,11 +389,10 @@ void
 PipeWirePlayer::subStringSearch(enum search::dir direction)
 {
     char firstChar = direction == search::dir::forward ? '/' : '?';
-
     wint_t wb[30] {};
 
     timeout(5000);
-    input::readStringEcho(wb, firstChar, std::size(wb));
+    input::readWStringEcho(wb, firstChar, std::size(wb));
     timeout(1000);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
@@ -429,6 +428,26 @@ PipeWirePlayer::centerOn(size_t i)
 {
     term.selected = i;
     term.firstInList = (term.selected - (term.playListMaxY() - 3) / 2);
+}
+
+void
+PipeWirePlayer::setSeek()
+{
+    wint_t wb[10] {};
+
+    timeout(5000);
+    input::readWStringEcho(wb, '`', std::size(wb));
+    timeout(1000);
+
+    if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
+    {
+        std::lock_guard lock(pw.mtx);
+
+        wchar_t* end;
+        u64 num = wcstoul((wchar_t*)wb, &end, 10);
+        num = num * pw.sampleRate;
+        hSnd.seek(num, SEEK_SET);
+    }
 }
 
 } /* namespace app */

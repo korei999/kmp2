@@ -128,6 +128,7 @@ struct PipeWirePlayer
     void subStringSearch(enum search::dir direction);
     void jumpToFound(enum search::dir direction);
     void centerOn(size_t i);
+    void setSeek();
 };
 
 } /* namespace app */
