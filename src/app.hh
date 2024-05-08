@@ -73,7 +73,7 @@ struct Curses
     std::mutex mtx;
 
     Curses();
-    ~Curses() { endwin(); }
+    ~Curses();
 
     void drawUI();
     void updateAll() { update.bTime = update.bVolume = update.bSongName = update.bPlayList = update.bBottomLine = true; }

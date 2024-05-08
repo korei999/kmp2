@@ -50,6 +50,14 @@ Curses::Curses()
     pPlayList = subwin(stdscr, getmaxy(stdscr) - listYPos - 1, getmaxx(stdscr), listYPos, 0);
 }
 
+Curses::~Curses()
+{
+    endwin();
+
+    if (p->songs.empty())
+        COUT("kmp: no input provided\n");
+}
+
 void
 Curses::drawUI()
 {
@@ -283,9 +291,6 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
 PipeWirePlayer::~PipeWirePlayer()
 {
     pw_deinit();
-
-    if (songs.empty())
-        COUT("kmp: no input provided\n");
 }
 
 void
