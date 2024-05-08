@@ -2,10 +2,13 @@
 
 Supports: wav, opus, ogg, mp3, flac.
 ### Usage:
-```kmp *``` inside music directory.
+`kmp *`, `kmp **`, `kmp $(find . | rg "\.mp3|\.wav")` or whatever your shell can do.
 Navigate with vim-like keybinds.
-Searching with `/`.
+Searching with `/` or `?`, `n` and `N` to next-prev found string.
 `9` and `0` volume.
+`t` to set time like `4:20`, `40` or `60%`.
+`:` to jump to selected number in the playlist.
+`z` to center around currently playing song.
 
 #### Dependencies:
 fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel`
