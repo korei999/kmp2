@@ -11,6 +11,16 @@ read(app::PipeWirePlayer* p)
 {
     int c;
 
+    auto search = [p](enum search::dir d) -> void {
+        bool succes = p->subStringSearch(d);
+        if (!p->foundIndices.empty() && succes)
+        {
+            p->term.selected = p->foundIndices[p->currFoundIdx];
+            p->term.update.bPlayList = true;
+            p->term.update.bBottomLine = true;
+        }
+    };
+
     while ((c = getch()))
     {
         switch (c)
@@ -162,20 +172,12 @@ read(app::PipeWirePlayer* p)
 
             case 46:
             case '/':
-                p->subStringSearch(search::dir::forward);
-                if (!p->foundIndices.empty())
-                    p->term.selected = p->foundIndices[p->currFoundIdx];
-                p->term.update.bPlayList = true;
-                p->term.update.bBottomLine = true;
+                search(search::dir::forward);
                 break;
 
             case 44:
             case '?':
-                p->subStringSearch(search::dir::backwards);
-                if (!p->foundIndices.empty())
-                    p->term.selected = p->foundIndices[p->currFoundIdx];
-                p->term.update.bPlayList = true;
-                p->term.update.bBottomLine = true;
+                search(search::dir::backwards);
                 break;
 
             case 'n':

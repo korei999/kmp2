@@ -396,7 +396,7 @@ PipeWirePlayer::playCurrent()
     }
 }
 
-void
+bool
 PipeWirePlayer::subStringSearch(enum search::dir direction)
 {
     const wchar_t* prefix = direction == search::dir::forward ? L"search: " : L"backwards-search: ";
@@ -408,12 +408,19 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
         searchingNow = (wchar_t*)wb;
+    else
+        return false;
+
 
     if (!searchingNow.empty())
     {
         foundIndices = search::getIndexList(songs, searchingNow, direction);
         currFoundIdx = 0;
+
+        return true;
     }
+
+    return false;
 }
 
 void

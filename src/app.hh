@@ -128,7 +128,7 @@ struct PipeWirePlayer
     void playAll();
     void playCurrent();
     const std::string_view currSongName() const { return songs[currSongIdx]; }
-    void subStringSearch(enum search::dir direction);
+    bool subStringSearch(enum search::dir direction);
     void jumpToFound(enum search::dir direction);
     void centerOn(size_t i);
     void setSeek();
