@@ -95,25 +95,13 @@ private:
     void drawPlayListCounter();
     void drawTitle();
     void drawPlayList();
+    void drawBorders();
     void drawBottomLine();
 };
 
 struct SongInfo
 {
-    std::string path {};
-    std::string title {};
-    std::string copyright {};
-    std::string software {};
-    std::string artist {};
-    std::string comment {};
-    std::string date {};
-    std::string album {};
-    std::string license {};
-    std::string tracknumber {};
-    std::string genre {};
-
-    SongInfo() = default;
-    SongInfo(std::string_view _path, const SndfileHandle& h);
+    std::string title;
 };
 
 struct PipeWirePlayer
