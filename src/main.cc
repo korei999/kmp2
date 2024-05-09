@@ -1,5 +1,7 @@
 #include "app.hh"
 
+#include <locale>
+
 int
 main(int argc, char* argv[])
 {

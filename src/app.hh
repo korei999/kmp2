@@ -2,7 +2,7 @@
 #include "search.hh"
 #include "ultratypes.h"
 
-#include <condition_variable>
+#include <mutex>
 #include <pipewire/pipewire.h>
 #include <sndfile.hh>
 #include <ncurses.h>
@@ -140,8 +140,6 @@ struct PipeWirePlayer
     bool bRepeatAfterLast = false;
     bool bWrapSelection = true;
     bool bFinished = false;
-    std::mutex pauseMtx;
-    std::condition_variable pauseCnd;
 
     PipeWirePlayer(int argc, char** argv);
     ~PipeWirePlayer();

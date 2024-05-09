@@ -46,10 +46,7 @@ read(app::PipeWirePlayer* p)
         {
             case 'q':
                 if (p->bPaused)
-                {
                     p->bPaused = false;
-                    // p->pauseCnd.notify_all();
-                }
                 p->bFinished = true;
                 return;
                 break;
@@ -189,8 +186,6 @@ read(app::PipeWirePlayer* p)
 
             case ' ':
                 p->bPaused = !p->bPaused;
-                // if (!p->bPaused)
-                    // p->pauseCnd.notify_one();
                 break;
 
             case '\n':

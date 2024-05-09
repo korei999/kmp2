@@ -4,6 +4,7 @@
 #include "utils.hh"
 
 #include <cmath>
+#include <thread>
 
 namespace app
 {
@@ -102,7 +103,6 @@ Curses::resizeWindows()
 
     int iXW = std::round(maxx*0.4);
     int iYP = std::round(maxx*0.6);
-    int sXw = iXW;
     int sYP = iXW;
 
     info.pBor = subwin(stdscr, listYPos, iYP, 0, iXW);
@@ -258,7 +258,7 @@ Curses::drawBottomLine()
 void
 Curses::drawInfo()
 {
-    int maxy = getmaxy(info.pCon), maxx = getmaxx(info.pCon);
+    int maxx = getmaxx(info.pCon);
     constexpr std::string_view sTi = "title: ";
     constexpr std::string_view sAl = "album: ";
     constexpr std::string_view sAr = "artist: ";

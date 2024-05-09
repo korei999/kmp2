@@ -1,6 +1,8 @@
 #pragma once
 #include "app.hh"
 
+#include <optional>
+
 namespace input
 {
 
