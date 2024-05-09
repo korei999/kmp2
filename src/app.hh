@@ -67,11 +67,10 @@ struct Curses
     PipeWirePlayer* p {};
     /* mark which to update on drawUI */
     struct {
-        bool bTime = true;
-        bool bVolume = true;
-        bool bSongName = true;
         bool bPlayList = true;
         bool bBottomLine = true;
+        bool bStatus = true;
+        bool bInfo = true;
     } update;
     BWin status {};
     BWin info {};
@@ -85,7 +84,7 @@ struct Curses
     ~Curses();
 
     void drawUI();
-    void updateAll() { update.bTime = update.bVolume = update.bSongName = update.bPlayList = update.bBottomLine = true; }
+    void updateAll() { update.bInfo = update.bStatus = update.bPlayList = update.bBottomLine = true; }
     size_t playListMaxY() const { return getmaxy(pl.pBor); }
     void resizeWindows();
 
@@ -95,13 +94,27 @@ private:
     void drawPlayListCounter();
     void drawTitle();
     void drawPlayList();
-    void drawBorders();
     void drawBottomLine();
+    void drawInfo();
+    void drawStatus();
 };
 
 struct SongInfo
 {
-    std::string title;
+    std::string path {};
+    std::string title {};
+    std::string copyright {};
+    std::string software {};
+    std::string artist {};
+    std::string comment {};
+    std::string date {};
+    std::string album {};
+    std::string license {};
+    std::string tracknumber {};
+    std::string genre {};
+
+    SongInfo() = default;
+    SongInfo(std::string_view _path, const SndfileHandle& h);
 };
 
 struct PipeWirePlayer

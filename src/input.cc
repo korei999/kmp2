@@ -32,7 +32,7 @@ read(app::PipeWirePlayer* p)
         while (c == key0 || c == key1)
         {
             p->hSnd.seek(step, SEEK_CUR);
-            p->term.update.bTime = true;
+            p->term.update.bStatus = true;
             p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
             p->term.drawUI();
             c = getch();
@@ -61,7 +61,6 @@ read(app::PipeWirePlayer* p)
                 p->volume += 0.01;
                 if (p->volume > app::def::maxVolume)
                     p->volume = app::def::maxVolume;
-                p->term.update.bVolume = true;
                 break;
 
             case '9':
@@ -71,7 +70,6 @@ read(app::PipeWirePlayer* p)
                 p->volume -= 0.01;
                 if (p->volume < app::def::minVolume)
                     p->volume = app::def::minVolume;
-                p->term.update.bVolume = true;
                 break;
 
             case KEY_RIGHT:
@@ -187,7 +185,6 @@ read(app::PipeWirePlayer* p)
 
             case 'r':
                 p->bRepeatAfterLast = !p->bRepeatAfterLast;
-                p->term.update.bSongName = true;
                 break;
 
             case ' ':
@@ -219,7 +216,6 @@ read(app::PipeWirePlayer* p)
 
             case 'm':
                 p->bMuted = !p->bMuted;
-                p->term.update.bVolume = true;
                 break;
 
             case KEY_RESIZE:
@@ -240,7 +236,7 @@ read(app::PipeWirePlayer* p)
         }
 
         /* TODO: each 1000ms time updates are not actually accurate */
-        p->term.update.bTime = true;
+        p->term.update.bStatus = true;
         p->term.drawUI();
     }
 }

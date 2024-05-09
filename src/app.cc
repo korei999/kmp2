@@ -9,6 +9,21 @@ namespace app
 {
 
 static void
+drawBorders(WINDOW* pWin)
+{
+    cchar_t ls, rs, ts, bs, tl, tr, bl, br;
+    setcchar(&ls, L"┃", 0, Curses::color::blue, nullptr);
+    setcchar(&rs, L"┃", 0, Curses::color::blue, nullptr);
+    setcchar(&ts, L"━", 0, Curses::color::blue, nullptr);
+    setcchar(&bs, L"━", 0, Curses::color::blue, nullptr);
+    setcchar(&tl, L"┏", 0, Curses::color::blue, nullptr);
+    setcchar(&tr, L"┓", 0, Curses::color::blue, nullptr);
+    setcchar(&bl, L"┗", 0, Curses::color::blue, nullptr);
+    setcchar(&br, L"┛", 0, Curses::color::blue, nullptr);
+    wborder_set(pWin, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
+}
+
+static void
 ioChangedCB([[maybe_unused]] void* data,
             [[maybe_unused]] uint32_t id,
             [[maybe_unused]] void* area,
@@ -68,19 +83,33 @@ Curses::drawUI()
 
     if (maxy > 6 && maxx > 6)
     {
-        if (update.bTime)       { update.bTime       = false; drawTime(); }
-        if (update.bVolume)     { update.bVolume     = false; drawVolume(); }
-        if (update.bSongName)   { update.bSongName   = false; drawTitle(); drawPlayListCounter(); }
-        if (update.bPlayList)   { update.bPlayList   = false; drawPlayList(); }
+        touchwin(stdscr);
+
+        if (update.bStatus)     { update.bStatus     = false; drawStatus();     }
+        if (update.bInfo)       { update.bInfo       = false; drawInfo();       }
         if (update.bBottomLine) { update.bBottomLine = false; drawBottomLine(); }
+        if (update.bPlayList)   { update.bPlayList   = false; drawPlayList();   }
     }
 }
 
 void
 Curses::resizeWindows()
 {
-    pl.pBor = subwin(stdscr, getmaxy(stdscr) - listYPos - 1, getmaxx(stdscr), listYPos, 0);
-    pl.pCon = derwin(pl.pBor, getmaxy(pl.pBor) - 1, getmaxx(pl.pBor) - 1, 1, 1);
+    int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
+
+    pl.pBor = subwin(stdscr, maxy - listYPos - 1, maxx, listYPos, 0);
+    pl.pCon = derwin(pl.pBor, getmaxy(pl.pBor) - 1, getmaxx(pl.pBor) - 2, 1, 1);
+
+    int iXW = std::round(maxx*0.4);
+    int iYP = std::round(maxx*0.6);
+    int sXw = iXW;
+    int sYP = iXW;
+
+    info.pBor = subwin(stdscr, listYPos, iYP, 0, iXW);
+    info.pCon = derwin(info.pBor, getmaxy(info.pBor) - 1, getmaxx(info.pBor) - 2, 1, 1);
+
+    status.pBor = subwin(stdscr, listYPos, sYP, 0, 0);
+    status.pCon = derwin(status.pBor, getmaxy(status.pBor) - 1, getmaxx(status.pBor) - 2, 1, 1);
 }
 
 void
@@ -100,11 +129,7 @@ Curses::drawTime()
     auto timeStr = std::format("{}:{:02d} / {}:{:02d} (min/sec)", m, frac, mMax, fracMax);
     if (p->bPaused) { timeStr = "(paused) " + timeStr; }
 
-    move(0, 0);
-    clrtoeol();
-    mvaddstr(0, 1, timeStr.data());
-    move(1, 0);
-    clrtoeol();
+    mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
 }
 
 void 
@@ -115,6 +140,7 @@ Curses::drawVolume()
     constexpr short volumeColors[] {color::green, color::yellow, color::red};
     constexpr short mutedColor = color::blue;
     size_t max = std::min(seg, std::size(volumeLevels));
+    int maxx = getmaxx(status.pCon);
 
     /* normilize * max number (aka size(volumeColors) */
     auto calcColor = [&](int i) -> int {
@@ -126,12 +152,10 @@ Curses::drawVolume()
     int strCol = calcColor(strColOff);
     if (strCol < 0) strCol = 0;
 
-    move(2, 0);
-    clrtoeol();
     int col = p->bMuted ? COLOR_PAIR(mutedColor) : A_BOLD | COLOR_PAIR(volumeColors[strCol]);
-    attron(col);
-    mvaddstr(2, 1, volumeStr.data());
-    attroff(col);
+    wattron(status.pCon, col);
+    mvwaddnstr(status.pCon, 1, 0, volumeStr.data(), maxx);
+    wattroff(status.pCon, col);
 
     for (size_t i = 0; i < max + 1; i++)
     {
@@ -141,26 +165,21 @@ Curses::drawVolume()
         int segCol = calcColor(off);
         int imgCol = p->bMuted ? COLOR_PAIR(mutedColor) : COLOR_PAIR(volumeColors[segCol]);
 
-        attron(imgCol);
-        mvaddwstr(2, i + 14, volumeLevels[i]);
-        attroff(imgCol);
+        wattron(status.pCon, imgCol);
+        mvwaddnwstr(status.pCon, 1, i + 14, volumeLevels[i], maxx);
+        wattroff(status.pCon, imgCol);
     }
 
-    move(3, 0);
-    clrtoeol();
+    drawBorders(status.pBor);
 }
 
 void
 Curses::drawPlayListCounter()
 {
-    auto songCounterStr = std::format("{} / {}", p->currSongIdx + 1, p->songs.size());
+    auto songCounterStr = std::format("total: {} / {}", p->currSongIdx + 1, p->songs.size());
     if (p->bRepeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
 
-    move(4, 0);
-    clrtoeol();
-    attron(A_ITALIC);
-    mvaddstr(4, 1, songCounterStr.data());
-    attroff(A_ITALIC);
+    mvwaddnstr(status.pCon, 3, 0, songCounterStr.data(), getmaxx(status.pCon));
 }
 
 void
@@ -188,7 +207,7 @@ Curses::drawPlayList()
         firstInList = (p->songs.size() - 1) - (maxy - 2);
     if ((long)p->songs.size() < maxy - 1)
         firstInList = 0;
-    if (firstInList < 0)
+    else if (firstInList < 0)
         firstInList = 0;
 
     long listSizeBound = firstInList + (maxy - 1); /* - 2*borders */
@@ -214,8 +233,7 @@ Curses::drawPlayList()
         wattroff(pl.pCon, A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
     }
 
-    drawBorders();
-    touchwin(stdscr);
+    drawBorders(pl.pBor);
 }
 
 void
@@ -238,18 +256,75 @@ Curses::drawBottomLine()
 }
 
 void
-Curses::drawBorders()
+Curses::drawInfo()
 {
-    cchar_t ls, rs, ts, bs, tl, tr, bl, br;
-    setcchar(&ls, L"┃", 0, color::blue, nullptr);
-    setcchar(&rs, L"┃", 0, color::blue, nullptr);
-    setcchar(&ts, L"━", 0, color::blue, nullptr);
-    setcchar(&bs, L"━", 0, color::blue, nullptr);
-    setcchar(&tl, L"┏", 0, color::blue, nullptr);
-    setcchar(&tr, L"┓", 0, color::blue, nullptr);
-    setcchar(&bl, L"┗", 0, color::blue, nullptr);
-    setcchar(&br, L"┛", 0, color::blue, nullptr);
-    wborder_set(pl.pBor, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
+    int maxy = getmaxy(info.pCon), maxx = getmaxx(info.pCon);
+    constexpr std::string_view sTi = "title: ";
+    constexpr std::string_view sAl = "album: ";
+    constexpr std::string_view sAr = "artist: ";
+
+    werase(info.pBor);
+
+    mvwaddnstr(info.pCon, 0, 0, sTi.data(), maxx*2);
+    wattron(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::yellow));
+    mvwaddnstr(info.pCon, 0, sTi.size(), p->info.title.data(), (maxx*2) - sTi.size());
+    wattroff(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::yellow));
+
+    mvwaddnstr(info.pCon, 2, 0, sAl.data(), maxx);
+    wattron(info.pCon, A_BOLD);
+    mvwaddnstr(info.pCon, 2, sAl.size(), p->info.album.data(), maxx);
+    wattroff(info.pCon, A_BOLD);
+
+    mvwaddnstr(info.pCon, 3, 0, sAr.data(), maxx);
+    wattron(info.pCon, A_BOLD);
+    mvwaddnstr(info.pCon, 3, sAr.size(), p->info.artist.data(), maxx);
+    wattroff(info.pCon, A_BOLD);
+
+    drawBorders(info.pBor);
+}
+
+void
+Curses::drawStatus()
+{
+    werase(status.pBor);
+
+    drawTime();
+    drawVolume();
+    drawPlayListCounter();
+
+    drawBorders(status.pBor);
+}
+
+SongInfo::SongInfo(std::string_view _path, const SndfileHandle& h)
+{
+    const char* _title = h.getString(SF_STR_TITLE);
+    const char* _copyright = h.getString(SF_STR_COPYRIGHT);
+    const char* _software = h.getString(SF_STR_SOFTWARE);
+    const char* _artist = h.getString(SF_STR_ARTIST);
+    const char* _comment = h.getString(SF_STR_COMMENT);
+    const char* _date = h.getString(SF_STR_DATE);
+    const char* _album = h.getString(SF_STR_ALBUM);
+    const char* _license = h.getString(SF_STR_LICENSE);
+    const char* _tracknumber = h.getString(SF_STR_TRACKNUMBER);
+    const char* _genre = h.getString(SF_STR_GENRE);
+
+    if (_title) title = _title;
+    else title = utils::removePath(_path);
+
+    auto set = [](const char* s) -> std::string {
+        if (s) return s;
+        else return {};
+    };
+
+    copyright = set(_copyright);
+    software = set(_software);
+    artist = set(_artist);
+    comment = set(_comment);
+    date = set(_date);
+    album = set(_album);
+    license = set(_license);
+    tracknumber = set(_tracknumber);
+    genre = set(_genre);
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
@@ -349,14 +424,14 @@ PipeWirePlayer::playCurrent()
         pcmPos = 0;
         pcmSize = hSnd.frames() * pw.channels;
 
-        auto title = hSnd.getString(SF_STR_TITLE);
-        if (title) info.title = title;
-        else info.title = utils::removePath(currSongName());
+        info = SongInfo(currSongName(), hSnd);
 
         setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
         term.updateAll();
         term.drawUI();
+        refresh(); /* needed to avoid one second black screen before first getch update */
+
         pw_main_loop_run(pw.loop);
 
         /* in this order */
