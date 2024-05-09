@@ -16,6 +16,9 @@ onProcessCB(void* data)
 
     std::lock_guard lock(p->pw.mtx);
 
+    if (p->bPaused)
+        return;
+
     pw_buffer* b;
     if ((b = pw_stream_dequeue_buffer(p->pw.stream)) == nullptr)
     {
@@ -69,12 +72,12 @@ onProcessCB(void* data)
 
     pw_stream_queue_buffer(p->pw.stream, b);
 
-    while (p->bPaused)
-    {
-        /* FIXME: this blocks systems sound on device change */
-        std::unique_lock lock(p->pauseMtx);
-        p->pauseCnd.wait(lock);
-    }
+    // while (p->bPaused)
+    // {
+        // /* FIXME: this blocks systems sound on device change */
+        // std::unique_lock lock(p->pauseMtx);
+        // p->pauseCnd.wait(lock);
+    // }
 
     if (p->bNext || p->bPrev || p->bNewSongSelected || p->bFinished)
     {
