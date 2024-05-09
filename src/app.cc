@@ -9,6 +9,21 @@ namespace app
 {
 
 static void
+drawBorders(WINDOW* pWin)
+{
+    cchar_t ls, rs, ts, bs, tl, tr, bl, br;
+    setcchar(&ls, L"┃", 0, Curses::color::blue, nullptr);
+    setcchar(&rs, L"┃", 0, Curses::color::blue, nullptr);
+    setcchar(&ts, L"━", 0, Curses::color::blue, nullptr);
+    setcchar(&bs, L"━", 0, Curses::color::blue, nullptr);
+    setcchar(&tl, L"┏", 0, Curses::color::blue, nullptr);
+    setcchar(&tr, L"┓", 0, Curses::color::blue, nullptr);
+    setcchar(&bl, L"┗", 0, Curses::color::blue, nullptr);
+    setcchar(&br, L"┛", 0, Curses::color::blue, nullptr);
+    wborder_set(pWin, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
+}
+
+static void
 ioChangedCB([[maybe_unused]] void* data,
             [[maybe_unused]] uint32_t id,
             [[maybe_unused]] void* area,
@@ -73,6 +88,9 @@ Curses::drawUI()
         if (update.bSongName)   { update.bSongName   = false; drawTitle(); drawPlayListCounter(); }
         if (update.bPlayList)   { update.bPlayList   = false; drawPlayList(); }
         if (update.bBottomLine) { update.bBottomLine = false; drawBottomLine(); }
+
+        // touchwin(stdscr);
+        drawBorders(info.pBor);
     }
 }
 
@@ -81,6 +99,8 @@ Curses::resizeWindows()
 {
     pl.pBor = subwin(stdscr, getmaxy(stdscr) - listYPos - 1, getmaxx(stdscr), listYPos, 0);
     pl.pCon = derwin(pl.pBor, getmaxy(pl.pBor) - 1, getmaxx(pl.pBor) - 1, 1, 1);
+
+    info.pBor = subwin(stdscr, listYPos, getmaxx(stdscr) * 0.6, 0, getmaxx(stdscr) / 3);
 }
 
 void
@@ -188,7 +208,7 @@ Curses::drawPlayList()
         firstInList = (p->songs.size() - 1) - (maxy - 2);
     if ((long)p->songs.size() < maxy - 1)
         firstInList = 0;
-    if (firstInList < 0)
+    else if (firstInList < 0)
         firstInList = 0;
 
     long listSizeBound = firstInList + (maxy - 1); /* - 2*borders */
@@ -214,7 +234,7 @@ Curses::drawPlayList()
         wattroff(pl.pCon, A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
     }
 
-    drawBorders();
+    drawBorders(pl.pBor);
     touchwin(stdscr);
 }
 
@@ -237,19 +257,24 @@ Curses::drawBottomLine()
     mvaddstr(maxy - 1, (getmaxx(stdscr) - 1) - sel.size(), sel.data());
 }
 
-void
-Curses::drawBorders()
+SongInfo::SongInfo(std::string_view _path, const SndfileHandle& h)
 {
-    cchar_t ls, rs, ts, bs, tl, tr, bl, br;
-    setcchar(&ls, L"┃", 0, color::blue, nullptr);
-    setcchar(&rs, L"┃", 0, color::blue, nullptr);
-    setcchar(&ts, L"━", 0, color::blue, nullptr);
-    setcchar(&bs, L"━", 0, color::blue, nullptr);
-    setcchar(&tl, L"┏", 0, color::blue, nullptr);
-    setcchar(&tr, L"┓", 0, color::blue, nullptr);
-    setcchar(&bl, L"┗", 0, color::blue, nullptr);
-    setcchar(&br, L"┛", 0, color::blue, nullptr);
-    wborder_set(pl.pBor, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
+    const char* _title = h.getString(SF_STR_TITLE);
+    const char* _copyright = h.getString(SF_STR_COPYRIGHT);
+    const char* _software = h.getString(SF_STR_SOFTWARE);
+    const char* _artist = h.getString(SF_STR_ARTIST);
+    const char* _comment = h.getString(SF_STR_COMMENT);
+    const char* _date = h.getString(SF_STR_DATE);
+    const char* _album = h.getString(SF_STR_ALBUM);
+    const char* _license = h.getString(SF_STR_LICENSE);
+    const char* _tracknumber = h.getString(SF_STR_TRACKNUMBER);
+    const char* _genre = h.getString(SF_STR_GENRE);
+
+    if (_title) title = _title;
+    else title = utils::removePath(_path);
+
+    if (_copyright) copyright = _copyright;
+    else copyright = {};
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
@@ -349,14 +374,14 @@ PipeWirePlayer::playCurrent()
         pcmPos = 0;
         pcmSize = hSnd.frames() * pw.channels;
 
-        auto title = hSnd.getString(SF_STR_TITLE);
-        if (title) info.title = title;
-        else info.title = utils::removePath(currSongName());
+        info = SongInfo(currSongName(), hSnd);
 
         setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
         term.updateAll();
         term.drawUI();
+        refresh(); /* needed to avoid one second black screen before first getch update */
+
         pw_main_loop_run(pw.loop);
 
         /* in this order */
