@@ -18,6 +18,7 @@ read(app::PipeWirePlayer* p)
             p->term.selected = p->foundIndices[p->currFoundIdx];
             p->term.update.bPlayList = true;
             p->term.update.bBottomLine = true;
+            p->centerOn(p->term.selected);
         }
     };
 
