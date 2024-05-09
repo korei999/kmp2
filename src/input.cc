@@ -23,6 +23,7 @@ read(app::PipeWirePlayer* p)
 
     auto seek = [&]() -> void {
         std::lock_guard lock(p->pw.mtx);
+
         int step = (c == 'l' || c == KEY_RIGHT ? app::def::step : -app::def::step);
         int key0 = (c == 'l' ? 'l' : 'h');
         int key1 = (c == 'l' || c == KEY_RIGHT ? KEY_RIGHT : KEY_LEFT);
@@ -223,7 +224,7 @@ read(app::PipeWirePlayer* p)
 
             case KEY_RESIZE:
             case 12: /* C-l */
-                p->term.resizePlayListWindow();
+                p->term.resizeWindows();
                 p->term.updateAll();
                 redrawwin(stdscr);
                 break;

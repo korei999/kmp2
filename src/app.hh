@@ -43,6 +43,13 @@ struct PipeWireData
 
 struct PipeWirePlayer;
 
+/* pBor for borders and pCon for content */
+struct BWin
+{
+    WINDOW* pBor;
+    WINDOW* pCon;
+};
+
 struct Curses
 {
     enum color : short
@@ -56,17 +63,19 @@ struct Curses
         red
     };
 
+    /* parent pointer */
+    PipeWirePlayer* p {};
     /* mark which to update on drawUI */
-    struct
-    {
+    struct {
         bool bTime = true;
         bool bVolume = true;
         bool bSongName = true;
         bool bPlayList = true;
         bool bBottomLine = true;
     } update;
-    PipeWirePlayer* p {};
-    WINDOW* pPlayList {};
+    BWin status {};
+    BWin info {};
+    BWin pl {};
     long selected = 0;
     long firstInList = 0;
     const long listYPos = 6;
@@ -77,8 +86,8 @@ struct Curses
 
     void drawUI();
     void updateAll() { update.bTime = update.bVolume = update.bSongName = update.bPlayList = update.bBottomLine = true; }
-    size_t playListMaxY() const { return getmaxy(pPlayList); }
-    void resizePlayListWindow();
+    size_t playListMaxY() const { return getmaxy(pl.pBor); }
+    void resizeWindows();
 
 private:
     void drawTime();

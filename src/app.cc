@@ -47,7 +47,7 @@ Curses::Curses()
     init_pair(Curses::red, COLOR_RED, td);
     init_pair(Curses::white, COLOR_WHITE, td);
 
-    pPlayList = subwin(stdscr, getmaxy(stdscr) - listYPos - 1, getmaxx(stdscr), listYPos, 0);
+    resizeWindows();
 }
 
 Curses::~Curses()
@@ -73,15 +73,14 @@ Curses::drawUI()
         if (update.bSongName)   { update.bSongName   = false; drawTitle(); drawPlayListCounter(); }
         if (update.bPlayList)   { update.bPlayList   = false; drawPlayList(); }
         if (update.bBottomLine) { update.bBottomLine = false; drawBottomLine(); }
-
-        refresh();
     }
 }
 
 void
-Curses::resizePlayListWindow()
+Curses::resizeWindows()
 {
-    pPlayList = subwin(stdscr, getmaxy(stdscr) - listYPos - 1, getmaxx(stdscr), listYPos, 0);
+    pl.pBor = subwin(stdscr, getmaxy(stdscr) - listYPos - 1, getmaxx(stdscr), listYPos, 0);
+    pl.pCon = derwin(pl.pBor, getmaxy(pl.pBor) - 1, getmaxx(pl.pBor) - 1, 1, 1);
 }
 
 void
@@ -168,7 +167,7 @@ void
 Curses::drawTitle()
 {
     auto ls = "playing: " + p->info.title;
-    ls.resize(getmaxx(pPlayList) - 1);
+    ls.resize(getmaxx(pl.pBor) - 1);
 
     move(5, 0);
     clrtoeol();
@@ -180,40 +179,39 @@ Curses::drawTitle()
 void
 Curses::drawPlayList()
 {
-    long maxy = getmaxy(pPlayList);
+    long maxy = getmaxy(pl.pCon);
 
-    long startFromY = 1; /* offset from border */
-    long sel = p->term.selected;
+    long startFromY = 0; /* offset from border */
+    long sel = selected;
 
-    if ((long)(p->songs.size() - 1) - firstInList < maxy - 1)
-        firstInList = (p->songs.size() - 1) - (maxy - 3);
-    if ((long)p->songs.size() < maxy)
+    if ((long)(p->songs.size() - 1) - firstInList < (maxy))
+        firstInList = (p->songs.size() - 1) - (maxy - 2);
+    if ((long)p->songs.size() < maxy - 1)
         firstInList = 0;
     if (firstInList < 0)
         firstInList = 0;
 
-    long listSizeBound = firstInList + (maxy - 2); /* - 2*borders */
+    long listSizeBound = firstInList + (maxy - 1); /* - 2*borders */
 
     if (selected > listSizeBound - 1)
-        firstInList = selected - (maxy - 3); /* -3 == (2*borders - 1) */
+        firstInList = selected - (maxy - 2); /* -3 == (2*borders - 1) */
     else if (selected < firstInList)
         firstInList = selected;
 
-    for (long i = firstInList; i < (long)p->songs.size() && startFromY < maxy - 1; i++, startFromY++)
+    werase(pl.pBor);
+    for (long i = firstInList; i < (long)p->songs.size() && startFromY < maxy; i++, startFromY++)
     {
         auto lineStr = utils::removePath(std::format("{}", p->songs[i]));
-        lineStr.resize(getmaxx(pPlayList) - 1);
+        lineStr.resize(getmaxx(pl.pCon) - 1);
 
         if (i == sel)
-            wattron(pPlayList, A_REVERSE);
+            wattron(pl.pCon, A_REVERSE);
         if (i == p->currSongIdx)
-            wattron(pPlayList, A_BOLD | COLOR_PAIR(app::Curses::yellow));
+            wattron(pl.pCon, A_BOLD | COLOR_PAIR(app::Curses::yellow));
 
-        wmove(pPlayList, startFromY, getbegx(pPlayList) + 1);
-        wclrtoeol(pPlayList);
-        waddstr(pPlayList, lineStr.data());
+        mvwaddstr(pl.pCon, startFromY, getbegx(pl.pCon), lineStr.data());
 
-        wattroff(pPlayList, A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
+        wattroff(pl.pCon, A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
     }
 
     drawBorders();
@@ -251,7 +249,7 @@ Curses::drawBorders()
     setcchar(&tr, L"┓", 0, color::blue, nullptr);
     setcchar(&bl, L"┗", 0, color::blue, nullptr);
     setcchar(&br, L"┛", 0, color::blue, nullptr);
-    wborder_set(pPlayList, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
+    wborder_set(pl.pBor, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
