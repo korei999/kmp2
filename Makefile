@@ -1,6 +1,6 @@
 MAKEFLAGS := --jobs=$(shell nproc) --output-sync=target 
 
-CXX := clang++ -fcolor-diagnostics -fansi-escape-codes -fdiagnostics-format=msvc
+CLANG := clang++ -fcolor-diagnostics -fansi-escape-codes -fdiagnostics-format=msvc
 
 WARNINGS := -Wall -Wextra -fms-extensions -Wno-missing-field-initializers
 
@@ -25,11 +25,11 @@ INC_DIRS := $(shell find $(SRCS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CPPFLAGS := $(INC_FLAGS) -MMD -MP
 
-all: CXX := g++ -fdiagnostics-color=always -flto=auto
-all: CXXFLAGS += -g -O3 -march=native -ffast-math $(WARNINGS) -DNDEBUG
+all: CXX ?= g++ -fdiagnostics-color=always -flto=auto
+all: CXXFLAGS += -O3 -march=native -ffast-math $(WARNINGS) -DNDEBUG
 all: $(EXEC)
 
-debug: CXX += $(ASAN) $(SAFE_STACK)
+debug: CXX = $(CLANG) $(ASAN) $(SAFE_STACK)
 debug: CXXFLAGS += -g3 -O0 $(DEBUG) $(WARNINGS) $(WNO)
 debug: LDFLAGS += -fuse-ld=mold
 debug: $(EXEC)
