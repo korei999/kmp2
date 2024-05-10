@@ -35,8 +35,17 @@ ioChangedCB([[maybe_unused]] void* data,
 
 static const pw_stream_events streamEvents {
     .version = PW_VERSION_STREAM_EVENTS,
+	.destroy {},
+    .state_changed {},
+    .control_info {},
     .io_changed = ioChangedCB,
-    .process = play::onProcessCB /* attached playback function */
+    .param_changed {},
+    .add_buffer {},
+    .remove_buffer {},
+    .process = play::onProcessCB,
+    .drained {},
+    .command {},
+    .trigger_done {},
 };
 
 
@@ -387,8 +396,10 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 
     spa_audio_info_raw info {
         .format = format,
+        .flags {},
         .rate = sampleRate,
-        .channels = channels
+        .channels = channels,
+        .position {}
     };
 
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &info);
