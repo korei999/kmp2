@@ -175,7 +175,7 @@ Curses::drawVolume()
         int imgCol = p->bMuted ? COLOR_PAIR(mutedColor) : COLOR_PAIR(volumeColors[segCol]);
 
         wattron(status.pCon, imgCol);
-        mvwaddnwstr(status.pCon, 1, i + 14, volumeLevels[i], maxx);
+        mvwaddnwstr(status.pCon, 1, i + volumeStr.size(), volumeLevels[i], maxx - volumeStr.size());
         wattroff(status.pCon, imgCol);
     }
 

@@ -25,7 +25,7 @@ constexpr f64 volume = 0.15;
 
 };
 
-constexpr wchar_t volumeLevels[17][2] {
+constexpr wchar_t volumeLevels[17][3] {
     L" ", L"▁", L"▁", L"▂", L"▂", L"▃", L"▃", L"▄", L"▄", L"▅", L"▅", L"▆", L"▆", L"▇", L"▇", L"█", L"█"
 };
 constexpr wchar_t blockIcon[2] = L"█";
