@@ -15,4 +15,11 @@ Formats supported: flac, opus, mp3, ogg, wav, caf, aif.
 - `q` quit.
 
 ### Dependencies:
-fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel`
+fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel meson`
+
+### Install:
+```
+meson setup build
+ninja -C build
+sudo ninja -C build install
+```
