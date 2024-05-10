@@ -6,12 +6,7 @@ project('kmp2', 'cpp',
 add_global_arguments('-DLOGS', language : 'cpp')
 
 if get_option('buildtype') == 'release'
-  add_project_arguments('-O3', '-ffast-math', language : 'cpp')
-  add_global_arguments('-DNDEBUG', '-flto=auto', language : 'cpp')
-endif
-
-if get_option('buildtype') == 'debug'
-  add_project_arguments('-O0', '-g3', language : 'cpp')
+  add_global_arguments('-DNDEBUG', language : 'cpp')
 endif
 
 sndfile = dependency('sndfile')
