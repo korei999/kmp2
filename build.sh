@@ -14,7 +14,7 @@ debug()
 release()
 {
     rm -rf build
-    if meson setup build
+    if meson setup build --buildtype=release
     then
         ninja -C build/
     fi
