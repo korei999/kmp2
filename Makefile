@@ -26,7 +26,7 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 CPPFLAGS := $(INC_FLAGS) -MMD -MP
 
 all: CXX ?= g++ -fdiagnostics-color=always -flto=auto
-all: CXXFLAGS += -O3 -march=native -ffast-math $(WARNINGS) -DNDEBUG
+all: CXXFLAGS += -g -O3 -march=native -ffast-math $(WARNINGS) -DNDEBUG
 all: $(EXEC)
 
 debug: CXX = $(CLANG) $(ASAN) $(SAFE_STACK)

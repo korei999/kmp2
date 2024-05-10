@@ -1,13 +1,18 @@
 project('kmp2', 'cpp',
   version : '0.1',
   license : ['MIT', 'LGPL-2.1'],
-  default_options : ['warning_level=2',
-                     'cpp_std=c++20',
-                     'optimization=3',
-                     'b_lto=true',
-                     'debug=false'])
+  default_options : ['warning_level=2', 'cpp_std=c++20', 'buildtype=release'])
 
 add_global_arguments('-DLOGS', language : 'cpp')
+
+if get_option('buildtype') == 'release'
+  add_project_arguments('-O3', '-ffast-math', language : 'cpp')
+  add_global_arguments('-DNDEBUG', '-flto=auto', language : 'cpp')
+endif
+
+if get_option('buildtype') == 'debug'
+  add_project_arguments('-O0', '-g3', language : 'cpp')
+endif
 
 sndfile = dependency('sndfile')
 pipewire = dependency('libpipewire-0.3')
