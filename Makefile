@@ -10,7 +10,7 @@ PKGS := libpipewire-0.3 ncursesw sndfile
 PKG := $(shell pkg-config --cflags $(PKGS))
 PKG_LIB := $(shell pkg-config --libs $(PKGS))
 
-CXXFLAGS := -std=c++23 $(PKG)
+CXXFLAGS := -std=c++20 $(PKG)
 LDFLAGS := $(PKG_LIB)
 
 SRCD := ./src
