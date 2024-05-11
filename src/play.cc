@@ -48,12 +48,6 @@ onProcessCB(void* data)
     {
         for (int j = 0; j < (int)p->pw.channels; j++)
         {
-            // if (p->pcmPos > (long)p->pcmSize - 1)
-            // {
-                // pw_main_loop_quit(p->pw.loop);
-                // return;
-            // }
-
             /* modify each sample here */
             f32 val = p->chunk[chunkPos] * vol;
 

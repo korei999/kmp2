@@ -26,10 +26,9 @@ constexpr u32 updateRate = 1000;
 
 };
 
-constexpr wchar_t volumeLevels[17][3] {
-    L" ", L"▁", L"▁", L"▂", L"▂", L"▃", L"▃", L"▄", L"▄", L"▅", L"▅", L"▆", L"▆", L"▇", L"▇", L"█", L"█"
-};
-constexpr wchar_t blockIcon[3] = L"█";
+constexpr wchar_t blockIcon0[3] = L"█";
+constexpr wchar_t blockIcon1[3] = L"▮";
+constexpr wchar_t blockIcon2[3] = L"▯";
 constexpr size_t chunkSize = 0x4000;
 
 struct PipeWireData

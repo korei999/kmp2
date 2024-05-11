@@ -25,15 +25,29 @@ read(app::PipeWirePlayer* p)
     auto seek = [&]() -> void {
         std::lock_guard lock(p->pw.mtx);
 
-        int step = (c == 'l' || c == KEY_RIGHT ? app::def::step : -app::def::step);
-        int key0 = (c == 'l' ? 'l' : 'h');
-        int key1 = (c == 'l' || c == KEY_RIGHT ? KEY_RIGHT : KEY_LEFT);
+        int step;
+        int key0;
+        int key1;
+
+        if (c == 'l' || c == KEY_RIGHT)
+        {
+            step = app::def::step;
+            key0 = 'l';
+            key1 = KEY_RIGHT;
+        }
+        else
+        {
+            step = -app::def::step;
+            key0 = 'h';
+            key1 = KEY_LEFT;
+        }
 
         timeout(50);
         while (c == key0 || c == key1)
         {
             p->hSnd.seek(step, SEEK_CUR);
             p->term.update.bStatus = true;
+            p->term.update.bBottomLine = true;
             p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
             p->term.drawUI();
             c = getch();
@@ -163,11 +177,13 @@ read(app::PipeWirePlayer* p)
             case 46:
             case '/':
                 search(search::dir::forward);
+                p->term.update.bBottomLine = true;
                 break;
 
             case 44:
             case '?':
                 search(search::dir::backwards);
+                p->term.update.bBottomLine = true;
                 break;
 
             case 'n':
@@ -204,6 +220,7 @@ read(app::PipeWirePlayer* p)
 
             case 't':
                 p->setSeek();
+                p->term.update.bBottomLine = true;
                 break;
 
             case ':':
@@ -247,7 +264,7 @@ readWString(std::wstring_view prefix, wint_t* pBuff, int buffSize)
         addwstr(prefix.data());
         mvaddwstr(maxy - 1, prefix.size(), (wchar_t*)pBuff);
         if (curs)
-            mvaddwstr(maxy - 1, prefix.size() + wcsnlen((wchar_t*)pBuff, buffSize), app::blockIcon);
+            mvaddwstr(maxy - 1, prefix.size() + wcsnlen((wchar_t*)pBuff, buffSize), app::blockIcon0);
     };
 
     displayString(true);
@@ -270,6 +287,11 @@ readWString(std::wstring_view prefix, wint_t* pBuff, int buffSize)
             case 23: /* C-w */
                 memset(pBuff, '\0', buffSize * sizeof(*pBuff));
                 i = 0;
+                break;
+
+            case '\t':
+                /* ignore tabs */
+                pBuff[i] = '\0';
                 break;
 
             case 263:

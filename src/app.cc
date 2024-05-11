@@ -58,6 +58,7 @@ Curses::Curses()
     start_color();
     use_default_colors();
     curs_set(0);
+    set_escdelay(0);
     noecho();
     cbreak();
     timeout(def::updateRate);
@@ -145,38 +146,43 @@ void
 Curses::drawVolume()
 {
     auto volumeStr = std::format("volume: {:3.0f}%\n", 100.0 * p->volume);
-    size_t seg = (p->volume / def::maxVolume) * std::size(volumeLevels);
-    constexpr short volumeColors[] {color::green, color::yellow, color::red};
-    constexpr short mutedColor = color::blue;
-    size_t max = std::min(seg, std::size(volumeLevels));
+    constexpr int mutedColor = COLOR_PAIR(color::blue);
     int maxx = getmaxx(status.pCon);
 
-    /* normilize * max number (aka size(volumeColors) */
-    auto calcColor = [&](int i) -> int {
-        return (((f32)(i) / std::size(volumeLevels))) * std::size(volumeColors);
+    long maxWidth = maxx - volumeStr.size() - 1;
+    f64 maxline = (p->volume * (f64)maxWidth) * (1.0 - (def::maxVolume - 1.0));
+
+    auto getColor = [&](f64 i) -> int {
+        f64 val = p->volume * (i/(maxline));
+
+        if (val > 1.00) return COLOR_PAIR(color::red);
+        else if (val > 0.50) return COLOR_PAIR(color::yellow);
+        else return COLOR_PAIR(color::green);
     };
 
-    constexpr int colOff = 3;
-    int strColOff = max - colOff;
-    int strCol = calcColor(strColOff);
-    if (strCol < 0) strCol = 0;
-
-    int col = p->bMuted ? COLOR_PAIR(mutedColor) : A_BOLD | COLOR_PAIR(volumeColors[strCol]);
-    wattron(status.pCon, col);
+    int sCol = p->bMuted ? mutedColor : A_BOLD | getColor(maxline);
+    wattron(status.pCon, sCol);
     mvwaddnstr(status.pCon, 1, 0, volumeStr.data(), maxx);
-    wattroff(status.pCon, col);
+    wattroff(status.pCon, sCol);
 
-    for (size_t i = 0; i < max + 1; i++)
+    for (long i = 0; i < maxline; i++)
     {
-        long off = i - colOff;
-        if (off < 0) off = 0;
+        int color;
+        const wchar_t* icon;
+        if (p->bMuted)
+        {
+            color = mutedColor;
+            icon = blockIcon2;
+        }
+        else
+        {
+            color = getColor(i);
+            icon = blockIcon1;
+        }
 
-        int segCol = calcColor(off);
-        int imgCol = p->bMuted ? COLOR_PAIR(mutedColor) : COLOR_PAIR(volumeColors[segCol]);
-
-        wattron(status.pCon, imgCol);
-        mvwaddnwstr(status.pCon, 1, i + volumeStr.size(), volumeLevels[i], maxx - volumeStr.size());
-        wattroff(status.pCon, imgCol);
+        wattron(status.pCon, color);
+        mvwaddwstr(status.pCon, 1, 1 + i + volumeStr.size(), icon);
+        wattroff(status.pCon, color);
     }
 
     drawBorders(status.pBor);
