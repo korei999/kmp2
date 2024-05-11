@@ -298,7 +298,7 @@ parseTimeString(std::wstring_view ts, app::PipeWirePlayer* p)
 {
     u64 ret = 0;
 
-    if (!std::isdigit(ts[0]))
+    if (!std::isdigit(ts[0]) || ts.empty())
         return std::nullopt;
 
     std::vector<std::wstring> numbers {};
@@ -311,13 +311,13 @@ parseTimeString(std::wstring_view ts, app::PipeWirePlayer* p)
     auto getNumber = [&]() -> std::wstring {
         std::wstring ret;
 
-        while (std::isdigit(ts[i]))
+        while (i < (int)ts.size() && std::isdigit(ts[i]))
             ret.push_back(ts[i++]);
 
         return ret;
     };
 
-    while ((c = ts[i]) && i < (int)ts.size() && numbers.size() < 2)
+    while (i < (int)ts.size() && (c = ts[i]) && numbers.size() < 2)
     {
         if (std::isdigit(c))
             numbers.push_back(getNumber());

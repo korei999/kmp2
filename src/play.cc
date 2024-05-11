@@ -48,11 +48,11 @@ onProcessCB(void* data)
     {
         for (int j = 0; j < (int)p->pw.channels; j++)
         {
-            if (p->pcmPos > (long)p->pcmSize - 1)
-            {
-                pw_main_loop_quit(p->pw.loop);
-                return;
-            }
+            // if (p->pcmPos > (long)p->pcmSize - 1)
+            // {
+                // pw_main_loop_quit(p->pw.loop);
+                // return;
+            // }
 
             /* modify each sample here */
             f32 val = p->chunk[chunkPos] * vol;
@@ -72,7 +72,7 @@ onProcessCB(void* data)
 
     pw_stream_queue_buffer(p->pw.stream, b);
 
-    if (p->bNext || p->bPrev || p->bNewSongSelected || p->bFinished)
+    if (p->bNext || p->bPrev || p->bNewSongSelected || p->bFinished || p->pcmPos > (long)p->pcmSize - 1)
         pw_main_loop_quit(p->pw.loop);
 }
 

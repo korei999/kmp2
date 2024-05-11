@@ -307,15 +307,8 @@ Curses::drawStatus()
 SongInfo::SongInfo(std::string_view _path, const SndfileHandle& h)
 {
     const char* _title = h.getString(SF_STR_TITLE);
-    const char* _copyright = h.getString(SF_STR_COPYRIGHT);
-    const char* _software = h.getString(SF_STR_SOFTWARE);
     const char* _artist = h.getString(SF_STR_ARTIST);
-    const char* _comment = h.getString(SF_STR_COMMENT);
-    const char* _date = h.getString(SF_STR_DATE);
     const char* _album = h.getString(SF_STR_ALBUM);
-    const char* _license = h.getString(SF_STR_LICENSE);
-    const char* _tracknumber = h.getString(SF_STR_TRACKNUMBER);
-    const char* _genre = h.getString(SF_STR_GENRE);
 
     if (_title) title = _title;
     else title = utils::removePath(_path);
@@ -325,15 +318,8 @@ SongInfo::SongInfo(std::string_view _path, const SndfileHandle& h)
         else return {};
     };
 
-    copyright = set(_copyright);
-    software = set(_software);
     artist = set(_artist);
-    comment = set(_comment);
-    date = set(_date);
     album = set(_album);
-    license = set(_license);
-    tracknumber = set(_tracknumber);
-    genre = set(_genre);
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)

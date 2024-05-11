@@ -19,9 +19,10 @@ getIndexList(const std::vector<std::string>& a, std::wstring_view key, enum dir 
     {
         std::string s = utils::removePath(a[i]);
 
-        /*  https://stackoverflow.com/questions/2573834/c-convert-string-or-char-to-wstring-or-wchar-t */
-        std::wstring sw(a[i].size(), L' ');
-        size_t swSize = std::mbstowcs(&sw[0], s.data(), s.size());
+        std::wstring sw(a[i].size(), L'\0');
+        std::mbstate_t state = std::mbstate_t();
+        const char* mbstr = s.data();
+        size_t swSize = std::mbsrtowcs(&sw[0], &mbstr, s.size(), &state);
         sw.resize(swSize);
 
         std::wstring fw(key.begin(), key.end());
