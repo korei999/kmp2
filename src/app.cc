@@ -136,8 +136,9 @@ Curses::drawTime()
     u64 mMax = u64(mFMax);
     u64 fracMax = 60 * (mFMax - mMax);
 
-    auto timeStr = std::format("{}:{:02.0f} / {}:{:02d} (min/sec)", m, frac, mMax, fracMax);
+    auto timeStr = std::format("{}:{:02.0f} / {}:{:02d}", m, frac, mMax, fracMax);
     if (p->bPaused) { timeStr = "(paused) " + timeStr; }
+    timeStr = "time: " + timeStr;
 
     mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
 }
