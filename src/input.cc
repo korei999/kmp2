@@ -298,7 +298,7 @@ parseTimeString(std::wstring_view ts, app::PipeWirePlayer* p)
 {
     u64 ret = 0;
 
-    if (!std::isdigit(ts[0]) || ts.empty())
+    if (ts.empty() || !std::isdigit(ts[0]))
         return std::nullopt;
 
     std::vector<std::wstring> numbers {};
