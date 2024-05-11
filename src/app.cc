@@ -156,8 +156,8 @@ Curses::drawVolume()
     auto getColor = [&](f64 i) -> int {
         f64 val = p->volume * (i/(maxline));
 
-        if (val > 1.00) return COLOR_PAIR(color::red);
-        else if (val > 0.50) return COLOR_PAIR(color::yellow);
+        if (val > 1.01) return COLOR_PAIR(color::red);
+        else if (val > 0.51) return COLOR_PAIR(color::yellow);
         else return COLOR_PAIR(color::green);
     };
 
