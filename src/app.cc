@@ -60,7 +60,7 @@ Curses::Curses()
     curs_set(0);
     noecho();
     cbreak();
-    timeout(1000);
+    timeout(def::updateRate);
     keypad(stdscr, true);
     refresh();
 
@@ -129,13 +129,13 @@ Curses::drawTime()
 
     f64 mF = t / 60.0;
     u64 m = u64(mF);
-    u64 frac = 60 * (mF - m);
+    f64 frac = 60 * (mF - m);
 
     f64 mFMax = maxT / 60.0;
     u64 mMax = u64(mFMax);
     u64 fracMax = 60 * (mFMax - mMax);
 
-    auto timeStr = std::format("{}:{:02d} / {}:{:02d} (min/sec)", m, frac, mMax, fracMax);
+    auto timeStr = std::format("{}:{:02.0f} / {}:{:02d} (min/sec)", m, frac, mMax, fracMax);
     if (p->bPaused) { timeStr = "(paused) " + timeStr; }
 
     mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
@@ -229,7 +229,7 @@ Curses::drawPlayList()
     werase(pl.pBor);
     for (long i = firstInList; i < (long)p->songs.size() && startFromY < maxy; i++, startFromY++)
     {
-        auto lineStr = utils::removePath(std::format("{}", p->songs[i]));
+        auto lineStr = utils::removePath(p->songs[i]);
         lineStr.resize(getmaxx(pl.pCon) - 1);
 
         if (i == sel)
@@ -493,7 +493,7 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
 
     timeout(5000);
     input::readWString(prefix, wb, std::size(wb));
-    timeout(1000);
+    timeout(def::updateRate);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
         searchingNow = (wchar_t*)wb;
@@ -544,7 +544,7 @@ PipeWirePlayer::setSeek()
 
     timeout(5000);
     input::readWString(L"time: ", wb, std::size(wb));
-    timeout(1000);
+    timeout(def::updateRate);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
     {
@@ -567,7 +567,7 @@ PipeWirePlayer::jumpTo()
 
     timeout(5000);
     input::readWString(L"select: ", wb, std::size(wb));
-    timeout(1000);
+    timeout(def::updateRate);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
     {

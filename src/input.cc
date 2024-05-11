@@ -38,8 +38,9 @@ read(app::PipeWirePlayer* p)
             p->term.drawUI();
             c = getch();
         }
-        timeout(1000);
+        timeout(app::def::updateRate);
     };
+
 
     while ((c = getch()))
     {
@@ -231,7 +232,6 @@ read(app::PipeWirePlayer* p)
                 break;
         }
 
-        /* TODO: each 1000ms time updates are not actually accurate */
         p->term.update.bStatus = true;
         p->term.drawUI();
     }

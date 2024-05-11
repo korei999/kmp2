@@ -22,13 +22,14 @@ constexpr int step = 100000;
 constexpr int sampleRate = 48000;
 constexpr int channels = 2;
 constexpr f64 volume = 0.15;
+constexpr u32 updateRate = 1000;
 
 };
 
 constexpr wchar_t volumeLevels[17][3] {
     L" ", L"▁", L"▁", L"▂", L"▂", L"▃", L"▃", L"▄", L"▄", L"▅", L"▅", L"▆", L"▆", L"▇", L"▇", L"█", L"█"
 };
-constexpr wchar_t blockIcon[2] = L"█";
+constexpr wchar_t blockIcon[3] = L"█";
 constexpr size_t chunkSize = 0x4000;
 
 struct PipeWireData

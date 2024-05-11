@@ -73,11 +73,7 @@ onProcessCB(void* data)
     pw_stream_queue_buffer(p->pw.stream, b);
 
     if (p->bNext || p->bPrev || p->bNewSongSelected || p->bFinished)
-    {
-        p->pw.mtx.unlock();
         pw_main_loop_quit(p->pw.loop);
-        return;
-    }
 }
 
 } /* namespace play */

@@ -1,8 +1,6 @@
 #include "search.hh"
 #include "utils.hh"
 
-#include <codecvt>
-
 namespace search
 {
 
@@ -16,7 +14,6 @@ getIndexList(const std::vector<std::string>& a, std::wstring_view key, enum dir 
     int cond = direction == dir::forward ? a.size() : -1;
 
     const auto& f = std::use_facet<std::ctype<wchar_t>>(std::locale());
-    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
 
     for (int i = start; i != cond; i += inc)
     {
@@ -24,9 +21,11 @@ getIndexList(const std::vector<std::string>& a, std::wstring_view key, enum dir 
 
         /*  https://stackoverflow.com/questions/2573834/c-convert-string-or-char-to-wstring-or-wchar-t */
         std::wstring sw(a[i].size(), L' ');
-        sw.resize(std::mbstowcs(&sw[0], s.data(), s.size()));
+        size_t swSize = std::mbstowcs(&sw[0], s.data(), s.size());
+        sw.resize(swSize);
 
         std::wstring fw(key.begin(), key.end());
+
         f.toupper(&sw[0], &sw[0] + sw.size());
         f.toupper(&fw[0], &fw[0] + fw.size());
 

@@ -91,4 +91,10 @@ removePath(std::string_view str)
     return std::string(str.substr(str.find_last_of("/") + 1, str.size()));
 }
 
+constexpr std::wstring
+removePath(std::wstring_view str)
+{
+    return std::wstring(str.substr(str.find_last_of(L"/") + 1, str.size()));
+}
+
 } /* namespace utils */
