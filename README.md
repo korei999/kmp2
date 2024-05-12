@@ -13,6 +13,7 @@ Formats supported: flac, opus, mp3, ogg, wav, caf, aif.
 - `r` repeat after last song.
 - `m` mute.
 - `q` quit.
+- `[` and `]` pitch shifting fun. `\` Set original rate back.
 
 ### Dependencies:
 fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel meson`

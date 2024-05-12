@@ -239,6 +239,36 @@ read(app::PipeWirePlayer* p)
                 redrawwin(stdscr);
                 break;
 
+            case '[':
+                {
+                    std::lock_guard lock(p->pw.mtx);
+
+                    long nSr = (f64)p->pw.sampleRate - 1000;
+                    if (nSr < 0) nSr = 1000;
+
+                    p->newSampleRate = nSr;
+                    p->bChangeParams = true;
+                }
+                break;
+
+            case ']':
+                {
+                    std::lock_guard lock(p->pw.mtx);
+
+                    long nSr = (f64)p->pw.sampleRate + 1000;
+                    p->newSampleRate = nSr;
+                    p->bChangeParams = true;
+                }
+                break;
+
+            case '\\':
+                {
+                    std::lock_guard lock(p->pw.mtx);
+                    p->newSampleRate = p->origSampleRate;
+                    p->bChangeParams = true;
+                }
+                break;
+
             case ERR:
                 break;
 

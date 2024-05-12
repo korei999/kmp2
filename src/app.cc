@@ -386,16 +386,13 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &info);
 
-    [[maybe_unused]] auto err = pw_stream_connect(pw.stream,
+    pw_stream_connect(pw.stream,
                       PW_DIRECTION_OUTPUT,
                       PW_ID_ANY,
                       (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT |
                                              PW_STREAM_FLAG_MAP_BUFFERS |
                                              PW_STREAM_FLAG_ASYNC),
                       params, std::size(params));
-#ifndef NDEBUG
-    CERR("err: {}\n", err);
-#endif
 }
 
 void
@@ -416,12 +413,20 @@ PipeWirePlayer::playCurrent()
         pw.format = SPA_AUDIO_FORMAT_F32;
         pw.sampleRate = hSnd.samplerate();
         pw.channels = hSnd.channels();
+        origSampleRate = pw.sampleRate;
 
         pcmPos = 0;
         pcmSize = hSnd.frames() * pw.channels;
 
         info = song::Info(currSongName(), hSnd);
 
+        /* TODO: there is probably a better way to update params than just to reset the whole thing */
+updateParamsHack:
+        if (bChangeParams)
+        {
+            pw.sampleRate = newSampleRate;
+            bChangeParams = false;
+        }
         setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
         term.updateAll();
@@ -433,6 +438,9 @@ PipeWirePlayer::playCurrent()
         /* in this order */
         pw_stream_destroy(pw.stream);
         pw_main_loop_destroy(pw.loop);
+
+        if (bChangeParams)
+            goto updateParamsHack;
     }
     else
     {

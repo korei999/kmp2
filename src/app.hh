@@ -109,6 +109,9 @@ struct PipeWirePlayer
     bool bRepeatAfterLast = false;
     bool bWrapSelection = true;
     bool bFinished = false;
+    bool bChangeParams = false;
+    u32 newSampleRate = 48000;
+    u32 origSampleRate;
 
     PipeWirePlayer(int argc, char** argv);
     ~PipeWirePlayer();
