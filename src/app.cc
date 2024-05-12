@@ -421,17 +421,19 @@ PipeWirePlayer::playCurrent()
         info = song::Info(currSongName(), hSnd);
 
         /* TODO: there is probably a better way to update params than just to reset the whole thing */
-updateParamsHack:
-        if (bChangeParams)
-        {
-            pw.sampleRate = newSampleRate;
-            bChangeParams = false;
-        }
         setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
         term.updateAll();
         term.drawUI();
         refresh(); /* needed to avoid one second black screen before first getch update */
+
+updateParamsHack:
+        if (bChangeParams)
+        {
+            pw.sampleRate = newSampleRate;
+            setupPlayer(pw.format, pw.sampleRate, pw.channels);
+            bChangeParams = false;
+        }
 
         pw_main_loop_run(pw.loop);
 
