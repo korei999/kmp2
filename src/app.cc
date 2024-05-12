@@ -33,13 +33,21 @@ ioChangedCB([[maybe_unused]] void* data,
     //
 }
 
+static void
+paramChangedCB([[maybe_unused]] void* data,
+               [[maybe_unused]] uint32_t id,
+               [[maybe_unused]] const spa_pod* param)
+{
+    //
+}
+
 static const pw_stream_events streamEvents {
     .version = PW_VERSION_STREAM_EVENTS,
 	.destroy {},
     .state_changed {},
     .control_info {},
     .io_changed = ioChangedCB,
-    .param_changed {},
+    .param_changed = paramChangedCB,
     .add_buffer {},
     .remove_buffer {},
     .process = play::onProcessCB,
@@ -47,7 +55,6 @@ static const pw_stream_events streamEvents {
     .command {},
     .trigger_done {},
 };
-
 
 std::mutex PipeWireData::mtx;
 f32 PipeWirePlayer::chunk[chunkSize] {};
@@ -61,7 +68,7 @@ Curses::Curses()
     set_escdelay(0);
     noecho();
     cbreak();
-    timeout(def::updateRate);
+    timeout(defaults::updateRate);
     keypad(stdscr, true);
     refresh();
 
@@ -151,7 +158,7 @@ Curses::drawVolume()
     int maxx = getmaxx(status.pCon);
 
     long maxWidth = maxx - volumeStr.size() - 1;
-    f64 maxLine = (p->volume * (f64)maxWidth) * (1.0 - (def::maxVolume - 1.0));
+    f64 maxLine = (p->volume * (f64)maxWidth) * (1.0 - (defaults::maxVolume - 1.0));
 
     auto getColor = [&](f64 i) -> int {
         f64 val = p->volume * (i / (maxLine));
@@ -379,13 +386,16 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &info);
 
-    pw_stream_connect(pw.stream,
+    auto err = pw_stream_connect(pw.stream,
                       PW_DIRECTION_OUTPUT,
                       PW_ID_ANY,
                       (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT |
                                              PW_STREAM_FLAG_MAP_BUFFERS |
                                              PW_STREAM_FLAG_ASYNC),
                       params, std::size(params));
+#ifndef NDEBUG
+    CERR("err: {}\n", err);
+#endif
 }
 
 void
@@ -466,9 +476,9 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
     const wchar_t* prefix = direction == search::dir::forward ? L"search: " : L"backwards-search: ";
     wint_t wb[30] {};
 
-    timeout(5000);
+    timeout(defaults::timeOut);
     input::readWString(prefix, wb, std::size(wb));
-    timeout(def::updateRate);
+    timeout(defaults::updateRate);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
         searchingNow = (wchar_t*)wb;
@@ -517,9 +527,9 @@ PipeWirePlayer::setSeek()
 {
     wint_t wb[10] {};
 
-    timeout(5000);
+    timeout(defaults::timeOut);
     input::readWString(L"time: ", wb, std::size(wb));
-    timeout(def::updateRate);
+    timeout(defaults::updateRate);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
     {
@@ -540,9 +550,9 @@ PipeWirePlayer::jumpTo()
 {
     wint_t wb[10] {};
 
-    timeout(5000);
+    timeout(defaults::timeOut);
     input::readWString(L"select: ", wb, std::size(wb));
-    timeout(def::updateRate);
+    timeout(defaults::updateRate);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
     {

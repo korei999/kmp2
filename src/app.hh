@@ -2,6 +2,7 @@
 #include "search.hh"
 #include "ultratypes.h"
 #include "song.hh"
+#include "defaults.hh"
 
 #include <mutex>
 #include <pipewire/pipewire.h>
@@ -12,33 +13,18 @@
 namespace app
 {
 
-#define M_PI_M2 (M_PI + M_PI)
-
-namespace def
-{
-
-constexpr f64 maxVolume = 1.2;
-constexpr f64 minVolume = 0.0;
-constexpr int step = 100000;
-constexpr int sampleRate = 48000;
-constexpr int channels = 2;
-constexpr f64 volume = 0.15;
-constexpr u32 updateRate = 1000;
-
-};
-
 constexpr wchar_t blockIcon0[3] = L"█";
 constexpr wchar_t blockIcon1[3] = L"▮";
 constexpr wchar_t blockIcon2[3] = L"▯";
-constexpr size_t chunkSize = 0x4000;
+constexpr size_t chunkSize = 0x4000; /* big enough */
 
 struct PipeWireData
 {
     pw_main_loop* loop {};
     pw_stream* stream {};
     enum spa_audio_format format = SPA_AUDIO_FORMAT_S16;
-    u32 sampleRate = app::def::sampleRate;
-    u32 channels = app::def::channels;
+    u32 sampleRate = 48000;
+    u32 channels = 2;
     static std::mutex mtx;
 };
 
@@ -114,7 +100,7 @@ struct PipeWirePlayer
     long currFoundIdx = 0;
     size_t pcmSize = 0;
     long pcmPos = 0;
-    f64 volume = def::volume;
+    f64 volume = defaults::volume;
     bool bMuted = false;
     bool bPaused = false;
     bool bNext = false;

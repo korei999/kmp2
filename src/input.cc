@@ -1,5 +1,6 @@
 #include "input.hh"
 #include "utils.hh"
+#include "defaults.hh"
 
 #include <ncurses.h>
 
@@ -31,13 +32,13 @@ read(app::PipeWirePlayer* p)
 
         if (c == 'l' || c == KEY_RIGHT)
         {
-            step = app::def::step;
+            step = defaults::step;
             key0 = 'l';
             key1 = KEY_RIGHT;
         }
         else
         {
-            step = -app::def::step;
+            step = -defaults::step;
             key0 = 'h';
             key1 = KEY_LEFT;
         }
@@ -52,9 +53,8 @@ read(app::PipeWirePlayer* p)
             p->term.drawUI();
             c = getch();
         }
-        timeout(app::def::updateRate);
+        timeout(defaults::updateRate);
     };
-
 
     while ((c = getch()))
     {
@@ -72,8 +72,8 @@ read(app::PipeWirePlayer* p)
                 [[fallthrough]];
             case ')':
                 p->volume += 0.01;
-                if (p->volume > app::def::maxVolume)
-                    p->volume = app::def::maxVolume;
+                if (p->volume > defaults::maxVolume)
+                    p->volume = defaults::maxVolume;
                 break;
 
             case '9':
@@ -81,8 +81,8 @@ read(app::PipeWirePlayer* p)
                 [[fallthrough]];
             case '(':
                 p->volume -= 0.01;
-                if (p->volume < app::def::minVolume)
-                    p->volume = app::def::minVolume;
+                if (p->volume < defaults::minVolume)
+                    p->volume = defaults::minVolume;
                 break;
 
             case KEY_RIGHT:
