@@ -386,7 +386,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &info);
 
-    auto err = pw_stream_connect(pw.stream,
+    [[maybe_unused]] auto err = pw_stream_connect(pw.stream,
                       PW_DIRECTION_OUTPUT,
                       PW_ID_ANY,
                       (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT |
