@@ -111,6 +111,7 @@ struct PipeWirePlayer
     bool bWrapSelection = true;
     bool bFinished = false;
     bool bChangeParams = false;
+    f64 speedMul = 1.0;
 
     PipeWirePlayer(int argc, char** argv);
     ~PipeWirePlayer();

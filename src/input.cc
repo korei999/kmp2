@@ -64,6 +64,7 @@ read(app::PipeWirePlayer* p)
 
         // p->newSampleRate = nSr;
         p->pw.sampleRate = nSr;
+        p->speedMul = (f64)p->pw.sampleRate / (f64)p->pw.origSampleRate;
         p->bChangeParams = true;
     };
 
@@ -268,6 +269,7 @@ read(app::PipeWirePlayer* p)
                 {
                     std::lock_guard lock(p->pw.mtx);
                     p->pw.sampleRate = p->pw.origSampleRate;
+                    p->speedMul = 1.0;
                     p->bChangeParams = true;
                 }
                 break;

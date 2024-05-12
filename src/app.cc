@@ -151,10 +151,7 @@ Curses::drawTime()
     timeStr = "time: " + timeStr;
 
     if (p->pw.sampleRate != p->pw.origSampleRate)
-    {
-        f64 diff = (f64)p->pw.sampleRate / (f64)p->pw.origSampleRate;
-        timeStr += std::format(" ({:.0f}% speed)", diff * 100);
-    }
+        timeStr += std::format(" ({:.0f}% speed)", p->speedMul * 100);
 
     mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
 }
@@ -429,6 +426,8 @@ PipeWirePlayer::playCurrent()
 
         info = song::Info(currSongName(), hSnd);
 
+        /* restore speed multiplier */
+        pw.sampleRate *= speedMul;
         setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
         term.updateAll();
