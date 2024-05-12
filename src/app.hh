@@ -1,6 +1,7 @@
 #pragma once
 #include "search.hh"
 #include "ultratypes.h"
+#include "song.hh"
 
 #include <mutex>
 #include <pipewire/pipewire.h>
@@ -99,22 +100,11 @@ private:
     void drawStatus();
 };
 
-struct SongInfo
-{
-    std::string path {};
-    std::string title {};
-    std::string artist {};
-    std::string album {};
-
-    SongInfo() = default;
-    SongInfo(std::string_view _path, const SndfileHandle& h);
-};
-
 struct PipeWirePlayer
 {
     PipeWireData pw {};
     SndfileHandle hSnd {};
-    SongInfo info {};
+    song::Info info {};
     Curses term;
     std::vector<std::string> songs {};
     std::vector<int> foundIndices {};

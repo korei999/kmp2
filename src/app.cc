@@ -154,7 +154,7 @@ Curses::drawVolume()
     f64 maxline = (p->volume * (f64)maxWidth) * (1.0 - (def::maxVolume - 1.0));
 
     auto getColor = [&](f64 i) -> int {
-        f64 val = p->volume * (i/(maxline));
+        f64 val = p->volume * (i / (maxline));
 
         if (val > 1.01) return COLOR_PAIR(color::red);
         else if (val > 0.51) return COLOR_PAIR(color::yellow);
@@ -311,24 +311,6 @@ Curses::drawStatus()
     drawBorders(status.pBor);
 }
 
-SongInfo::SongInfo(std::string_view _path, const SndfileHandle& h)
-{
-    const char* _title = h.getString(SF_STR_TITLE);
-    const char* _artist = h.getString(SF_STR_ARTIST);
-    const char* _album = h.getString(SF_STR_ALBUM);
-
-    if (_title) title = _title;
-    else title = utils::removePath(_path);
-
-    auto set = [](const char* s) -> std::string {
-        if (s) return s;
-        else return {};
-    };
-
-    artist = set(_artist);
-    album = set(_album);
-}
-
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
 {
     term.p = this;
@@ -428,7 +410,7 @@ PipeWirePlayer::playCurrent()
         pcmPos = 0;
         pcmSize = hSnd.frames() * pw.channels;
 
-        info = SongInfo(currSongName(), hSnd);
+        info = song::Info(currSongName(), hSnd);
 
         setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
