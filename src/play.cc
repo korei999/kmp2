@@ -42,6 +42,8 @@ onProcessCB(void* data)
 
     p->hSnd.readf(p->chunk, nFrames);
     int chunkPos = 0;
+
+    /* non linear nicer ramping */
     f32 vol = p->bMuted ? 0.0 : std::pow(p->volume, 1.5);
 
     for (int i = 0; i < nFrames; i++)
@@ -58,6 +60,7 @@ onProcessCB(void* data)
         }
     }
 
+    /* update position last time */
     p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
 
     buf->datas[0].chunk->offset = 0;

@@ -91,7 +91,7 @@ struct Curses
 
 private:
     void drawTime();
-    void drawVolume();
+    int drawVolume();
     void drawPlayListCounter();
     void drawTitle();
     void drawPlayList();

@@ -10,17 +10,17 @@ namespace app
 {
 
 static void
-drawBorders(WINDOW* pWin)
+drawBorders(WINDOW* pWin, enum Curses::color color = Curses::color::blue)
 {
     cchar_t ls, rs, ts, bs, tl, tr, bl, br;
-    setcchar(&ls, L"┃", 0, Curses::color::blue, nullptr);
-    setcchar(&rs, L"┃", 0, Curses::color::blue, nullptr);
-    setcchar(&ts, L"━", 0, Curses::color::blue, nullptr);
-    setcchar(&bs, L"━", 0, Curses::color::blue, nullptr);
-    setcchar(&tl, L"┏", 0, Curses::color::blue, nullptr);
-    setcchar(&tr, L"┓", 0, Curses::color::blue, nullptr);
-    setcchar(&bl, L"┗", 0, Curses::color::blue, nullptr);
-    setcchar(&br, L"┛", 0, Curses::color::blue, nullptr);
+    setcchar(&ls, L"┃", 0, color, nullptr);
+    setcchar(&rs, L"┃", 0, color, nullptr);
+    setcchar(&ts, L"━", 0, color, nullptr);
+    setcchar(&bs, L"━", 0, color, nullptr);
+    setcchar(&tl, L"┏", 0, color, nullptr);
+    setcchar(&tr, L"┓", 0, color, nullptr);
+    setcchar(&bl, L"┗", 0, color, nullptr);
+    setcchar(&br, L"┛", 0, color, nullptr);
     wborder_set(pWin, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
 }
 
@@ -143,7 +143,7 @@ Curses::drawTime()
     mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
 }
 
-void 
+int 
 Curses::drawVolume()
 {
     auto volumeStr = std::format("volume: {:3.0f}%\n", 100.0 * p->volume);
@@ -151,22 +151,22 @@ Curses::drawVolume()
     int maxx = getmaxx(status.pCon);
 
     long maxWidth = maxx - volumeStr.size() - 1;
-    f64 maxline = (p->volume * (f64)maxWidth) * (1.0 - (def::maxVolume - 1.0));
+    f64 maxLine = (p->volume * (f64)maxWidth) * (1.0 - (def::maxVolume - 1.0));
 
     auto getColor = [&](f64 i) -> int {
-        f64 val = p->volume * (i / (maxline));
+        f64 val = p->volume * (i / (maxLine));
 
-        if (val > 1.01) return COLOR_PAIR(color::red);
-        else if (val > 0.51) return COLOR_PAIR(color::yellow);
-        else return COLOR_PAIR(color::green);
+        if (val > 1.01) return color::red;
+        else if (val > 0.51) return color::yellow;
+        else return color::green;
     };
 
-    int sCol = p->bMuted ? mutedColor : A_BOLD | getColor(maxline);
+    int sCol = p->bMuted ? mutedColor : A_BOLD | COLOR_PAIR(getColor(maxLine));
     wattron(status.pCon, sCol);
     mvwaddnstr(status.pCon, 1, 0, volumeStr.data(), maxx);
     wattroff(status.pCon, sCol);
 
-    for (long i = 0; i < maxline; i++)
+    for (long i = 0; i < maxLine; i++)
     {
         int color;
         const wchar_t* icon;
@@ -177,7 +177,7 @@ Curses::drawVolume()
         }
         else
         {
-            color = getColor(i);
+            color = COLOR_PAIR(getColor(i));
             icon = blockIcon1;
         }
 
@@ -186,7 +186,7 @@ Curses::drawVolume()
         wattroff(status.pCon, color);
     }
 
-    drawBorders(status.pBor);
+    return sCol;
 }
 
 void
@@ -275,25 +275,25 @@ void
 Curses::drawInfo()
 {
     int maxx = getmaxx(info.pCon);
-    constexpr std::string_view sTi = "title: ";
-    constexpr std::string_view sAl = "album: ";
-    constexpr std::string_view sAr = "artist: ";
+    constexpr std::string_view sTitle = "title: ";
+    constexpr std::string_view sAlbum = "album: ";
+    constexpr std::string_view sArtist = "artist: ";
 
     werase(info.pBor);
 
-    mvwaddnstr(info.pCon, 0, 0, sTi.data(), maxx*2);
+    mvwaddnstr(info.pCon, 0, 0, sTitle.data(), maxx*2);
     wattron(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::yellow));
-    mvwaddnstr(info.pCon, 0, sTi.size(), p->info.title.data(), (maxx*2) - sTi.size());
+    mvwaddnstr(info.pCon, 0, sTitle.size(), p->info.title.data(), (maxx*2) - sTitle.size());
     wattroff(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::yellow));
 
-    mvwaddnstr(info.pCon, 2, 0, sAl.data(), maxx);
+    mvwaddnstr(info.pCon, 2, 0, sAlbum.data(), maxx);
     wattron(info.pCon, A_BOLD);
-    mvwaddnstr(info.pCon, 2, sAl.size(), p->info.album.data(), maxx);
+    mvwaddnstr(info.pCon, 2, sAlbum.size(), p->info.album.data(), maxx - sAlbum.size());
     wattroff(info.pCon, A_BOLD);
 
-    mvwaddnstr(info.pCon, 3, 0, sAr.data(), maxx);
+    mvwaddnstr(info.pCon, 3, 0, sArtist.data(), maxx);
     wattron(info.pCon, A_BOLD);
-    mvwaddnstr(info.pCon, 3, sAr.size(), p->info.artist.data(), maxx);
+    mvwaddnstr(info.pCon, 3, sArtist.size(), p->info.artist.data(), maxx - sArtist.size());
     wattroff(info.pCon, A_BOLD);
 
     drawBorders(info.pBor);
@@ -305,10 +305,10 @@ Curses::drawStatus()
     werase(status.pBor);
 
     drawTime();
-    drawVolume();
+    auto color = drawVolume();
     drawPlayListCounter();
 
-    drawBorders(status.pBor);
+    drawBorders(status.pBor, (enum color)PAIR_NUMBER(color));
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
