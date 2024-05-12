@@ -127,6 +127,9 @@ Curses::resizeWindows()
 
     status.pBor = subwin(stdscr, listYPos, sYP, 0, 0);
     status.pCon = derwin(status.pBor, getmaxy(status.pBor) - 1, getmaxx(status.pBor) - 2, 1, 1);
+
+    redrawwin(stdscr);
+    updateAll();
 }
 
 void
@@ -147,9 +150,9 @@ Curses::drawTime()
     if (p->bPaused) { timeStr = "(paused) " + timeStr; }
     timeStr = "time: " + timeStr;
 
-    if (p->pw.sampleRate != p->origSampleRate)
+    if (p->pw.sampleRate != p->pw.origSampleRate)
     {
-        f64 diff = (f64)p->pw.sampleRate / (f64)p->origSampleRate;
+        f64 diff = (f64)p->pw.sampleRate / (f64)p->pw.origSampleRate;
         timeStr += std::format(" ({:.0f}% speed)", diff * 100);
     }
 
@@ -419,7 +422,7 @@ PipeWirePlayer::playCurrent()
         pw.format = SPA_AUDIO_FORMAT_F32;
         pw.sampleRate = hSnd.samplerate();
         pw.channels = hSnd.channels();
-        origSampleRate = pw.sampleRate;
+        pw.origSampleRate = pw.sampleRate;
 
         pcmPos = 0;
         pcmSize = hSnd.frames() * pw.channels;
@@ -436,14 +439,10 @@ PipeWirePlayer::playCurrent()
 updateParamsHack:
         if (bChangeParams)
         {
-            pw.sampleRate = newSampleRate;
+            bChangeParams = false;
             setupPlayer(pw.format, pw.sampleRate, pw.channels);
             term.resizeWindows();
-            term.updateAll();
-            redrawwin(stdscr);
             term.drawUI();
-
-            bChangeParams = false;
         }
 
         pw_main_loop_run(pw.loop);

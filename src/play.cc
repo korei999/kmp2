@@ -72,12 +72,11 @@ onProcessCB(void* data)
 
     pw_stream_queue_buffer(p->pw.stream, b);
 
-    if (p->bNext                         ||
-        p->bPrev                         ||
-        p->bNewSongSelected              ||
-        p->bFinished                     ||
-        p->pcmPos > (long)p->pcmSize - 1 ||
-        p->bChangeParams)
+    if (p->bNext                          ||
+        p->bPrev                          ||
+        p->bNewSongSelected               ||
+        p->bFinished                      ||
+        p->pcmPos > (long)p->pcmSize - 1)
     {
         pw_main_loop_quit(p->pw.loop);
     }

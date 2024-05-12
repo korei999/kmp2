@@ -59,12 +59,11 @@ read(app::PipeWirePlayer* p)
     };
 
     auto addSampleRate = [&](long val) -> void {
-        std::lock_guard lock(p->pw.mtx);
-
         long nSr = (f64)p->pw.sampleRate + val;
         if (nSr < 1000) nSr = 1000;
 
-        p->newSampleRate = nSr;
+        // p->newSampleRate = nSr;
+        p->pw.sampleRate = nSr;
         p->bChangeParams = true;
     };
 
@@ -247,8 +246,6 @@ read(app::PipeWirePlayer* p)
             case KEY_RESIZE:
             case 12: /* C-l */
                 p->term.resizeWindows();
-                p->term.updateAll();
-                redrawwin(stdscr);
                 break;
 
             case '[':
@@ -270,7 +267,7 @@ read(app::PipeWirePlayer* p)
             case '\\':
                 {
                     std::lock_guard lock(p->pw.mtx);
-                    p->newSampleRate = p->origSampleRate;
+                    p->pw.sampleRate = p->pw.origSampleRate;
                     p->bChangeParams = true;
                 }
                 break;

@@ -24,6 +24,7 @@ struct PipeWireData
     pw_stream* stream {};
     enum spa_audio_format format = SPA_AUDIO_FORMAT_S16;
     u32 sampleRate = 48000;
+    u32 origSampleRate = sampleRate;
     u32 channels = 2;
     static std::mutex mtx;
 };
@@ -110,8 +111,6 @@ struct PipeWirePlayer
     bool bWrapSelection = true;
     bool bFinished = false;
     bool bChangeParams = false;
-    u32 newSampleRate = 0;
-    u32 origSampleRate = 0;
 
     PipeWirePlayer(int argc, char** argv);
     ~PipeWirePlayer();
