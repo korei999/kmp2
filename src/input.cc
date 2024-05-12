@@ -1,5 +1,4 @@
 #include "input.hh"
-#include "utils.hh"
 #include "defaults.hh"
 
 #include <ncurses.h>
@@ -54,6 +53,16 @@ read(app::PipeWirePlayer* p)
             c = getch();
         }
         timeout(defaults::updateRate);
+    };
+
+    auto addSampleRate = [&](long val) -> void {
+        std::lock_guard lock(p->pw.mtx);
+
+        long nSr = (f64)p->pw.sampleRate + val;
+        if (nSr < 1000) nSr = 1000;
+
+        p->newSampleRate = nSr;
+        p->bChangeParams = true;
     };
 
     while ((c = getch()))
@@ -240,25 +249,19 @@ read(app::PipeWirePlayer* p)
                 break;
 
             case '[':
-                {
-                    std::lock_guard lock(p->pw.mtx);
+                addSampleRate(-1000);
+                break;
 
-                    long nSr = (f64)p->pw.sampleRate - 1000;
-                    if (nSr < 0) nSr = 1000;
-
-                    p->newSampleRate = nSr;
-                    p->bChangeParams = true;
-                }
+            case '{':
+                addSampleRate(-100);
                 break;
 
             case ']':
-                {
-                    std::lock_guard lock(p->pw.mtx);
+                addSampleRate(1000);
+                break;
 
-                    long nSr = (f64)p->pw.sampleRate + 1000;
-                    p->newSampleRate = nSr;
-                    p->bChangeParams = true;
-                }
+            case '}':
+                addSampleRate(100);
                 break;
 
             case '\\':
