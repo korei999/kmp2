@@ -1,5 +1,8 @@
 #include "input.hh"
 #include "defaults.hh"
+#ifndef NDEBUG
+#include "utils.hh"
+#endif
 
 #include <ncurses.h>
 

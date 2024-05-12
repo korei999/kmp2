@@ -91,7 +91,7 @@ struct PipeWirePlayer
     PipeWireData pw {};
     SndfileHandle hSnd {};
     song::Info info {};
-    Curses term;
+    Curses term {};
     std::vector<std::string> songs {};
     std::vector<int> foundIndices {};
     std::wstring searchingNow {};
@@ -110,8 +110,8 @@ struct PipeWirePlayer
     bool bWrapSelection = true;
     bool bFinished = false;
     bool bChangeParams = false;
-    u32 newSampleRate = 48000;
-    u32 origSampleRate;
+    u32 newSampleRate = 0;
+    u32 origSampleRate = 0;
 
     PipeWirePlayer(int argc, char** argv);
     ~PipeWirePlayer();

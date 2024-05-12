@@ -147,6 +147,12 @@ Curses::drawTime()
     if (p->bPaused) { timeStr = "(paused) " + timeStr; }
     timeStr = "time: " + timeStr;
 
+    if (p->pw.sampleRate != p->origSampleRate)
+    {
+        f64 diff = (f64)p->pw.sampleRate / (f64)p->origSampleRate;
+        timeStr += std::format(" ({:.0f}% speed)", diff * 100);
+    }
+
     mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
 }
 
@@ -420,18 +426,22 @@ PipeWirePlayer::playCurrent()
 
         info = song::Info(currSongName(), hSnd);
 
-        /* TODO: there is probably a better way to update params than just to reset the whole thing */
         setupPlayer(pw.format, pw.sampleRate, pw.channels);
 
         term.updateAll();
         term.drawUI();
         refresh(); /* needed to avoid one second black screen before first getch update */
 
+        /* TODO: there is probably a better way to update params than just to reset the whole thing */
 updateParamsHack:
         if (bChangeParams)
         {
             pw.sampleRate = newSampleRate;
             setupPlayer(pw.format, pw.sampleRate, pw.channels);
+            term.update.bStatus = true;
+            term.drawUI();
+            refresh();
+
             bChangeParams = false;
         }
 
