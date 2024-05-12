@@ -16,6 +16,9 @@ onProcessCB(void* data)
 
     std::lock_guard lock(p->pw.mtx);
 
+    if (p->bChangeParams)
+        pw_main_loop_quit(p->pw.loop);
+
     if (p->bPaused)
         return;
 

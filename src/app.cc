@@ -438,9 +438,10 @@ updateParamsHack:
         {
             pw.sampleRate = newSampleRate;
             setupPlayer(pw.format, pw.sampleRate, pw.channels);
-            term.update.bStatus = true;
+            term.resizeWindows();
+            term.updateAll();
+            redrawwin(stdscr);
             term.drawUI();
-            refresh();
 
             bChangeParams = false;
         }
