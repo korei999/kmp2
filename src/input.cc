@@ -320,7 +320,8 @@ read(app::PipeWirePlayer* p)
         }
 
         p->term.update.bStatus = true;
-        p->term.update.bVisualizer = true;
+        if (!p->bPaused) p->term.update.bVisualizer = true;
+
         p->term.drawUI();
     }
 }

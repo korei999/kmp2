@@ -9,7 +9,7 @@ constexpr f32 minVolume = 0.0;
 constexpr f32 volume = 0.15; /* volume at startup */
 constexpr f64 volumePower = 3.0; /* affects volume curve aka 'std::pow(volume, volumePower)' */
 constexpr int step = 100000; /* pcm relative seek step (for sampleRate=48000 -> "100000 / sampleRate" == skip 2.08 sec each step) */
-constexpr u32 updateRate = 100; /* time (ms) between input polls (affects visualizer updates for now) */
+constexpr u32 updateRate = 50; /* time (ms) between input polls (affects visualizer updates for now) */
 constexpr u32 timeOut = 5000; /* time (ms) to cancel input */
 constexpr bool bWrapSelection = true; /* jump to first after scrolling past the last element in the list */
 constexpr bool bDrawVisualizer = true;
