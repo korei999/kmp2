@@ -16,6 +16,8 @@ namespace app
 constexpr wchar_t blockIcon0[3] = L"█";
 constexpr wchar_t blockIcon1[3] = L"▮";
 constexpr wchar_t blockIcon2[3] = L"▯";
+constexpr wchar_t blockIconST0[3] = L"░";
+constexpr wchar_t botBarIcon0[3] = L"▁";
 constexpr size_t chunkSize = 0x4000; /* big enough */
 
 struct PipeWireData
@@ -26,6 +28,7 @@ struct PipeWireData
     u32 sampleRate = 48000;
     u32 origSampleRate = sampleRate;
     u32 channels = 2;
+    int lastNFrames = 0;
     static std::mutex mtx;
 };
 
@@ -59,13 +62,16 @@ struct Curses
         bool bBottomLine = true;
         bool bStatus = true;
         bool bInfo = true;
+        bool bVisualizer = true;
     } update;
     BWin status {};
     BWin info {};
     BWin pl {};
+    BWin vis {};
     long selected = 0;
     long firstInList = 0;
     const long listYPos = 6;
+    const long visualizerYSize = 4;
     std::mutex mtx;
 
     Curses();
@@ -75,6 +81,7 @@ struct Curses
     void updateAll() { update.bInfo = update.bStatus = update.bPlayList = update.bBottomLine = true; }
     size_t playListMaxY() const { return getmaxy(pl.pBor); }
     void resizeWindows();
+    void drawVisualizer();
 
 private:
     void drawTime();
@@ -108,7 +115,8 @@ struct PipeWirePlayer
     bool bPrev = false;
     bool bNewSongSelected = false;
     bool bRepeatAfterLast = false;
-    bool bWrapSelection = true;
+    bool bWrapSelection = defaults::bWrapSelection;
+    bool bDrawVisualizer = defaults::bDrawVisualizer;
     bool bFinished = false;
     bool bChangeParams = false;
     f64 speedMul = 1.0;

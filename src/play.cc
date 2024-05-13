@@ -43,11 +43,12 @@ onProcessCB(void* data)
     if (b->requested)
         nFrames = SPA_MIN(b->requested, (u64)nFrames);
 
+    p->pw.lastNFrames = nFrames;
     p->hSnd.readf(p->chunk, nFrames);
     int chunkPos = 0;
 
     /* non linear nicer ramping */
-    f32 vol = p->bMuted ? 0.0 : std::pow(p->volume, 1.5);
+    f32 vol = p->bMuted ? 0.0 : std::pow(p->volume, defaults::volumePower);
 
     for (int i = 0; i < nFrames; i++)
     {

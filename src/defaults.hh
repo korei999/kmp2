@@ -4,11 +4,16 @@
 namespace defaults
 {
 
-constexpr f64 maxVolume = 1.2; /* 1.0 == 100% */
-constexpr f64 minVolume = 0.0;
-constexpr f64 volume = 0.15; /* volume at startup */
-constexpr int step = 100000; /* pcm relative seek step */
-constexpr u32 updateRate = 1000; /* time (in ms) between input polls */
-constexpr u32 timeOut = 5000; /* time (in ms) to cancel input */
+constexpr f32 maxVolume = 1.2; /* 1.0 == 100% */
+constexpr f32 minVolume = 0.0;
+constexpr f32 volume = 0.15; /* volume at startup */
+constexpr f64 volumePower = 3.0; /* affects volume curve aka 'std::pow(volume, volumePower)' */
+constexpr int step = 100000; /* pcm relative seek step (for sampleRate=48000 -> "100000 / sampleRate" == skip 2.08 sec each step) */
+constexpr u32 updateRate = 100; /* time (ms) between input polls (affects visualizer updates for now) */
+constexpr u32 timeOut = 5000; /* time (ms) to cancel input */
+constexpr bool bWrapSelection = true; /* jump to first after scrolling past the last element in the list */
+constexpr bool bDrawVisualizer = true;
+constexpr f32 visualizerScalar = 18.0; /* boost bar heights */
+constexpr bool bNormalizeVisualizer = false;
 
 } /* namespace defaults */

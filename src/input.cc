@@ -5,13 +5,31 @@
 #endif
 
 #include <ncurses.h>
+// #include <thread>
 
 namespace input
 {
 
+// [[maybe_unused]] static void
+// drawVisualizer(app::PipeWirePlayer* p)
+// {
+    // while (!p->bFinished)
+    // {
+        // usleep(1000 * defaults::visualizerUpdateRate);
+
+        // std::lock_guard lock(p->term.mtx);
+        // p->term.drawVisualizer();
+        // refresh();
+    // }
+// }
+
 void
 read(app::PipeWirePlayer* p)
 {
+    /* TODO: separate thread for visualizer with it's own update rate would've been nice */
+    // std::thread visThread(drawVisualizer, p);
+    // visThread.detach();
+
     int c;
 
     auto search = [p](enum search::dir d) -> void {
@@ -62,7 +80,6 @@ read(app::PipeWirePlayer* p)
         long nSr = (f64)p->pw.sampleRate + val;
         if (nSr < 1000) nSr = 1000;
 
-        // p->newSampleRate = nSr;
         p->pw.sampleRate = nSr;
         p->speedMul = (f64)p->pw.sampleRate / (f64)p->pw.origSampleRate;
         p->bChangeParams = true;
@@ -265,6 +282,12 @@ read(app::PipeWirePlayer* p)
                 addSampleRate(100);
                 break;
 
+            case 'v':
+            case 'V':
+                p->bDrawVisualizer = !p->bDrawVisualizer;
+                p->term.resizeWindows();
+                break;
+
             case '\\':
                 {
                     std::lock_guard lock(p->pw.mtx);
@@ -285,6 +308,7 @@ read(app::PipeWirePlayer* p)
         }
 
         p->term.update.bStatus = true;
+        p->term.update.bVisualizer = true;
         p->term.drawUI();
     }
 }

@@ -79,8 +79,6 @@ Curses::Curses()
     init_pair(Curses::cyan, COLOR_CYAN, td);
     init_pair(Curses::red, COLOR_RED, td);
     init_pair(Curses::white, COLOR_WHITE, td);
-
-    resizeWindows();
 }
 
 Curses::~Curses()
@@ -94,12 +92,12 @@ Curses::~Curses()
 void
 Curses::drawUI()
 {
-    /* ncurses is not thread safe */
+    /* disallow drawing to ncurses from multiple threads */
     std::lock_guard lock(mtx);
 
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
-    if (maxy > 6 && maxx > 6)
+    if (maxy > 11 && maxx > 11)
     {
         touchwin(stdscr);
 
@@ -107,6 +105,20 @@ Curses::drawUI()
         if (update.bInfo)       { update.bInfo       = false; drawInfo();       }
         if (update.bBottomLine) { update.bBottomLine = false; drawBottomLine(); }
         if (update.bPlayList)   { update.bPlayList   = false; drawPlayList();   }
+
+        if (p->bDrawVisualizer && update.bVisualizer)
+        {
+            update.bVisualizer = false;
+            drawVisualizer();
+        }
+    }
+    else
+    {
+        erase();
+        std::string tooSmall0 = std::format("too small ({}/{})", maxy, maxx);
+        constexpr std::string_view tooSmall1 = ">= 11/11 needed";
+        mvaddstr((maxy-1)/2 - 1, (maxx-tooSmall0.size()-1)/2, tooSmall0.data());
+        mvaddstr((maxy-1)/2 + 1, (maxx-tooSmall1.size()-1)/2, tooSmall1.data());
     }
 }
 
@@ -115,7 +127,18 @@ Curses::resizeWindows()
 {
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
-    pl.pBor = subwin(stdscr, maxy - listYPos - 1, maxx, listYPos, 0);
+    int visOff = 0;
+    if (p->bDrawVisualizer)
+        visOff = visualizerYSize;
+
+    /* TODO: hardcoded for now */
+    if (p->bDrawVisualizer)
+    {
+        vis.pBor = subwin(stdscr, visualizerYSize, maxx, listYPos, 0);
+        vis.pCon = derwin(vis.pBor, getmaxy(vis.pBor), getmaxx(vis.pBor) - 2, 0, 1);
+    }
+
+    pl.pBor = subwin(stdscr, maxy - (listYPos + visOff + 1), maxx, listYPos + visOff, 0);
     pl.pCon = derwin(pl.pBor, getmaxy(pl.pBor) - 1, getmaxx(pl.pBor) - 2, 1, 1);
 
     int iXW = std::round(maxx*0.4);
@@ -129,6 +152,7 @@ Curses::resizeWindows()
     status.pCon = derwin(status.pBor, getmaxy(status.pBor) - 1, getmaxx(status.pBor) - 2, 1, 1);
 
     redrawwin(stdscr);
+    werase(stdscr);
     updateAll();
 }
 
@@ -324,9 +348,54 @@ Curses::drawStatus()
     drawBorders(status.pBor, (enum color)PAIR_NUMBER(color));
 }
 
+void
+Curses::drawVisualizer()
+{
+    werase(vis.pBor);
+
+    int maxy = getmaxy(vis.pCon), maxx = getmaxx(vis.pCon);
+    int lastChunkSize = p->pw.lastNFrames * p->pw.channels;
+
+    std::vector<u32> bars(maxx);
+    int accSize = lastChunkSize / bars.size();
+    long chunkPos = 0;
+
+    for (long i = 0; i < (long)bars.size(); i++)
+    {
+        f32 acc = 0;
+        for (long j = 0; j < accSize; j++)
+            acc += ((std::abs(p->chunk[chunkPos++])) * p->volume);
+        acc /= (accSize);
+
+        u32 h = std::round(acc * defaults::visualizerScalar); /* scale by some number to boost the bars heights */
+        if (h > (u32)maxy) h = maxy;
+        bars[i] = h;
+    }
+
+    constexpr short barHeightColors[4] {
+        color::red, color::yellow, color::green, color::green
+    };
+
+    for (int r = 0; r < maxx; r++)
+    {
+        int maxHeight = bars[r];
+
+        /* draw from bottom (maxy) upwards */
+        for (int c = maxy - 1; c >= maxy - maxHeight; c--)
+        {
+            short color = COLOR_PAIR(barHeightColors[c]);
+
+            wattron(vis.pCon, color);
+            mvwaddwstr(vis.pCon, c, r, botBarIcon0);
+            wattroff(vis.pCon, color);
+        }
+    }
+}
+
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
 {
     term.p = this;
+    term.resizeWindows();
 
     pw_init(&argc, &argv);
 
