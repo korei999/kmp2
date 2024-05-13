@@ -15,27 +15,27 @@ drawVisualizer(app::PipeWirePlayer* p)
 {
     while (!p->bFinished)
     {
-        if (p->bPaused)
+        if (p->bPaused || !p->bDrawVisualizer)
         {
             std::unique_lock lock(p->mtxPause);
             p->cndPause.wait(lock);
         }
 
-        usleep(1000 * defaults::visualizerUpdateRate);
+        std::this_thread::sleep_for(std::chrono::milliseconds(defaults::visualizerUpdateRate));
 
-        std::lock_guard lock(p->term.mtx);
-        p->term.drawVisualizer();
-        touchwin(stdscr);
-        refresh();
+        if (!p->bPaused && p->bDrawVisualizer)
+        {
+            std::lock_guard lock(p->term.mtx);
+
+            p->term.drawVisualizer();
+            wrefresh(p->term.vis.pCon);
+        }
     }
 }
 
 void
 read(app::PipeWirePlayer* p)
 {
-    std::thread visThread(drawVisualizer, p);
-    visThread.detach();
-
     int c;
 
     auto search = [p](enum search::dir d) -> void {
@@ -96,12 +96,12 @@ read(app::PipeWirePlayer* p)
         switch (c)
         {
             case 'q':
+                p->bFinished = true;
                 if (p->bPaused)
                 {
                     p->bPaused = false;
-                    p->cndPause.notify_all();
+                    p->cndPause.notify_one();
                 }
-                p->bFinished = true;
                 return;
                 break;
 
@@ -297,6 +297,7 @@ read(app::PipeWirePlayer* p)
             case 'V':
                 p->bDrawVisualizer = !p->bDrawVisualizer;
                 p->term.resizeWindows();
+                p->term.update.bPlayList = true;
                 break;
 
             case '\\':
@@ -319,6 +320,7 @@ read(app::PipeWirePlayer* p)
         }
 
         p->term.update.bStatus = true;
+        p->term.update.bVisualizer = true;
         p->term.drawUI();
     }
 }

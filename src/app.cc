@@ -105,6 +105,12 @@ Curses::drawUI()
         if (update.bInfo)       { update.bInfo       = false; drawInfo();       }
         if (update.bBottomLine) { update.bBottomLine = false; drawBottomLine(); }
         if (update.bPlayList)   { update.bPlayList   = false; drawPlayList();   }
+
+        if (p->bDrawVisualizer && update.bVisualizer)
+        {
+            update.bVisualizer = false;
+            drawVisualizer();
+        }
     }
     else
     {
@@ -125,12 +131,8 @@ Curses::resizeWindows()
     if (p->bDrawVisualizer)
         visOff = visualizerYSize;
 
-    /* TODO: hardcoded for now */
-    if (p->bDrawVisualizer)
-    {
-        vis.pBor = subwin(stdscr, visualizerYSize, maxx, listYPos, 0);
-        vis.pCon = derwin(vis.pBor, getmaxy(vis.pBor), getmaxx(vis.pBor) - 2, 0, 1);
-    }
+    vis.pBor = subwin(stdscr, visualizerYSize, maxx, listYPos, 0);
+    vis.pCon = derwin(vis.pBor, getmaxy(vis.pBor), getmaxx(vis.pBor) - 2, 0, 1);
 
     pl.pBor = subwin(stdscr, maxy - (listYPos + visOff + 1), maxx, listYPos + visOff, 0);
     pl.pCon = derwin(pl.pBor, getmaxy(pl.pBor) - 1, getmaxx(pl.pBor) - 2, 1, 1);

@@ -39,8 +39,8 @@ struct PipeWirePlayer;
 /* pBor for borders and pCon for content */
 struct BWin
 {
-    WINDOW* pBor;
-    WINDOW* pCon;
+    WINDOW* pBor {};
+    WINDOW* pCon {};
 };
 
 struct Curses
@@ -75,6 +75,7 @@ struct Curses
     const long listYPos = 6;
     const long visualizerYSize = 4;
     std::mutex mtx;
+    std::mutex mtxRefresh;
 
     Curses();
     ~Curses();
@@ -120,7 +121,7 @@ struct PipeWirePlayer
     bool bNewSongSelected = false;
     bool bRepeatAfterLast = false;
     bool bWrapSelection = defaults::bWrapSelection;
-    bool bDrawVisualizer = defaults::bDrawVisualizer;
+    std::atomic<bool> bDrawVisualizer = defaults::bDrawVisualizer;
     std::atomic<bool> bFinished = false;
     bool bChangeParams = false;
     f64 speedMul = 1.0;
