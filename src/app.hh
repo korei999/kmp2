@@ -4,6 +4,8 @@
 #include "song.hh"
 #include "defaults.hh"
 
+#include <atomic>
+#include <condition_variable>
 #include <mutex>
 #include <pipewire/pipewire.h>
 #include <sndfile.hh>
@@ -96,6 +98,8 @@ private:
 
 struct PipeWirePlayer
 {
+    std::mutex mtxPause;
+    std::condition_variable cndPause;
     PipeWireData pw {};
     SndfileHandle hSnd {};
     song::Info info {};
@@ -110,14 +114,14 @@ struct PipeWirePlayer
     long pcmPos = 0;
     f64 volume = defaults::volume;
     bool bMuted = false;
-    bool bPaused = false;
+    std::atomic<bool> bPaused = false;
     bool bNext = false;
     bool bPrev = false;
     bool bNewSongSelected = false;
     bool bRepeatAfterLast = false;
     bool bWrapSelection = defaults::bWrapSelection;
     bool bDrawVisualizer = defaults::bDrawVisualizer;
-    bool bFinished = false;
+    std::atomic<bool> bFinished = false;
     bool bChangeParams = false;
     f64 speedMul = 1.0;
 

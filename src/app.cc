@@ -105,12 +105,6 @@ Curses::drawUI()
         if (update.bInfo)       { update.bInfo       = false; drawInfo();       }
         if (update.bBottomLine) { update.bBottomLine = false; drawBottomLine(); }
         if (update.bPlayList)   { update.bPlayList   = false; drawPlayList();   }
-
-        if (p->bDrawVisualizer && update.bVisualizer)
-        {
-            update.bVisualizer = false;
-            drawVisualizer();
-        }
     }
     else
     {
@@ -386,7 +380,7 @@ Curses::drawVisualizer()
             short color = COLOR_PAIR(barHeightColors[c]);
 
             wattron(vis.pCon, color);
-            mvwaddwstr(vis.pCon, c, r, botBarIcon0);
+            mvwaddwstr(vis.pCon, c, r, defaults::visualizerSymbol);
             wattroff(vis.pCon, color);
         }
     }

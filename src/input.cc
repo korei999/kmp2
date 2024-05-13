@@ -5,30 +5,36 @@
 #endif
 
 #include <ncurses.h>
-// #include <thread>
+#include <thread>
 
 namespace input
 {
 
-// [[maybe_unused]] static void
-// drawVisualizer(app::PipeWirePlayer* p)
-// {
-    // while (!p->bFinished)
-    // {
-        // usleep(1000 * defaults::visualizerUpdateRate);
+[[maybe_unused]] static void
+drawVisualizer(app::PipeWirePlayer* p)
+{
+    while (!p->bFinished)
+    {
+        if (p->bPaused)
+        {
+            std::unique_lock lock(p->mtxPause);
+            p->cndPause.wait(lock);
+        }
 
-        // std::lock_guard lock(p->term.mtx);
-        // p->term.drawVisualizer();
-        // refresh();
-    // }
-// }
+        usleep(1000 * defaults::visualizerUpdateRate);
+
+        std::lock_guard lock(p->term.mtx);
+        p->term.drawVisualizer();
+        touchwin(stdscr);
+        refresh();
+    }
+}
 
 void
 read(app::PipeWirePlayer* p)
 {
-    /* TODO: separate thread for visualizer with it's own update rate would've been nice */
-    // std::thread visThread(drawVisualizer, p);
-    // visThread.detach();
+    std::thread visThread(drawVisualizer, p);
+    visThread.detach();
 
     int c;
 
@@ -91,7 +97,10 @@ read(app::PipeWirePlayer* p)
         {
             case 'q':
                 if (p->bPaused)
+                {
                     p->bPaused = false;
+                    p->cndPause.notify_all();
+                }
                 p->bFinished = true;
                 return;
                 break;
@@ -233,6 +242,8 @@ read(app::PipeWirePlayer* p)
 
             case ' ':
                 p->bPaused = !p->bPaused;
+                if (!p->bPaused)
+                    p->cndPause.notify_all();
                 break;
 
             case '\n':
@@ -308,7 +319,6 @@ read(app::PipeWirePlayer* p)
         }
 
         p->term.update.bStatus = true;
-        p->term.update.bVisualizer = true;
         p->term.drawUI();
     }
 }
