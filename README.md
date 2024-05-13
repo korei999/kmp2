@@ -1,4 +1,4 @@
-![kmp7](https://github.com/korei999/kmp2/assets/93387739/46751511-faa0-4280-9e74-c6650e7723ad)
+![kmp8](https://github.com/korei999/kmp2/assets/93387739/0bfaa28e-8edc-4f8b-9fa7-172fd9fc5e30)
 
 Formats supported: flac, opus, mp3, ogg, wav, caf, aif.
 ### Usage:
