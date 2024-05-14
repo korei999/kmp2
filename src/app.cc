@@ -356,12 +356,15 @@ Curses::drawVisualizer()
     int accSize = lastChunkSize / bars.size();
     long chunkPos = 0;
 
+    /* stupid simple time domain visualization. TODO: figure out dfft or something */
     for (long i = 0; i < (long)bars.size(); i++)
     {
         f32 acc = 0;
         for (long j = 0; j < accSize; j++)
-            acc += ((std::abs(p->chunk[chunkPos++])) * p->volume);
-        acc /= (accSize);
+        {
+            auto newAcc = std::abs((p->chunk[chunkPos++]));
+            if (newAcc > acc) acc = newAcc;
+        }
 
         u32 h = std::round(acc * defaults::visualizerScalar); /* scale by some number to boost the bars heights */
         if (h > (u32)maxy) h = maxy;

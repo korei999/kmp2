@@ -14,7 +14,7 @@ constexpr u32 timeOut = 5000; /* time (ms) to cancel input */
 constexpr bool bWrapSelection = true; /* jump to first after scrolling past the last element in the list */
 constexpr bool bDrawVisualizer = true;
 constexpr u32 visualizerUpdateRate = 50; /* time (ms) between visualizer upates */
-constexpr f32 visualizerScalar = 18.0; /* scale the height of each bar */
+constexpr f32 visualizerScalar = 5.0; /* scale the height of each bar */
 constexpr bool bNormalizeVisualizer = false;
 constexpr wchar_t visualizerSymbol[2] = L":";
 
