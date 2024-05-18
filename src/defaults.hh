@@ -1,5 +1,6 @@
 #pragma once
 #include "ultratypes.h"
+#include <string_view>
 
 namespace defaults
 {
@@ -17,5 +18,9 @@ constexpr u32 visualizerUpdateRate = 50; /* time (ms) between visualizer upates 
 constexpr f32 visualizerScalar = 5.0; /* scale the height of each bar */
 constexpr bool bNormalizeVisualizer = false;
 constexpr wchar_t visualizerSymbol[2] = L":";
+
+constexpr std::string_view formatsSupported[] {
+    ".flac", ".opus", ".mp3", ".ogg", ".wav", ".caf", ".aif"
+};
 
 } /* namespace defaults */

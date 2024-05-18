@@ -2,9 +2,10 @@
 
 Formats supported: flac, opus, mp3, ogg, wav, caf, aif.
 ### Usage:
-- `kmp *`, `kmp **`, `kmp $(find . | rg "\.mp3|\.wav")` or whatever your shell can do.
+- `kmp *`, `kmp **/*` or whatever your shell can do.
 - Navigate with vim-like keybinds.
 - `h` and `l` seek back/forward.
+- `o` and `i` next/prev song.
 - Searching: `/` or `?`, then `n` and `N` jump to next/prev found string.
 - `9` and `0` volume.
 - `t` set time like `4:20`, `40` or `60%`.
@@ -13,7 +14,7 @@ Formats supported: flac, opus, mp3, ogg, wav, caf, aif.
 - `r` repeat after last song.
 - `m` mute.
 - `q` quit.
-- `[` and `]` pitch shifting fun. `\` Set original rate back.
+- `[` and `]` playback speed shifting fun. `\` Set original speed back.
 - `v` toggle visualizer.
 
 ### Dependencies:

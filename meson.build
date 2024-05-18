@@ -9,9 +9,16 @@ sndfile = dependency('sndfile')
 pipewire = dependency('libpipewire-0.3')
 ncursesw = dependency('ncursesw')
 
+deps = [sndfile, pipewire, ncursesw]
+
+fmt = dependency('fmt')
+if fmt.found()
+  deps += [fmt]
+endif
+
 subdir('src')
 
 executable('kmp',
            sources,
-           dependencies : [sndfile, pipewire, ncursesw],
+           dependencies : deps,
            install : true)

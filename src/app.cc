@@ -3,6 +3,7 @@
 #include "play.hh"
 #include "utils.hh"
 
+#include <algorithm>
 #include <cmath>
 #include <thread>
 
@@ -115,7 +116,7 @@ Curses::drawUI()
     else
     {
         erase();
-        std::string tooSmall0 = std::format("too small ({}/{})", maxy, maxx);
+        std::string tooSmall0 = FMT("too small ({}/{})", maxy, maxx);
         constexpr std::string_view tooSmall1 = ">= 11/11 needed";
         mvaddstr((maxy-1)/2 - 1, (maxx-tooSmall0.size()-1)/2, tooSmall0.data());
         mvaddstr((maxy-1)/2 + 1, (maxx-tooSmall1.size()-1)/2, tooSmall1.data());
@@ -166,12 +167,12 @@ Curses::drawTime()
     u64 mMax = u64(mFMax);
     u64 fracMax = 60 * (mFMax - mMax);
 
-    auto timeStr = std::format("{}:{:02.0f} / {}:{:02d}", m, frac, mMax, fracMax);
+    auto timeStr = FMT("{}:{:02.0f} / {}:{:02d}", m, frac, mMax, fracMax);
     if (p->bPaused) { timeStr = "(paused) " + timeStr; }
     timeStr = "time: " + timeStr;
 
     if (p->pw.sampleRate != p->pw.origSampleRate)
-        timeStr += std::format(" ({:.0f}% speed)", p->speedMul * 100);
+        timeStr += FMT(" ({:.0f}% speed)", p->speedMul * 100);
 
     mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
 }
@@ -179,7 +180,7 @@ Curses::drawTime()
 int 
 Curses::drawVolume()
 {
-    auto volumeStr = std::format("volume: {:3.0f}%\n", 100.0 * p->volume);
+    auto volumeStr = FMT("volume: {:3.0f}%\n", 100.0 * p->volume);
     constexpr int mutedColor = COLOR_PAIR(color::blue);
     int maxx = getmaxx(status.pCon);
 
@@ -225,7 +226,7 @@ Curses::drawVolume()
 void
 Curses::drawPlayListCounter()
 {
-    auto songCounterStr = std::format("total: {} / {}", p->currSongIdx + 1, p->songs.size());
+    auto songCounterStr = FMT("total: {} / {}", p->currSongIdx + 1, p->songs.size());
     if (p->bRepeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
 
     mvwaddnstr(status.pCon, 3, 0, songCounterStr.data(), getmaxx(status.pCon));
@@ -294,13 +295,13 @@ Curses::drawBottomLine()
     move(maxy - 1, 1);
     if (!p->searchingNow.empty() && !p->foundIndices.empty())
     {
-        auto ss = std::format(" [{}/{}]", p->currFoundIdx + 1, p->foundIndices.size());
+        auto ss = FMT(" [{}/{}]", p->currFoundIdx + 1, p->foundIndices.size());
         auto s = L"'" + p->searchingNow + L"'" + std::wstring(ss.begin(), ss.end());
         addwstr(s.data());
     }
 
     /* draw selected index */
-    auto sel = std::format("{}\n", p->term.selected + 1);
+    auto sel = FMT("{}\n", p->term.selected + 1);
     mvaddstr(maxy - 1, (getmaxx(stdscr) - 1) - sel.size(), sel.data());
 }
 
@@ -400,20 +401,16 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
 
     term.firstInList = 0;
 
-    for (int i = 1; i < argc; i++)
+    for (int i = 2; i < argc; i++)
     {
         std::string s = argv[i];
 
-        if (s.ends_with(".flac") ||
-            s.ends_with(".opus") ||
-            s.ends_with(".mp3")  ||
-            s.ends_with(".ogg")  ||
-            s.ends_with(".wav")  ||
-            s.ends_with(".caf")  ||
-            s.ends_with(".aif"))
-        {
-            songs.push_back(std::move(s));
-        }
+        for (auto& f : defaults::formatsSupported)
+            if (s.ends_with(f))
+            {
+                songs.push_back(std::move(s));
+                break;
+            }
     }
 
     if (songs.empty())

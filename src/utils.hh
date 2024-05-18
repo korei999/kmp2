@@ -5,7 +5,18 @@
 #include <string_view>
 #include <vector>
 #include <iostream>
-#include <format>
+
+#if __has_include(<fmt/format.h>)
+#    include <fmt/format.h>
+#    define COUT std::cout << fmt::format
+#    define CERR std::cerr << fmt::format
+#    define FMT fmt::format
+#else
+#    include <format>
+#    define COUT std::cout << std::format
+#    define CERR std::cerr << std::format
+#    define FMT std::format
+#endif
 
 namespace utils
 {
@@ -40,9 +51,6 @@ const std::string_view severityStr[(int)sev::fatal + 1] {
 #define EVEN(A) (!ODD(A))
 #define ROUND(A) ((int)((A < 0) ? (A - 0.5) : (A + 0.5)))
 #define SQ(A) (A * A)
-
-#define COUT std::cout << std::format
-#define CERR std::cerr << std::format
 
 extern std::mutex logMtx;
 

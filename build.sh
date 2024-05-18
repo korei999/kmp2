@@ -11,6 +11,15 @@ debug()
     fi
 }
 
+default()
+{
+    rm -rf build
+    if meson setup build --buildtype=debugoptimized
+    then
+        ninja -C build/
+    fi
+}
+
 release()
 {
     rm -rf build
@@ -37,7 +46,8 @@ run()
 cd $(dirname $0)
 
 case "$1" in
-    debug) debug ;;
     run) run "$@" ;;
-    *) release ;;
+    debug) debug ;;
+    release) release ;;
+    *) default ;;
 esac
