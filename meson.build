@@ -11,7 +11,7 @@ ncursesw = dependency('ncursesw')
 
 deps = [sndfile, pipewire, ncursesw]
 
-fmt = dependency('fmt')
+fmt = dependency('fmt', required: false)
 if fmt.found()
   deps += [fmt]
 endif
