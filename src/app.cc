@@ -249,23 +249,9 @@ void
 Curses::drawPlayList()
 {
     long maxy = getmaxy(pl.pCon);
-
     long startFromY = 0; /* offset from border */
-    long sel = selected;
 
-    if ((long)(p->songs.size() - 1) - firstInList < (maxy))
-        firstInList = (p->songs.size() - 1) - (maxy - 2);
-    if ((long)p->songs.size() < maxy - 1)
-        firstInList = 0;
-    else if (firstInList < 0)
-        firstInList = 0;
-
-    long listSizeBound = firstInList + (maxy - 1); /* - 2*borders */
-
-    if (selected > listSizeBound - 1)
-        firstInList = selected - (maxy - 2); /* -3 == (2*borders - 1) */
-    else if (selected < firstInList)
-        firstInList = selected;
+    fixCursorPos();
 
     werase(pl.pBor);
     for (long i = firstInList; i < (long)p->songs.size() && startFromY < maxy; i++, startFromY++)
@@ -273,7 +259,7 @@ Curses::drawPlayList()
         auto lineStr = utils::removePath(p->songs[i]);
         lineStr.resize(getmaxx(pl.pCon) - 1);
 
-        if (i == sel)
+        if (i == selected)
             wattron(pl.pCon, A_REVERSE);
         if (i == p->currSongIdx)
             wattron(pl.pCon, A_BOLD | COLOR_PAIR(app::Curses::yellow));
@@ -390,6 +376,26 @@ Curses::drawVisualizer()
             wattroff(vis.pCon, color);
         }
     }
+}
+
+void
+Curses::fixCursorPos()
+{
+    long maxy = getmaxy(pl.pCon);
+
+    if (((long)(p->songs.size() - 1) - firstInList) < (maxy - 1))
+        firstInList = (p->songs.size() - 1) - (maxy - 2);
+    if ((long)p->songs.size() < maxy - 1)
+        firstInList = 0;
+    else if (firstInList < 0)
+        firstInList = 0;
+
+    long listSizeBound = firstInList + (maxy - 1);
+
+    if (selected > listSizeBound - 1)
+        firstInList = selected - (maxy - 2);
+    else if (selected < firstInList)
+        firstInList = selected;
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)

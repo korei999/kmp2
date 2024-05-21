@@ -95,6 +95,7 @@ private:
     void drawBottomLine();
     void drawInfo();
     void drawStatus();
+    void fixCursorPos();
 };
 
 struct PipeWirePlayer

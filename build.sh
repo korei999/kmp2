@@ -11,6 +11,15 @@ debug()
     fi
 }
 
+debug_asan()
+{
+    rm -rf build
+    if meson setup build -Db_sanitize=address --buildtype=debug
+    then
+        ninja -C build/
+    fi
+}
+
 default()
 {
     rm -rf build
@@ -48,6 +57,7 @@ cd $(dirname $0)
 case "$1" in
     run) run "$@" ;;
     debug) debug ;;
+    debug_asan) debug_asan ;;
     release) release ;;
     *) default ;;
 esac
