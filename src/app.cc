@@ -44,7 +44,7 @@ paramChangedCB([[maybe_unused]] void* data,
 
 static const pw_stream_events streamEvents {
     .version = PW_VERSION_STREAM_EVENTS,
-	.destroy {},
+    .destroy {},
     .state_changed {},
     .control_info {},
     .io_changed = ioChangedCB,
