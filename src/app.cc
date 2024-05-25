@@ -2,6 +2,7 @@
 #include "input.hh"
 #include "play.hh"
 #include "utils.hh"
+#include "color.hh"
 
 #include <algorithm>
 #include <cmath>
@@ -11,7 +12,7 @@ namespace app
 {
 
 static void
-drawBorders(WINDOW* pWin, enum Curses::color color = Curses::color::blue)
+drawBorders(WINDOW* pWin, enum color::curses color = defaults::borderColor)
 {
     cchar_t ls, rs, ts, bs, tl, tr, bl, br;
     setcchar(&ls, L"┃", 0, color, nullptr);
@@ -73,13 +74,13 @@ Curses::Curses()
     keypad(stdscr, true);
     refresh();
 
-    int td = (Curses::termdef);
-    init_pair(Curses::green, COLOR_GREEN, td);
-    init_pair(Curses::yellow, COLOR_YELLOW, td);
-    init_pair(Curses::blue, COLOR_BLUE, td);
-    init_pair(Curses::cyan, COLOR_CYAN, td);
-    init_pair(Curses::red, COLOR_RED, td);
-    init_pair(Curses::white, COLOR_WHITE, td);
+    int td = (color::curses::termdef);
+    init_pair(color::curses::green, COLOR_GREEN, td);
+    init_pair(color::curses::yellow, COLOR_YELLOW, td);
+    init_pair(color::curses::blue, COLOR_BLUE, td);
+    init_pair(color::curses::cyan, COLOR_CYAN, td);
+    init_pair(color::curses::red, COLOR_RED, td);
+    init_pair(color::curses::white, COLOR_WHITE, td);
 }
 
 Curses::~Curses()
@@ -181,7 +182,6 @@ int
 Curses::drawVolume()
 {
     auto volumeStr = FMT("volume: {:3.0f}%\n", 100.0 * p->volume);
-    constexpr int mutedColor = COLOR_PAIR(color::blue);
     int maxx = getmaxx(status.pCon);
 
     long maxWidth = maxx - volumeStr.size() - 1;
@@ -190,12 +190,12 @@ Curses::drawVolume()
     auto getColor = [&](f64 i) -> int {
         f64 val = p->volume * (i / (maxLine));
 
-        if (val > 1.01) return color::red;
-        else if (val > 0.51) return color::yellow;
-        else return color::green;
+        if (val > 1.01) return color::curses::red;
+        else if (val > 0.51) return color::curses::yellow;
+        else return color::curses::green;
     };
 
-    int sCol = p->bMuted ? mutedColor : A_BOLD | COLOR_PAIR(getColor(maxLine));
+    int sCol = p->bMuted ? COLOR_PAIR(color::blue) : (A_BOLD | COLOR_PAIR(getColor(maxLine)));
     wattron(status.pCon, sCol);
     mvwaddnstr(status.pCon, 1, 0, volumeStr.data(), maxx);
     wattroff(status.pCon, sCol);
@@ -206,7 +206,7 @@ Curses::drawVolume()
         const wchar_t* icon;
         if (p->bMuted)
         {
-            color = mutedColor;
+            color = defaults::mutedColor;
             icon = blockIcon2;
         }
         else
@@ -240,9 +240,9 @@ Curses::drawTitle()
 
     move(5, 0);
     clrtoeol();
-    attron(A_BOLD | A_ITALIC | COLOR_PAIR(yellow));
+    attron(A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
     mvaddstr(5, 1, ls.data());
-    attroff(A_BOLD | A_ITALIC | COLOR_PAIR(yellow));
+    attroff(A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
 }
 
 void
@@ -262,11 +262,11 @@ Curses::drawPlayList()
         if (i == selected)
             wattron(pl.pCon, A_REVERSE);
         if (i == p->currSongIdx)
-            wattron(pl.pCon, A_BOLD | COLOR_PAIR(app::Curses::yellow));
+            wattron(pl.pCon, A_BOLD | COLOR_PAIR(color::curses::yellow));
 
         mvwaddstr(pl.pCon, startFromY, getbegx(pl.pCon), lineStr.data());
 
-        wattroff(pl.pCon, A_REVERSE | A_BOLD | COLOR_PAIR(app::Curses::yellow));
+        wattroff(pl.pCon, A_REVERSE | A_BOLD | COLOR_PAIR(color::curses::yellow));
     }
 
     drawBorders(pl.pBor);
@@ -302,9 +302,9 @@ Curses::drawInfo()
     werase(info.pBor);
 
     mvwaddnstr(info.pCon, 0, 0, sTitle.data(), maxx*2);
-    wattron(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::yellow));
+    wattron(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
     mvwaddnstr(info.pCon, 0, sTitle.size(), p->info.title.data(), (maxx*2) - sTitle.size());
-    wattroff(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::yellow));
+    wattroff(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
 
     mvwaddnstr(info.pCon, 2, 0, sAlbum.data(), maxx);
     wattron(info.pCon, A_BOLD);
@@ -328,7 +328,7 @@ Curses::drawStatus()
     auto color = drawVolume();
     drawPlayListCounter();
 
-    drawBorders(status.pBor, (enum color)PAIR_NUMBER(color));
+    drawBorders(status.pBor, (color::curses)PAIR_NUMBER(color));
 }
 
 void
@@ -359,7 +359,7 @@ Curses::drawVisualizer()
     }
 
     constexpr short barHeightColors[4] {
-        color::red, color::yellow, color::green, color::green
+        color::curses::red, color::curses::yellow, color::curses::green, color::curses::green
     };
 
     for (int r = 0; r < maxx; r++)

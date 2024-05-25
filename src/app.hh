@@ -45,17 +45,6 @@ struct BWin
 
 struct Curses
 {
-    enum color : short
-    {
-        termdef = -1, /* -1 should preserve terminal default color when use_default_colors() */
-        white = 1,
-        green,
-        yellow,
-        blue,
-        cyan,
-        red
-    };
-
     /* parent pointer */
     PipeWirePlayer* p {};
     /* mark which to update on drawUI */

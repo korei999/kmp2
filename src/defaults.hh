@@ -1,9 +1,15 @@
 #pragma once
 #include "ultratypes.h"
+#include "color.hh"
+
 #include <string_view>
 
 namespace defaults
 {
+
+constexpr std::string_view formatsSupported[] {
+    ".flac", ".opus", ".mp3", ".ogg", ".wav", ".caf", ".aif"
+};
 
 constexpr f32 maxVolume = 1.2; /* 1.0 == 100% */
 constexpr f32 minVolume = 0.0;
@@ -18,9 +24,7 @@ constexpr u32 visualizerUpdateRate = 50; /* time (ms) between visualizer upates 
 constexpr f32 visualizerScalar = 5.0; /* scale the height of each bar */
 constexpr bool bNormalizeVisualizer = false;
 constexpr wchar_t visualizerSymbol[2] = L":";
-
-constexpr std::string_view formatsSupported[] {
-    ".flac", ".opus", ".mp3", ".ogg", ".wav", ".caf", ".aif"
-};
+constexpr color::curses borderColor = color::blue;
+constexpr color::curses mutedColor = color::blue;
 
 } /* namespace defaults */
