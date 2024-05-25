@@ -195,7 +195,7 @@ Curses::drawVolume()
         else return color::curses::green;
     };
 
-    int sCol = p->bMuted ? COLOR_PAIR(color::blue) : (A_BOLD | COLOR_PAIR(getColor(maxLine)));
+    int sCol = p->bMuted ? COLOR_PAIR(defaults::borderColor) : (A_BOLD | COLOR_PAIR(getColor(maxLine)));
     wattron(status.pCon, sCol);
     mvwaddnstr(status.pCon, 1, 0, volumeStr.data(), maxx);
     wattroff(status.pCon, sCol);
