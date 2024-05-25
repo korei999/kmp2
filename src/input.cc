@@ -36,6 +36,9 @@ drawVisualizer(app::PipeWirePlayer* p)
 void
 read(app::PipeWirePlayer* p)
 {
+    /* avoid possible double `refresh()` with input thread */
+    while (!p->ready) {};
+
     int c;
 
     auto search = [p](enum search::dir d) -> void {

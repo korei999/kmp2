@@ -101,6 +101,7 @@ private:
 struct PipeWirePlayer
 {
     std::mutex mtxPause;
+    std::atomic<bool> ready = false;
     std::condition_variable cndPause;
     PipeWireData pw {};
     SndfileHandle hSnd {};
