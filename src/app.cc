@@ -503,9 +503,10 @@ PipeWirePlayer::playCurrent()
 
         term.updateAll();
         term.drawUI();
-        refresh(); /* needed to avoid one second black screen before first getch update */
 
-        /* avoid possible double `refresh()` with input thread */
+        if (!ready)
+            refresh(); /* refresh before first getch update */
+
         ready = true;
 
         /* TODO: there is probably a better way to update params than just to reset the whole thing */

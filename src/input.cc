@@ -36,7 +36,7 @@ drawVisualizer(app::PipeWirePlayer* p)
 void
 read(app::PipeWirePlayer* p)
 {
-    /* avoid possible double `refresh()` with input thread */
+    /* avoid possible double `refresh()` */
     while (!p->ready) {};
 
     int c;
