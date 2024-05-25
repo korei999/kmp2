@@ -195,7 +195,8 @@ Curses::drawVolume()
         else return color::curses::green;
     };
 
-    int sCol = p->bMuted ? COLOR_PAIR(defaults::borderColor) : (A_BOLD | COLOR_PAIR(getColor(maxLine)));
+    auto mutedColor = COLOR_PAIR(defaults::mutedColor);
+    int sCol = p->bMuted ? mutedColor : (A_BOLD | COLOR_PAIR(getColor(maxLine)));
     wattron(status.pCon, sCol);
     mvwaddnstr(status.pCon, 1, 0, volumeStr.data(), maxx);
     wattroff(status.pCon, sCol);
@@ -206,7 +207,7 @@ Curses::drawVolume()
         const wchar_t* icon;
         if (p->bMuted)
         {
-            color = COLOR_PAIR(defaults::mutedColor);
+            color = mutedColor;
             icon = blockIcon2;
         }
         else
