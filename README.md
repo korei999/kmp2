@@ -2,7 +2,7 @@
 
 Formats supported: flac, opus, mp3, ogg, wav, caf, aif.
 ### Usage:
-- `kmp *`, `kmp **/* 2> /dev/null` or whatever your shell can do.
+- `kmp *`, `kmp **/*` or whatever your shell can do.
 - Navigate with vim-like keybinds.
 - `h` and `l` seek back/forward.
 - `o` and `i` next/prev song.
