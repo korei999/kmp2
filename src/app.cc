@@ -206,7 +206,7 @@ Curses::drawVolume()
         const wchar_t* icon;
         if (p->bMuted)
         {
-            color = defaults::mutedColor;
+            color = COLOR_PAIR(defaults::mutedColor);
             icon = blockIcon2;
         }
         else
