@@ -8,14 +8,16 @@ std::vector<int>
 getIndexList(const std::vector<std::string>& a, std::wstring_view key, enum dir direction)
 {
     std::vector<int> ret {};
+    int inc, start, doneCnd;
 
-    int inc = direction == dir::forward ? 1 : -1;
-    int start = direction == dir::forward ? 0 : a.size() - 1;
-    int cond = direction == dir::forward ? a.size() : -1;
+    if (direction == dir::forward)
+        inc = 1, start = 0, doneCnd = a.size();
+    else
+        inc = -1, start = a.size() -1, doneCnd = -1;
 
     const auto& f = std::use_facet<std::ctype<wchar_t>>(std::locale());
 
-    for (int i = start; i != cond; i += inc)
+    for (int i = start; i != doneCnd; i += inc)
     {
         std::string s = utils::removePath(a[i]);
 

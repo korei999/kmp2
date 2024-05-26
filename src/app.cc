@@ -580,7 +580,6 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
     else
         return false;
 
-
     if (!searchingNow.empty())
     {
         foundIndices = search::getIndexList(songs, searchingNow, direction);
