@@ -17,6 +17,9 @@ getIndexList(const std::vector<std::string>& a, std::wstring_view key, enum dir 
 
     const auto& f = std::use_facet<std::ctype<wchar_t>>(std::locale());
 
+    std::wstring fw(key.begin(), key.end());
+    f.toupper(&fw[0], &fw[0] + fw.size());
+
     for (int i = start; i != doneCnd; i += inc)
     {
         std::string s = utils::removePath(a[i]);
@@ -27,10 +30,7 @@ getIndexList(const std::vector<std::string>& a, std::wstring_view key, enum dir 
         size_t swSize = std::mbsrtowcs(&sw[0], &mbstr, s.size(), &state);
         sw.resize(swSize);
 
-        std::wstring fw(key.begin(), key.end());
-
         f.toupper(&sw[0], &sw[0] + sw.size());
-        f.toupper(&fw[0], &fw[0] + fw.size());
 
         if (sw.find(fw) != std::string::npos)
             ret.push_back(i);
