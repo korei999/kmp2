@@ -77,7 +77,7 @@ struct Curses
 
 private:
     void drawTime();
-    int drawVolume();
+    enum color::curses drawVolume();
     void drawPlayListCounter();
     void drawTitle();
     void drawPlayList();

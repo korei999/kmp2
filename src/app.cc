@@ -178,7 +178,7 @@ Curses::drawTime()
     mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
 }
 
-int 
+enum color::curses 
 Curses::drawVolume()
 {
     auto volumeStr = FMT("volume: {:3.0f}%\n", 100.0 * p->volume);
@@ -221,7 +221,7 @@ Curses::drawVolume()
         wattroff(status.pCon, color);
     }
 
-    return sCol;
+    return (enum color::curses)sCol;
 }
 
 void
