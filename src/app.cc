@@ -510,7 +510,7 @@ updateParams:
 
         if (bPaused)
         {
-            /* let input thread awake cnd var */
+            /* let input thread awake cndPause */
             mtxPauseSwitch.unlock();
 
             std::unique_lock lock(mtxPause);
