@@ -19,12 +19,14 @@ onProcessCB(void* data)
     if (p->bChangeParams)
         pw_main_loop_quit(p->pw.pLoop);
 
+    p->mtxPauseSwitch.lock();
     if (p->bPaused)
     {
-        /* TODO: 99% sure there is still a chance to toggle bPaused before lock on the next line */
-        p->mtxPauseSwitch.lock();
         pw_main_loop_quit(p->pw.pLoop);
+        /* unlock in `PipeWirePlayer::playCurrent()` */
+        return;
     }
+    p->mtxPauseSwitch.unlock();
 
     pw_buffer* b;
     if ((b = pw_stream_dequeue_buffer(p->pw.pStream)) == nullptr)
