@@ -26,30 +26,13 @@ drawBorders(WINDOW* pWin, enum color::curses color = defaults::borderColor)
     wborder_set(pWin, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
 }
 
-static void
-ioChangedCB([[maybe_unused]] void* data,
-            [[maybe_unused]] uint32_t id,
-            [[maybe_unused]] void* area,
-            [[maybe_unused]] uint32_t size)
-{
-    //
-}
-
-static void
-paramChangedCB([[maybe_unused]] void* data,
-               [[maybe_unused]] uint32_t id,
-               [[maybe_unused]] const spa_pod* param)
-{
-    //
-}
-
 static const pw_stream_events streamEvents {
     .version = PW_VERSION_STREAM_EVENTS,
     .destroy {},
-    .state_changed {},
+    .state_changed = play::stateChangedCB,
     .control_info {},
-    .io_changed = ioChangedCB,
-    .param_changed = paramChangedCB,
+    .io_changed = play::ioChangedCB,
+    .param_changed = play::paramChangedCB,
     .add_buffer {},
     .remove_buffer {},
     .process = play::onProcessCB,
@@ -438,13 +421,13 @@ PipeWirePlayer::~PipeWirePlayer()
 void
 PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 channels)
 {
-    u8* buffer[1024];
+    u8 setupBuffer[1024] {};
     const spa_pod* params[1] {};
-    spa_pod_builder b = SPA_POD_BUILDER_INIT(buffer, sizeof(buffer));
+    spa_pod_builder b = SPA_POD_BUILDER_INIT(setupBuffer, sizeof(setupBuffer));
 
-    pw.loop = pw_main_loop_new(nullptr);
+    pw.pLoop = pw_main_loop_new(nullptr);
 
-    pw.stream = pw_stream_new_simple(pw_main_loop_get_loop(pw.loop),
+    pw.pStream = pw_stream_new_simple(pw_main_loop_get_loop(pw.pLoop),
                                      "kmpMusicPlayback",
                                      pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
                                                        PW_KEY_MEDIA_CATEGORY, "Playback",
@@ -464,7 +447,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &info);
 
-    pw_stream_connect(pw.stream,
+    pw_stream_connect(pw.pStream,
                       PW_DIRECTION_OUTPUT,
                       PW_ID_ANY,
                       (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT |
@@ -507,11 +490,10 @@ PipeWirePlayer::playCurrent()
 
         if (!ready)
             refresh(); /* refresh before first getch update */
-
         ready = true;
 
         /* TODO: there is probably a better way to update params than just to reset the whole thing */
-updateParamsHack:
+updateParams:
         if (bChangeParams)
         {
             bChangeParams = false;
@@ -520,14 +502,24 @@ updateParamsHack:
             term.drawUI();
         }
 
-        pw_main_loop_run(pw.loop);
+        pw_main_loop_run(pw.pLoop);
 
         /* in this order */
-        pw_stream_destroy(pw.stream);
-        pw_main_loop_destroy(pw.loop);
+        pw_stream_destroy(pw.pStream);
+        pw_main_loop_destroy(pw.pLoop);
+
+        if (bPaused)
+        {
+            /* let input thread awake cnd var */
+            mtxPauseSwitch.unlock();
+
+            std::unique_lock lock(mtxPause);
+            cndPause.wait(lock);
+            bChangeParams = true;
+        }
 
         if (bChangeParams)
-            goto updateParamsHack;
+            goto updateParams;
     }
     else
     {
@@ -554,7 +546,9 @@ updateParamsHack:
             currSongIdx = songs.size() - 1;
     }
     else
+    {
         currSongIdx++;
+    }
 
     if (currSongIdx > (long)songs.size() - 1)
     {

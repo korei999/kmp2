@@ -17,13 +17,17 @@ onProcessCB(void* data)
     std::lock_guard lock(p->pw.mtx);
 
     if (p->bChangeParams)
-        pw_main_loop_quit(p->pw.loop);
+        pw_main_loop_quit(p->pw.pLoop);
 
     if (p->bPaused)
-        return;
+    {
+        /* TODO: 99% sure there is still a chance to toggle bPaused before lock on the next line */
+        p->mtxPauseSwitch.lock();
+        pw_main_loop_quit(p->pw.pLoop);
+    }
 
     pw_buffer* b;
-    if ((b = pw_stream_dequeue_buffer(p->pw.stream)) == nullptr)
+    if ((b = pw_stream_dequeue_buffer(p->pw.pStream)) == nullptr)
     {
         pw_log_warn("out of buffers: %m");
         return;
@@ -71,7 +75,7 @@ onProcessCB(void* data)
     buf->datas[0].chunk->stride = stride;
     buf->datas[0].chunk->size = nFrames * stride;
 
-    pw_stream_queue_buffer(p->pw.stream, b);
+    pw_stream_queue_buffer(p->pw.pStream, b);
 
     if (p->bNext                          ||
         p->bPrev                          ||
@@ -79,8 +83,60 @@ onProcessCB(void* data)
         p->bFinished                      ||
         p->pcmPos > (long)p->pcmSize - 1)
     {
-        pw_main_loop_quit(p->pw.loop);
+        pw_main_loop_quit(p->pw.pLoop);
     }
+}
+
+void
+stateChangedCB([[maybe_unused]] void* data,
+               [[maybe_unused]] enum pw_stream_state old,
+			   [[maybe_unused]] enum pw_stream_state state,
+               [[maybe_unused]] const char* error)
+{
+    /*
+    switch (state)
+    {
+        case PW_STREAM_STATE_ERROR:
+            if (error) CERR("PW_STREAM_STATE_ERROR: {}\n", error);
+            break;
+
+        case PW_STREAM_STATE_UNCONNECTED:
+            CERR("PW_STREAM_STATE_UNCONNECTED\n");
+            break;
+
+        case PW_STREAM_STATE_CONNECTING:
+            CERR("PW_STREAM_STATE_CONNECTING\n");
+            break;
+
+        case PW_STREAM_STATE_PAUSED:
+            CERR("PW_STREAM_STATE_PAUSED\n");
+            break;
+
+        case PW_STREAM_STATE_STREAMING:
+            CERR("PW_STREAM_STATE_STREAMING\n");
+            break;
+
+        default:
+            break;
+    }
+    */
+}
+
+void
+ioChangedCB([[maybe_unused]] void* data,
+            [[maybe_unused]] uint32_t id,
+            [[maybe_unused]] void* area,
+            [[maybe_unused]] uint32_t size)
+{
+    //
+}
+
+void
+paramChangedCB([[maybe_unused]] void* data,
+               [[maybe_unused]] uint32_t id,
+               [[maybe_unused]] const spa_pod* param)
+{
+    //
 }
 
 } /* namespace play */

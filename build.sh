@@ -20,6 +20,12 @@ debug_asan()
     fi
 }
 
+debug_clang()
+{
+    # mold links faster
+    CC=clang CXX=clang++ CC_LD=mold CXX_LD=mold debug
+}
+
 default()
 {
     rm -rf build
@@ -59,6 +65,7 @@ case "$1" in
     run) run "$@" ;;
     debug) debug ;;
     debug_asan) debug_asan ;;
+    debug_clang) debug_clang ;;
     release) release ;;
     *) default ;;
 esac

@@ -103,7 +103,7 @@ read(app::PipeWirePlayer* p)
                 if (p->bPaused)
                 {
                     p->bPaused = false;
-                    p->cndPause.notify_one();
+                    p->cndPause.notify_all();
                 }
                 return;
                 break;
@@ -244,9 +244,15 @@ read(app::PipeWirePlayer* p)
                 break;
 
             case ' ':
-                p->bPaused = !p->bPaused;
-                if (!p->bPaused)
-                    p->cndPause.notify_all();
+                {
+                    if (p->mtxPauseSwitch.try_lock())
+                    {
+                        p->bPaused = !p->bPaused;
+                        if (!p->bPaused) p->cndPause.notify_one();
+
+                        p->mtxPauseSwitch.unlock();
+                    }
+                }
                 break;
 
             case '\n':

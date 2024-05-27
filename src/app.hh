@@ -24,8 +24,10 @@ constexpr size_t chunkSize = 0x4000; /* big enough */
 
 struct PipeWireData
 {
-    pw_main_loop* loop {};
-    pw_stream* stream {};
+    pw_core* pCore {};
+    pw_context* pCtx {};
+    pw_main_loop* pLoop {};
+    pw_stream* pStream {};
     enum spa_audio_format format = SPA_AUDIO_FORMAT_S16;
     u32 sampleRate = 48000;
     u32 origSampleRate = sampleRate;
@@ -37,7 +39,7 @@ struct PipeWireData
 struct PipeWirePlayer;
 
 /* pBor for borders and pCon for content */
-struct BWin
+struct BCWin
 {
     WINDOW* pBor {};
     WINDOW* pCon {};
@@ -55,10 +57,10 @@ struct Curses
         bool bInfo = true;
         bool bVisualizer = true;
     } update;
-    BWin status {};
-    BWin info {};
-    BWin pl {};
-    BWin vis {};
+    BCWin status {};
+    BCWin info {};
+    BCWin pl {};
+    BCWin vis {};
     long selected = 0;
     long firstInList = 0;
     const long listYPos = 6;
@@ -90,6 +92,7 @@ private:
 struct PipeWirePlayer
 {
     std::mutex mtxPause;
+    std::mutex mtxPauseSwitch;
     std::atomic<bool> ready = false;
     std::condition_variable cndPause;
     PipeWireData pw {};
