@@ -28,6 +28,7 @@ struct PipeWireData
     pw_context* pCtx {};
     pw_main_loop* pLoop {};
     pw_stream* pStream {};
+    static const pw_stream_events streamEvents;
     enum spa_audio_format format = SPA_AUDIO_FORMAT_S16;
     u32 sampleRate = 48000;
     u32 origSampleRate = sampleRate;
@@ -66,7 +67,6 @@ struct Curses
     const long listYPos = 6;
     const long visualizerYSize = 4;
     std::mutex mtx;
-    std::mutex mtxRefresh;
 
     Curses();
     ~Curses();
@@ -91,6 +91,7 @@ private:
 
 struct PipeWirePlayer
 {
+    static constexpr std::string_view formatsSupported[] {".flac", ".opus", ".mp3", ".ogg", ".wav", ".caf", ".aif"};
     std::mutex mtxPause;
     std::mutex mtxPauseSwitch;
     std::atomic<bool> ready = false;

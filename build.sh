@@ -30,7 +30,7 @@ default()
 {
     rm -rf build
     # include debug symbols
-    if meson setup build --buildtype=release --debug
+    if meson setup build --buildtype=release -Ddebug=true
     then
         ninja -C build/
     fi

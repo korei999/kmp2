@@ -11,6 +11,23 @@
 namespace app
 {
 
+f32 PipeWirePlayer::chunk[chunkSize] {};
+std::mutex PipeWireData::mtx;
+const pw_stream_events PipeWireData::streamEvents {
+    .version = PW_VERSION_STREAM_EVENTS,
+    .destroy {},
+    .state_changed = play::stateChangedCB,
+    .control_info {},
+    .io_changed = play::ioChangedCB,
+    .param_changed = play::paramChangedCB,
+    .add_buffer {},
+    .remove_buffer {},
+    .process = play::onProcessCB,
+    .drained {},
+    .command {},
+    .trigger_done {},
+};
+
 static void
 drawBorders(WINDOW* pWin, enum color::curses color = defaults::borderColor)
 {
@@ -26,29 +43,12 @@ drawBorders(WINDOW* pWin, enum color::curses color = defaults::borderColor)
     wborder_set(pWin, &ls, &rs, &ts, &bs, &tl, &tr, &bl, &br);
 }
 
-static const pw_stream_events streamEvents {
-    .version = PW_VERSION_STREAM_EVENTS,
-    .destroy {},
-    .state_changed = play::stateChangedCB,
-    .control_info {},
-    .io_changed = play::ioChangedCB,
-    .param_changed = play::paramChangedCB,
-    .add_buffer {},
-    .remove_buffer {},
-    .process = play::onProcessCB,
-    .drained {},
-    .command {},
-    .trigger_done {},
-};
-
-std::mutex PipeWireData::mtx;
-f32 PipeWirePlayer::chunk[chunkSize] {};
 
 Curses::Curses()
 {
     initscr();
     start_color();
-    use_default_colors();
+    if (defaults::bTransparentBg) use_default_colors();
     curs_set(0);
     set_escdelay(0);
     noecho();
@@ -57,13 +57,43 @@ Curses::Curses()
     keypad(stdscr, true);
     refresh();
 
-    int td = (color::curses::termdef);
-    init_pair(color::curses::green, COLOR_GREEN, td);
-    init_pair(color::curses::yellow, COLOR_YELLOW, td);
-    init_pair(color::curses::blue, COLOR_BLUE, td);
-    init_pair(color::curses::cyan, COLOR_CYAN, td);
-    init_pair(color::curses::red, COLOR_RED, td);
-    init_pair(color::curses::white, COLOR_WHITE, td);
+    if (defaults::bCustomColorPallete)
+    {
+#ifndef NDEBUG
+        constexpr auto printColor = [](std::string_view s, color::rgb c) -> void {
+            CERR("{}: ({}, {}, {})\n", s, c.r, c.g, c.b);
+        };
+
+        printColor("COLOR_BLACK", defaults::black);
+        printColor("COLOR_GREEN", defaults::green);
+        printColor("COLOR_YELLOW", defaults::yellow);
+        printColor("COLOR_BLUE", defaults::blue);
+        printColor("COLOR_MAGENTA", defaults::magenta);
+        printColor("COLOR_CYAN", defaults::cyan);
+        printColor("COLOR_WHITE", defaults::white);
+#endif
+        auto initCustom = [](int cursesColor, color::rgb c) -> void {
+            init_color(cursesColor, c.r, c.g, c.b);
+        };
+
+        initCustom(COLOR_BLACK,   defaults::black);
+        initCustom(COLOR_RED,     defaults::red);
+        initCustom(COLOR_GREEN,   defaults::green);
+        initCustom(COLOR_YELLOW,  defaults::yellow);
+        initCustom(COLOR_BLUE,    defaults::blue);
+        initCustom(COLOR_MAGENTA, defaults::magenta);
+        initCustom(COLOR_CYAN,    defaults::cyan);
+        initCustom(COLOR_WHITE,   defaults::white);
+    }
+
+    int td = (COLOR_BLACK);
+    init_pair(color::green, COLOR_GREEN, td);
+    init_pair(color::yellow, COLOR_YELLOW, td);
+    init_pair(color::blue, COLOR_BLUE, td);
+    init_pair(color::cyan, COLOR_CYAN, td);
+    init_pair(color::red, COLOR_RED, td);
+    init_pair(color::white, COLOR_WHITE, td);
+    init_pair(color::black, COLOR_BLACK, td);
 }
 
 Curses::~Curses()
@@ -249,7 +279,6 @@ Curses::drawPlayList()
             wattron(pl.pCon, A_BOLD | COLOR_PAIR(color::curses::yellow));
 
         mvwaddstr(pl.pCon, startFromY, getbegx(pl.pCon), lineStr.data());
-
         wattroff(pl.pCon, A_REVERSE | A_BOLD | COLOR_PAIR(color::curses::yellow));
     }
 
@@ -395,7 +424,7 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
     {
         std::string s = argv[i];
 
-        for (auto& f : defaults::formatsSupported)
+        for (auto& f : formatsSupported)
             if (s.ends_with(f))
             {
                 songs.push_back(std::move(s));
@@ -433,7 +462,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
                                                        PW_KEY_MEDIA_CATEGORY, "Playback",
                                                        PW_KEY_MEDIA_ROLE, "Music",
                                                        nullptr),
-                                     &streamEvents,
+                                     &pw.streamEvents,
                                      this);
 
 

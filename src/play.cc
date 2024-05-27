@@ -23,7 +23,7 @@ onProcessCB(void* data)
     if (p->bPaused)
     {
         pw_main_loop_quit(p->pw.pLoop);
-        /* unlock in `PipeWirePlayer::playCurrent()` */
+        /* NOTE: unlock in `PipeWirePlayer::playCurrent()` */
         return;
     }
     p->mtxPauseSwitch.unlock();
