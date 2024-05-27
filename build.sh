@@ -23,7 +23,8 @@ debug_asan()
 default()
 {
     rm -rf build
-    if meson setup build --buildtype=debugoptimized
+    # include debug symbols
+    if meson setup build --buildtype=release --debug
     then
         ninja -C build/
     fi
