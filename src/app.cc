@@ -271,7 +271,7 @@ Curses::drawPlayList()
     long maxy = getmaxy(pl.pCon);
     long startFromY = 0; /* offset from border */
 
-    fixCursorPos();
+    adjustListToCursor();
 
     werase(pl.pBor);
     for (long i = firstInList; i < (long)p->songs.size() && startFromY < maxy; i++, startFromY++)
@@ -410,7 +410,7 @@ Curses::drawVisualizer()
 }
 
 void
-Curses::fixCursorPos()
+Curses::adjustListToCursor()
 {
     long maxy = getmaxy(pl.pCon);
 
