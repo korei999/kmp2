@@ -1,4 +1,5 @@
 #pragma once
+#include "utils.hh"
 
 #include <ncurses.h>
 
@@ -17,20 +18,14 @@ enum curses : short
     red
 };
 
-constexpr int
-cRound(double x)
-{
-    return x < 0 ? x - 0.5 : x + 0.5;
-}
-
 struct rgb
 {
     int r, g, b;
 
     constexpr rgb(int hex)
-        : r{cRound((((hex >> 16) & 0xff) / 255.0) * 1000.0)},
-          g{cRound((((hex >> 8) & 0xff) / 255.0) * 1000.0)},
-          b{cRound(((hex & 0xff) / 255.0) * 1000.0)}
+        : r{utils::cRound((((hex >> 16) & 0xff) / 255.0) * 1000.0)},
+          g{utils::cRound((((hex >> 8) & 0xff) / 255.0) * 1000.0)},
+          b{utils::cRound(((hex & 0xff) / 255.0) * 1000.0)}
     {}
 };
 

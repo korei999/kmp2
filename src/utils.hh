@@ -105,4 +105,10 @@ removePath(std::wstring_view str)
     return std::wstring(str.substr(str.find_last_of(L"/") + 1, str.size()));
 }
 
+constexpr int
+cRound(double x)
+{
+    return x < 0 ? x - 0.5 : x + 0.5;
+}
+
 } /* namespace utils */
