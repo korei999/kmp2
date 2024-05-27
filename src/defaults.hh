@@ -23,7 +23,7 @@ constexpr bool bNormalizeVisualizer   = false; /* ((unused)) */
 constexpr wchar_t visualizerSymbol[2] = L":";
 
 constexpr bool bTransparentBg      = true;
-constexpr bool bCustomColorPallete = false; /* use custom colors below, otherwise use default terminal colors */
+constexpr bool bCustomColorPallete = true; /* use custom colors below, otherwise use terminal defaults */
 constexpr color::rgb black   = 0x000000;
 constexpr color::rgb red     = 0xFF0000;
 constexpr color::rgb green   = 0x00FF00;

@@ -188,7 +188,10 @@ Curses::drawTime()
     if (p->pw.sampleRate != p->pw.origSampleRate)
         timeStr += FMT(" ({:.0f}% speed)", p->speedMul * 100);
 
+    auto col = COLOR_PAIR(color::white);
+    wattron(status.pCon, col);
     mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
+    wattroff(status.pCon, col);
 }
 
 enum color::curses 
@@ -243,7 +246,10 @@ Curses::drawPlayListCounter()
     auto songCounterStr = FMT("total: {} / {}", p->currSongIdx + 1, p->songs.size());
     if (p->bRepeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
 
+    auto col = COLOR_PAIR(color::white);
+    wattron(status.pCon, col);
     mvwaddnstr(status.pCon, 3, 0, songCounterStr.data(), getmaxx(status.pCon));
+    wattroff(status.pCon, col);
 }
 
 void
@@ -271,15 +277,16 @@ Curses::drawPlayList()
     for (long i = firstInList; i < (long)p->songs.size() && startFromY < maxy; i++, startFromY++)
     {
         auto lineStr = utils::removePath(p->songs[i]);
-        lineStr.resize(getmaxx(pl.pCon) - 1);
+        auto col = COLOR_PAIR(color::white);
+        wattron(pl.pCon, col);
 
         if (i == selected)
-            wattron(pl.pCon, A_REVERSE);
+            wattron(pl.pCon, col | A_REVERSE);
         if (i == p->currSongIdx)
             wattron(pl.pCon, A_BOLD | COLOR_PAIR(color::curses::yellow));
 
-        mvwaddstr(pl.pCon, startFromY, getbegx(pl.pCon), lineStr.data());
-        wattroff(pl.pCon, A_REVERSE | A_BOLD | COLOR_PAIR(color::curses::yellow));
+        mvwaddnstr(pl.pCon, startFromY, getbegx(pl.pCon), lineStr.data(), getmaxx(pl.pCon) - 1);
+        wattroff(pl.pCon, col | A_REVERSE | A_BOLD | COLOR_PAIR(color::curses::yellow));
     }
 
     drawBorders(pl.pBor);
@@ -292,6 +299,10 @@ Curses::drawBottomLine()
     move(maxy - 1, 0);
     clrtoeol();
     move(maxy - 1, 1);
+
+    auto col = COLOR_PAIR(color::white);
+    attron(col);
+
     if (!p->searchingNow.empty() && !p->foundIndices.empty())
     {
         auto ss = FMT(" [{}/{}]", p->currFoundIdx + 1, p->foundIndices.size());
@@ -301,7 +312,9 @@ Curses::drawBottomLine()
 
     /* draw selected index */
     auto sel = FMT("{}\n", p->term.selected + 1);
+
     mvaddstr(maxy - 1, (getmaxx(stdscr) - 1) - sel.size(), sel.data());
+    wattroff(status.pCon, col);
 }
 
 void
@@ -314,20 +327,25 @@ Curses::drawInfo()
 
     werase(info.pBor);
 
+    auto col = COLOR_PAIR(color::white);
+
+    wattron(info.pCon, col);
     mvwaddnstr(info.pCon, 0, 0, sTitle.data(), maxx*2);
     wattron(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
     mvwaddnstr(info.pCon, 0, sTitle.size(), p->info.title.data(), (maxx*2) - sTitle.size());
     wattroff(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
 
+    wattron(info.pCon, col);
     mvwaddnstr(info.pCon, 2, 0, sAlbum.data(), maxx);
-    wattron(info.pCon, A_BOLD);
+    wattron(info.pCon, A_BOLD | col);
     mvwaddnstr(info.pCon, 2, sAlbum.size(), p->info.album.data(), maxx - sAlbum.size());
-    wattroff(info.pCon, A_BOLD);
+    wattroff(info.pCon, A_BOLD | col);
 
+    wattron(info.pCon, col);
     mvwaddnstr(info.pCon, 3, 0, sArtist.data(), maxx);
-    wattron(info.pCon, A_BOLD);
+    wattron(info.pCon, A_BOLD | col);
     mvwaddnstr(info.pCon, 3, sArtist.size(), p->info.artist.data(), maxx - sArtist.size());
-    wattroff(info.pCon, A_BOLD);
+    wattroff(info.pCon, A_BOLD | col);
 
     drawBorders(info.pBor);
 }
