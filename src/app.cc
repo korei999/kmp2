@@ -693,7 +693,7 @@ PipeWirePlayer::jumpTo()
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
     {
         wchar_t* end;
-        long num = wcstol((wchar_t*)wb, &end, 10);
+        long num = wcstol((wchar_t*)wb, &end, std::size(wb));
         num = std::clamp((long)num, 1L, (long)songs.size());
         term.selected = num - 1;
     }
