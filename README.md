@@ -18,7 +18,7 @@
 - `q` quit.
 - `[` and `]` playback speed shifting fun. `\` Set original speed back.
 - `v` toggle visualizer.
-- 'ctrl-l' refresh screen.
+- `ctrl-l` refresh screen.
 
 ### Dependencies:
 fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel meson fmt-devel(optional)`

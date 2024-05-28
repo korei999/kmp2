@@ -1,4 +1,4 @@
-/* NOTE: thanks cmus! https://github.com/cmus/cmus/blob/master/mpris.c */
+/* NOTE: taken from cmus https://github.com/cmus/cmus/blob/master/mpris.c */
 
 #include "mpris.hh"
 
@@ -25,7 +25,7 @@ namespace mpris
 {
 
 static sd_bus *pBus {};
-static int mpris_fd = -1;
+static int fdMpris = -1;
 
 static int
 msgAppendDictSAS(sd_bus_message* m, const char* a, const char* b)
@@ -54,20 +54,6 @@ msgAppendDictSimple(sd_bus_message* m, const char* tag, char type, const void* v
     return 0;
 }
 
-[[maybe_unused]]
-static int
-msgAppendDictSO(sd_bus_message* m, const char* a, const char* b)
-{
-    return msgAppendDictSimple(m, a, 'o', b);
-}
-
-[[maybe_unused]]
-static int
-msgAppendDictSX(sd_bus_message* m, const char* a, int64_t i)
-{
-    return msgAppendDictSimple(m, a, 'x', &i);
-}
-
 static int
 msgAppendDictSS(sd_bus_message* m, const char* a, const char* b)
 {
@@ -80,6 +66,18 @@ msgIgnore([[maybe_unused]] sd_bus_message* m,
           [[maybe_unused]] sd_bus_error* _retError)
 {
     return sd_bus_reply_method_return(m, "");
+}
+
+static int
+writeIgnore([[maybe_unused]] sd_bus* _bus,
+                   [[maybe_unused]] const char* _path,
+                   [[maybe_unused]] const char* _interface,
+                   [[maybe_unused]] const char* _property,
+                   [[maybe_unused]] sd_bus_message* value,
+                   [[maybe_unused]] void* _data,
+                   [[maybe_unused]] sd_bus_error* _retError)
+{
+    return sd_bus_reply_method_return(value, "");
 }
 
 static int
@@ -189,9 +187,69 @@ playbackStatus([[maybe_unused]] sd_bus* _bus,
                [[maybe_unused]] void* _data,
                [[maybe_unused]] sd_bus_error* _retError)
 {
-    auto p = (app::PipeWirePlayer*)_data;
-    const char* s = p->bPaused ? "Paused" : "Playing";
+    const auto p = (app::PipeWirePlayer*)_data;
+    const char* s = p->bPaused ? "Paused" : "Playing"; /* NOTE: "Stopped" ignored */
     return sd_bus_message_append_basic(reply, 's', s);
+}
+
+static int
+volume([[maybe_unused]] sd_bus* _bus,
+       [[maybe_unused]] const char* _path,
+       [[maybe_unused]] const char* _interface,
+       [[maybe_unused]] const char* _property,
+       [[maybe_unused]] sd_bus_message* reply,
+       [[maybe_unused]] void* _data,
+       [[maybe_unused]] sd_bus_error* _retError)
+{
+    const auto p = (app::PipeWirePlayer*)_data;
+    f64 vol = p->volume;
+    return sd_bus_message_append_basic(reply, 'd', &vol);
+}
+
+static int
+setVolume([[maybe_unused]] sd_bus* _bus,
+          [[maybe_unused]] const char* _path,
+          [[maybe_unused]] const char* _interface,
+          [[maybe_unused]] const char* _property,
+          [[maybe_unused]] sd_bus_message* value,
+          [[maybe_unused]] void* _data,
+          [[maybe_unused]] sd_bus_error* _retError)
+{
+    auto p = (app::PipeWirePlayer*)_data;
+    f64 vol;
+	CK(sd_bus_message_read_basic(value, 'd', &vol));
+    p->setVolume(vol);
+
+    return sd_bus_reply_method_return(value, "");
+}
+
+static int
+position([[maybe_unused]] sd_bus* _bus,
+         [[maybe_unused]] const char* _path,
+         [[maybe_unused]] const char* _interface,
+         [[maybe_unused]] const char* _property,
+         [[maybe_unused]] sd_bus_message* reply,
+         [[maybe_unused]] void* _data,
+         [[maybe_unused]] sd_bus_error* _retError)
+{
+    auto p = (app::PipeWirePlayer*)_data;
+    u64 t = (p->pcmPos/p->pw.channels) / p->pw.sampleRate;
+    t *= 1000 * 1000;
+
+    return sd_bus_message_append_basic(reply, 'x', &t);
+}
+
+static int
+canRaiseVte([[maybe_unused]] sd_bus* _bus,
+            [[maybe_unused]] const char* _path,
+            [[maybe_unused]] const char* _interface,
+            [[maybe_unused]] const char* _property,
+            [[maybe_unused]] sd_bus_message* reply,
+            [[maybe_unused]] void* _data,
+            [[maybe_unused]] sd_bus_error* _retError)
+{
+    uint32_t b = 0;
+    return sd_bus_message_append_basic(reply, 'b', &b);
 }
 
 static int
@@ -203,14 +261,16 @@ metadata([[maybe_unused]] sd_bus* _bus,
          [[maybe_unused]] void* _data,
          [[maybe_unused]] sd_bus_error* _retError)
 {
-    const app::PipeWirePlayer& p = *(app::PipeWirePlayer*)_data;
+    const auto p = (app::PipeWirePlayer*)_data;
 
     CK(sd_bus_message_open_container(reply, 'a', "{sv}"));
 
-    /* TODO: more metadata? */
-    CK(msgAppendDictSAS(reply, "xesam:artist", p.info.artist.data()));
-    CK(msgAppendDictSS(reply, "xesam:title", p.info.title.data()));
-    CK(msgAppendDictSS(reply, "xesam:album", p.info.album.data()));
+    if (!p->info.title.empty())
+        CK(msgAppendDictSS(reply, "xesam:title", p->info.title.data()));
+    if (!p->info.album.empty())
+        CK(msgAppendDictSS(reply, "xesam:album", p->info.album.data()));
+    if (!p->info.artist.empty())
+        CK(msgAppendDictSAS(reply, "xesam:artist", p->info.artist.data()));
 
     CK(sd_bus_message_close_container(reply));
 
@@ -222,9 +282,9 @@ static const sd_bus_vtable vTmediaPlayer2[] {
 	// SD_BUS_METHOD("Raise", "", "", raiseVte, 0),
 	SD_BUS_METHOD("Quit", "", "", msgIgnore, 0),
 	MPRIS_PROP("CanQuit", "b", readFalse),
-	// MPRIS_WPROP("Fullscreen", "b", readFalse, mpris_write_ignore),
+	MPRIS_WPROP("Fullscreen", "b", readFalse, writeIgnore),
 	MPRIS_PROP("CanSetFullscreen", "b", readFalse),
-	// MPRIS_PROP("CanRaise", "b", canRaiseVte),
+	MPRIS_PROP("CanRaise", "b", canRaiseVte),
 	MPRIS_PROP("HasTrackList", "b", readFalse),
 	MPRIS_PROP("Identity", "s", identity),
 	// MPRIS_PROP("SupportedUriSchemes", "as", mpris_uri_schemes),
@@ -248,18 +308,18 @@ static const sd_bus_vtable vTmediaPlayer2Player[] = {
 	// MPRIS_WPROP("LoopStatus", "s", mpris_loop_status, mpris_set_loop_status),
 	// MPRIS_WPROP("Rate", "d", mpris_rate, mpris_write_ignore),
 	// MPRIS_WPROP("Shuffle", "b", mpris_shuffle, mpris_set_shuffle),
-	// MPRIS_WPROP("Volume", "d", mpris_volume, mpris_set_volume),
-	// SD_BUS_PROPERTY("Position", "x", mpris_position, 0, 0),
+	MPRIS_WPROP("Volume", "d", volume, setVolume),
+	SD_BUS_PROPERTY("Position", "x", position, 0, 0),
 	// MPRIS_PROP("MinimumRate", "d", mpris_rate),
 	// MPRIS_PROP("MaximumRate", "d", mpris_rate),
 	MPRIS_PROP("CanGoNext", "b", readTrue),
 	MPRIS_PROP("CanGoPrevious", "b", readTrue),
 	MPRIS_PROP("CanPlay", "b", readTrue),
 	MPRIS_PROP("CanPause", "b", readTrue),
-	// MPRIS_PROP("CanSeek", "b", mpris_read_true),
-	// SD_BUS_PROPERTY("CanControl", "b", mpris_read_true, 0, 0),
+	MPRIS_PROP("CanSeek", "b", readFalse),
+	SD_BUS_PROPERTY("CanControl", "b", readTrue, 0, 0),
 	MPRIS_PROP("Metadata", "a{sv}", metadata),
-	// SD_BUS_SIGNAL("Seeked", "x", 0),
+	SD_BUS_SIGNAL("Seeked", "x", 0),
 	SD_BUS_VTABLE_END,
 };
 
@@ -291,16 +351,16 @@ init(app::PipeWirePlayer* p)
                               "org.mpris.MediaPlayer2.kmp",
                               0);
 
-	mpris_fd = sd_bus_get_fd(pBus);
+	fdMpris = sd_bus_get_fd(pBus);
 
 out:
 	if (res < 0)
     {
 		sd_bus_unref(pBus);
 		pBus = nullptr;
-		mpris_fd = -1;
+		fdMpris = -1;
 
-		LOG_FATAL("{}: {}\n", strerror(-res), "mpris::Init error");
+		LOG_FATAL("{}: {}\n", strerror(-res), "mpris::init error");
 	}
 }
 
@@ -319,7 +379,7 @@ clean()
 {
     sd_bus_unref(pBus);
     pBus = nullptr;
-    mpris_fd = -1;
+    fdMpris = -1;
 }
 
 } /* namespace mpris */

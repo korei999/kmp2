@@ -5,8 +5,8 @@
 namespace defaults
 {
 
-constexpr f32 maxVolume   = 1.2; /* 1.0 == 100% */
-constexpr f32 minVolume   = 0.0;
+constexpr f64 maxVolume   = 1.2; /* 1.0 == 100% */
+constexpr f64 minVolume   = 0.0;
 constexpr f32 volume      = 0.15; /* volume at startup */
 constexpr f64 volumePower = 3.0; /* affects volume curve aka 'std::pow(volume, volumePower)' */
 

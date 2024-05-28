@@ -1,10 +1,10 @@
 #include "app.hh"
+#include "color.hh"
 #include "input.hh"
 #include "play.hh"
 #include "utils.hh"
-#include "color.hh"
 #ifdef MPRIS
-#include "mpris.hh"
+#    include "mpris.hh"
 #endif
 
 #include <algorithm>
@@ -735,6 +735,12 @@ PipeWirePlayer::togglePause()
     std::lock_guard lock(mtxPauseSwitch);
     bPaused = !bPaused;
     if (!bPaused) cndPause.notify_one();
+}
+
+void
+PipeWirePlayer::setVolume(f64 vol)
+{
+    volume = std::clamp(vol, defaults::minVolume, defaults::maxVolume);
 }
 
 } /* namespace app */

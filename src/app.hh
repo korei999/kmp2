@@ -135,6 +135,7 @@ struct PipeWirePlayer
     void pause();
     void resume();
     void togglePause();
+    void setVolume(f64 vol);
 };
 
 } /* namespace app */
