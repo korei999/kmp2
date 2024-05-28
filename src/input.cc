@@ -88,15 +88,6 @@ read(app::PipeWirePlayer* p)
         timeout(defaults::updateRate);
     };
 
-    auto addSampleRate = [&](long val) -> void {
-        long nSr = (f64)p->pw.sampleRate + val;
-        if (nSr < 1000) nSr = 1000;
-
-        p->pw.sampleRate = nSr;
-        p->speedMul = (f64)p->pw.sampleRate / (f64)p->pw.origSampleRate;
-        p->bChangeParams = true;
-    };
-
     while ((c = getch()))
     {
         switch (c)
@@ -284,19 +275,19 @@ read(app::PipeWirePlayer* p)
                 break;
 
             case '[':
-                addSampleRate(-1000);
+                p->addSampleRate(-1000);
                 break;
 
             case '{':
-                addSampleRate(-100);
+                p->addSampleRate(-100);
                 break;
 
             case ']':
-                addSampleRate(1000);
+                p->addSampleRate(1000);
                 break;
 
             case '}':
-                addSampleRate(100);
+                p->addSampleRate(100);
                 break;
 
             case 'v':

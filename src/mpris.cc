@@ -240,16 +240,58 @@ position([[maybe_unused]] sd_bus* _bus,
 }
 
 static int
-canRaiseVte([[maybe_unused]] sd_bus* _bus,
-            [[maybe_unused]] const char* _path,
-            [[maybe_unused]] const char* _interface,
-            [[maybe_unused]] const char* _property,
-            [[maybe_unused]] sd_bus_message* reply,
-            [[maybe_unused]] void* _data,
-            [[maybe_unused]] sd_bus_error* _retError)
+rate([[maybe_unused]] sd_bus* _bus,
+     [[maybe_unused]] const char* _path,
+     [[maybe_unused]] const char* _interface,
+     [[maybe_unused]] const char* _property,
+     [[maybe_unused]] sd_bus_message* reply,
+     [[maybe_unused]] void* _data,
+     [[maybe_unused]] sd_bus_error* _retError)
 {
-    uint32_t b = 0;
-    return sd_bus_message_append_basic(reply, 'b', &b);
+    const auto p = (app::PipeWirePlayer*)_data;
+    f64 mul = (f64)p->pw.sampleRate / (f64)p->pw.origSampleRate;
+    return sd_bus_message_append_basic(reply, 'd', &mul);
+}
+
+static int
+minRate([[maybe_unused]] sd_bus* _bus,
+        [[maybe_unused]] const char* _path,
+        [[maybe_unused]] const char* _interface,
+        [[maybe_unused]] const char* _property,
+        [[maybe_unused]] sd_bus_message* reply,
+        [[maybe_unused]] void* _data,
+        [[maybe_unused]] sd_bus_error* _retError)
+{
+    const auto p = (app::PipeWirePlayer*)_data;
+    f64 mul = (f64)defaults::minSampleRate / (f64)p->pw.origSampleRate;
+    return sd_bus_message_append_basic(reply, 'd', &mul);
+}
+
+static int
+maxRate([[maybe_unused]] sd_bus* _bus,
+        [[maybe_unused]] const char* _path,
+        [[maybe_unused]] const char* _interface,
+        [[maybe_unused]] const char* _property,
+        [[maybe_unused]] sd_bus_message* reply,
+        [[maybe_unused]] void* _data,
+        [[maybe_unused]] sd_bus_error* _retError)
+{
+    const auto p = (app::PipeWirePlayer*)_data;
+    f64 mul = (f64)defaults::maxSampleRate / (f64)p->pw.origSampleRate;
+    return sd_bus_message_append_basic(reply, 'd', &mul);
+}
+
+static int
+shuffle([[maybe_unused]] sd_bus* _bus,
+        [[maybe_unused]] const char* _path,
+        [[maybe_unused]] const char* _interface,
+        [[maybe_unused]] const char* _property,
+        [[maybe_unused]] sd_bus_message* reply,
+        [[maybe_unused]] void* _data,
+        [[maybe_unused]] sd_bus_error* _retError)
+{
+    const uint32_t s = 0;
+    return sd_bus_message_append_basic(reply, 'b', &s);
 }
 
 static int
@@ -284,7 +326,7 @@ static const sd_bus_vtable vTmediaPlayer2[] {
     MPRIS_PROP("CanQuit", "b", readFalse),
     MPRIS_WPROP("Fullscreen", "b", readFalse, writeIgnore),
     MPRIS_PROP("CanSetFullscreen", "b", readFalse),
-    MPRIS_PROP("CanRaise", "b", canRaiseVte),
+    MPRIS_PROP("CanRaise", "b", readFalse),
     MPRIS_PROP("HasTrackList", "b", readFalse),
     MPRIS_PROP("Identity", "s", identity),
     // MPRIS_PROP("SupportedUriSchemes", "as", mpris_uri_schemes),
@@ -306,12 +348,12 @@ static const sd_bus_vtable vTmediaPlayer2Player[] = {
     // SD_BUS_METHOD("OpenUri", "s", "", mpris_play_file, 0),
     MPRIS_PROP("PlaybackStatus", "s", playbackStatus),
     // MPRIS_WPROP("LoopStatus", "s", mpris_loop_status, mpris_set_loop_status),
-    // MPRIS_WPROP("Rate", "d", mpris_rate, mpris_write_ignore),
-    // MPRIS_WPROP("Shuffle", "b", mpris_shuffle, mpris_set_shuffle),
+    MPRIS_WPROP("Rate", "d", rate, writeIgnore), /* this one is not used by playerctl afaik */
+    MPRIS_WPROP("Shuffle", "b", shuffle, writeIgnore),
     MPRIS_WPROP("Volume", "d", volume, setVolume),
     SD_BUS_PROPERTY("Position", "x", position, 0, 0),
-    // MPRIS_PROP("MinimumRate", "d", mpris_rate),
-    // MPRIS_PROP("MaximumRate", "d", mpris_rate),
+    MPRIS_PROP("MinimumRate", "d", minRate),
+    MPRIS_PROP("MaximumRate", "d", maxRate),
     MPRIS_PROP("CanGoNext", "b", readTrue),
     MPRIS_PROP("CanGoPrevious", "b", readTrue),
     MPRIS_PROP("CanPlay", "b", readTrue),

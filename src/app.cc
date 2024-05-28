@@ -743,4 +743,15 @@ PipeWirePlayer::setVolume(f64 vol)
     volume = std::clamp(vol, defaults::minVolume, defaults::maxVolume);
 }
 
+void
+PipeWirePlayer::addSampleRate(long val)
+{
+    long nSr = (f64)pw.sampleRate + val;
+    nSr = std::clamp(nSr, defaults::minSampleRate, defaults::maxSampleRate);
+
+    pw.sampleRate = nSr;
+    speedMul = (f64)pw.sampleRate / (f64)pw.origSampleRate;
+    bChangeParams = true;
+}
+
 } /* namespace app */

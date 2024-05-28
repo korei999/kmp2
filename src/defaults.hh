@@ -10,6 +10,9 @@ constexpr f64 minVolume   = 0.0;
 constexpr f32 volume      = 0.15; /* volume at startup */
 constexpr f64 volumePower = 3.0; /* affects volume curve aka 'std::pow(volume, volumePower)' */
 
+constexpr long maxSampleRate = 666666; /* can be stupid big */
+constexpr long minSampleRate = 1000; /* should be > 0 */
+
 constexpr int step        = 100000; /* pcm relative seek step (for sampleRate=48000 -> "100000 / sampleRate" == skip 2.08 sec each step) */
 constexpr u32 updateRate  = 100; /* time (ms) between input polls (affects visualizer updates for now) */
 constexpr u32 timeOut     = 5000; /* time (ms) to cancel input */
