@@ -334,7 +334,6 @@ static const sd_bus_vtable vTmediaPlayer2[] {
     SD_BUS_VTABLE_END,
 };
 
-/* TODO: more properties? */
 static const sd_bus_vtable vTmediaPlayer2Player[] = {
     SD_BUS_VTABLE_START(0),
     SD_BUS_METHOD("Next", "", "", next, 0),
