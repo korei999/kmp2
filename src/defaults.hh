@@ -1,6 +1,6 @@
 #pragma once
-#include "ultratypes.h"
 #include "color.hh"
+#include "ultratypes.h"
 
 namespace defaults
 {

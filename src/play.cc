@@ -46,8 +46,12 @@ onProcessCB(void* data)
 
     int stride = sizeof(f32) * p->pw.channels;
     int nFrames = buf->datas[0].maxsize / stride;
-    if (b->requested)
-        nFrames = SPA_MIN(b->requested, (u64)nFrames);
+    if (b->requested) nFrames = SPA_MIN(b->requested, (u64)nFrames);
+
+    /* BUG: sometimes linsndfile crashes when nFrames gets too big for some reason */
+    /* for example by default nFrames == 1024, but when system has > 1 active playback, it goes to 2048 */
+    /* last coredump i got shows nFrames = 13312 (1024*13?) */
+    if (nFrames > 1024*4) nFrames = 1024*4; /* limit to arbitrary number, `SPA_MAX` maybe? */
 
     p->pw.lastNFrames = nFrames;
     p->hSnd.readf(p->chunk, nFrames);
