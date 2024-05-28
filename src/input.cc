@@ -1,3 +1,6 @@
+#ifdef MPRIS
+#include "mpris.hh"
+#endif
 #include "input.hh"
 #include "defaults.hh"
 #ifndef NDEBUG
@@ -245,13 +248,7 @@ read(app::PipeWirePlayer* p)
 
             case ' ':
                 {
-                    if (p->mtxPauseSwitch.try_lock())
-                    {
-                        p->bPaused = !p->bPaused;
-                        if (!p->bPaused) p->cndPause.notify_one();
-
-                        p->mtxPauseSwitch.unlock();
-                    }
+                    p->togglePause();
                 }
                 break;
 
@@ -331,6 +328,9 @@ read(app::PipeWirePlayer* p)
         p->term.update.bStatus = true;
         if (!p->bPaused) p->term.update.bVisualizer = true;
 
+#ifdef MPRIS
+        mpris::process(p);
+#endif
         p->term.drawUI();
     }
 }
@@ -399,15 +399,12 @@ done:
 std::optional<u64>
 parseTimeString(std::wstring_view ts, app::PipeWirePlayer* p)
 {
-    u64 ret = 0;
-
     if (ts.empty() || !std::isdigit(ts[0]))
         return std::nullopt;
 
+    u64 ret = 0;
     std::vector<std::wstring> numbers {};
-
     bool percent = false;
-
     int i = 0;
     wchar_t c;
 
@@ -423,16 +420,22 @@ parseTimeString(std::wstring_view ts, app::PipeWirePlayer* p)
     while (i < (int)ts.size() && (c = ts[i]) && numbers.size() < 2)
     {
         if (std::isdigit(c))
+        {
             numbers.push_back(getNumber());
+        }
         else if (c == L':')
+        {
             i++;
+        }
         else if (c == L'%')
         {
             percent = true;
             break;
         }
         else
+        {
             i++;
+        }
     }
 
     constexpr int mul[2] {60, 1};

@@ -57,6 +57,8 @@ Curses::Curses()
     keypad(stdscr, true);
     refresh();
 
+    int td = defaults::bTransparentBg ? -1 : COLOR_BLACK;
+
     if (defaults::bCustomColorPallete)
     {
 #ifndef NDEBUG
@@ -86,7 +88,6 @@ Curses::Curses()
         initCustom(COLOR_WHITE,   defaults::white);
     }
 
-    int td = (COLOR_BLACK);
     init_pair(color::green, COLOR_GREEN, td);
     init_pair(color::yellow, COLOR_YELLOW, td);
     init_pair(color::blue, COLOR_BLUE, td);
@@ -698,5 +699,36 @@ PipeWirePlayer::jumpTo()
     }
 }
 
+void
+PipeWirePlayer::pause()
+{
+    if (mtxPauseSwitch.try_lock())
+    {
+        bPaused = true;
+        mtxPauseSwitch.unlock();
+    }
+}
+
+void
+PipeWirePlayer::resume()
+{
+    if (mtxPauseSwitch.try_lock())
+    {
+        bPaused = false;
+        mtxPauseSwitch.unlock();
+    }
+}
+
+void
+PipeWirePlayer::togglePause()
+{
+    if (mtxPauseSwitch.try_lock())
+    {
+        bPaused = !bPaused;
+        if (!bPaused) cndPause.notify_one();
+
+        mtxPauseSwitch.unlock();
+    }
+}
 
 } /* namespace app */

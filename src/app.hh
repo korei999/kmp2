@@ -133,6 +133,9 @@ struct PipeWirePlayer
     void centerOn(size_t i);
     void setSeek();
     void jumpTo();
+    void pause();
+    void resume();
+    void togglePause();
 };
 
 } /* namespace app */

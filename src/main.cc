@@ -1,4 +1,7 @@
 #include "app.hh"
+#ifdef MPRIS
+#include "mpris.hh"
+#endif
 
 #include <locale>
 
@@ -12,5 +15,14 @@ main(int argc, char* argv[])
 #endif
 
     app::PipeWirePlayer p(argc, argv);
+
+#ifdef MPRIS
+    mpris::init(&p);
+#endif
+
     p.playAll();
+
+#ifdef MPRIS
+    mpris::clean();
+#endif
 }
