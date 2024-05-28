@@ -8,19 +8,72 @@
 #include <systemd/sd-bus.h>
 #endif
 
-#define MPRIS_PROP(name, type, read) \
-	SD_BUS_PROPERTY(name, type, read, 0, \
-			SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE)
+#define MPRIS_PROP(name, type, read) SD_BUS_PROPERTY(name, type, read, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE)
 
-#define MPRIS_WPROP(name, type, read, write) \
-	SD_BUS_WRITABLE_PROPERTY(name, type, read, write, 0, \
-			SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE)
+#define MPRIS_WPROP(name, type, read, write)                                                                           \
+    SD_BUS_WRITABLE_PROPERTY(name, type, read, write, 0, SD_BUS_VTABLE_PROPERTY_EMITS_CHANGE)
+
+#define CK(v)                                                                                                          \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        int tmp = (v);                                                                                                 \
+        if (tmp < 0)                                                                                                   \
+            return tmp;                                                                                                \
+    } while (0)
 
 namespace mpris
 {
 
 static sd_bus *pBus {};
 static int mpris_fd = -1;
+static bool ready = false;
+
+static int
+msgAppendDictSAS(sd_bus_message* m, const char* a, const char* b)
+{
+    CK(sd_bus_message_open_container(m, 'e', "sv"));
+    CK(sd_bus_message_append_basic(m, 's', a));
+    CK(sd_bus_message_open_container(m, 'v', "as"));
+    CK(sd_bus_message_open_container(m, 'a', "s"));
+    CK(sd_bus_message_append_basic(m, 's', b));
+    CK(sd_bus_message_close_container(m));
+    CK(sd_bus_message_close_container(m));
+    CK(sd_bus_message_close_container(m));
+    return 0;
+}
+
+static int
+msgAppendDictSimple(sd_bus_message* m, const char* tag, char type, const void* val)
+{
+    const char s[] = {type, 0};
+    CK(sd_bus_message_open_container(m, 'e', "sv"));
+    CK(sd_bus_message_append_basic(m, 's', tag));
+    CK(sd_bus_message_open_container(m, 'v', s));
+    CK(sd_bus_message_append_basic(m, type, val));
+    CK(sd_bus_message_close_container(m));
+    CK(sd_bus_message_close_container(m));
+    return 0;
+}
+
+[[maybe_unused]]
+static int
+msgAppendDictSO(sd_bus_message* m, const char* a, const char* b)
+{
+    return msgAppendDictSimple(m, a, 'o', b);
+}
+
+[[maybe_unused]]
+static int
+msgAppendDictSX(sd_bus_message* m, const char* a, int64_t i)
+{
+    return msgAppendDictSimple(m, a, 'x', &i);
+}
+
+static int
+msgAppendDictSS(sd_bus_message* m, const char* a, const char* b)
+{
+    return msgAppendDictSimple(m, a, 's', b);
+}
 
 static int
 msgIgnore([[maybe_unused]] sd_bus_message* m,
@@ -152,74 +205,16 @@ metadata([[maybe_unused]] sd_bus* _bus,
          [[maybe_unused]] void* _data,
          [[maybe_unused]] sd_bus_error* _retError)
 {
-    // sd_bus_message_open_container(reply, 'a', "{sv}");
+    const app::PipeWirePlayer& p = *(app::PipeWirePlayer*)_data;
 
-    // struct track_info* ti = player_info.ti;
-    // if (ti)
-    // {
-        // char buf[] = "/1122334455667788";
-        // sprintf(buf, "/%" PRIx64, ti->uid);
-        // mpris_msg_append_so_dict(reply, "mpris:trackid", buf);
+    CK(sd_bus_message_open_container(reply, 'a', "{sv}"));
 
-        // int64_t dur;
-        // dur *= 1000 * 1000;
-        // mpris_msg_append_sx_dict(reply, "mpris:length", dur);
+    CK(msgAppendDictSAS(reply, "xesam:artist", p.info.artist.data()));
+    CK(msgAppendDictSS(reply, "xesam:title", p.info.title.data()));
+    CK(msgAppendDictSS(reply, "xesam:album", p.info.album.data()));
 
-        // The dbus connection closes if invalid data is sent.
-        // As a *temporary* fix, ensure all strings are encoded in utf8.
-        // if (ti->artist)
-        // {
-            // char corrected[u_str_print_size(ti->artist)];
-            // u_to_utf8(corrected, ti->artist);
-            // CK(mpris_msg_append_sas_dict(reply, "xesam:artist", corrected));
-        // }
-        // if (ti->title)
-        // {
-            // char corrected[u_str_print_size(ti->title)];
-            // u_to_utf8(corrected, ti->title);
-            // CK(mpris_msg_append_ss_dict(reply, "xesam:title", corrected));
-        // }
-        // else
-        // {
-            // char corrected[u_str_print_size(path_basename(ti->filename))];
-            // u_to_utf8(corrected, path_basename(ti->filename));
-            // CK(mpris_msg_append_ss_dict(reply, "xesam:title", corrected));
-        // }
-        // if (ti->album)
-        // {
-            // char corrected[u_str_print_size(ti->album)];
-            // u_to_utf8(corrected, ti->album);
-            // CK(mpris_msg_append_ss_dict(reply, "xesam:album", corrected));
-        // }
-        // if (ti->albumartist)
-        // {
-            // char corrected[u_str_print_size(ti->albumartist)];
-            // u_to_utf8(corrected, ti->albumartist);
-            // CK(mpris_msg_append_sas_dict(reply, "xesam:albumArtist", corrected));
-        // }
-        // if (ti->genre)
-        // {
-            // char corrected[u_str_print_size(ti->genre)];
-            // u_to_utf8(corrected, ti->genre);
-            // CK(mpris_msg_append_sas_dict(reply, "xesam:genre", corrected));
-        // }
-        // if (ti->comment)
-        // {
-            // char corrected[u_str_print_size(ti->comment)];
-            // u_to_utf8(corrected, ti->comment);
-            // CK(mpris_msg_append_sas_dict(reply, "xesam:comment", corrected));
-        // }
-        // if (ti->bpm != -1)
-            // CK(mpris_msg_append_si_dict(reply, "xesam:audioBPM", ti->bpm));
-        // if (ti->tracknumber != -1)
-            // CK(mpris_msg_append_si_dict(reply, "xesam:trackNumber", ti->tracknumber));
-        // if (ti->discnumber != -1)
-            // CK(mpris_msg_append_si_dict(reply, "xesam:discNumber", ti->discnumber));
-        // if (is_http_url(ti->filename))
-            // CK(mpris_msg_append_ss_dict(reply, "cmus:stream_title", get_stream_title()));
-    // }
+    CK(sd_bus_message_close_container(reply));
 
-    // CK(sd_bus_message_close_container(reply));
     return 0;
 }
 
@@ -263,7 +258,7 @@ static const sd_bus_vtable vTmediaPlayer2Player[] = {
 	MPRIS_PROP("CanPause", "b", readTrue),
 	// MPRIS_PROP("CanSeek", "b", mpris_read_true),
 	// SD_BUS_PROPERTY("CanControl", "b", mpris_read_true, 0, 0),
-	// MPRIS_PROP("Metadata", "a{sv}", metadata),
+	MPRIS_PROP("Metadata", "a{sv}", metadata),
 	// SD_BUS_SIGNAL("Seeked", "x", 0),
 	SD_BUS_VTABLE_END,
 };
@@ -271,6 +266,12 @@ static const sd_bus_vtable vTmediaPlayer2Player[] = {
 void
 init(app::PipeWirePlayer* p)
 {
+    if (ready)
+    {
+        LOG_WARN("mpris must be initialized only once\n");
+        return;
+    }
+
 	int res = 0;
 
 	res = sd_bus_default_user(&pBus);
@@ -307,12 +308,14 @@ out:
 
 		LOG_FATAL("{}: {}\n", strerror(-res), "mpris::Init error");
 	}
+
+    ready = true;
 }
 
 void
 process(app::PipeWirePlayer* p)
 {
-    if (pBus)
+    if (pBus && ready)
     {
         while (sd_bus_process(pBus, nullptr) > 0 && !p->bFinished)
             ;

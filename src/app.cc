@@ -476,16 +476,16 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
     pw.pLoop = pw_main_loop_new(nullptr);
 
     pw.pStream = pw_stream_new_simple(pw_main_loop_get_loop(pw.pLoop),
-                                     "kmpMusicPlayback",
-                                     pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
-                                                       PW_KEY_MEDIA_CATEGORY, "Playback",
-                                                       PW_KEY_MEDIA_ROLE, "Music",
-                                                       nullptr),
-                                     &pw.streamEvents,
-                                     this);
+                                      "kmpMusicPlayback",
+                                      pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
+                                                        PW_KEY_MEDIA_CATEGORY, "Playback",
+                                                        PW_KEY_MEDIA_ROLE, "Music",
+                                                        nullptr),
+                                      &pw.streamEvents,
+                                      this);
 
 
-    spa_audio_info_raw info {
+    spa_audio_info_raw rawInfo {
         .format = format,
         .flags {},
         .rate = sampleRate,
@@ -493,7 +493,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
         .position {}
     };
 
-    params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &info);
+    params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &rawInfo);
 
     pw_stream_connect(pw.pStream,
                       PW_DIRECTION_OUTPUT,
