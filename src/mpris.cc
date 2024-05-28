@@ -26,7 +26,6 @@ namespace mpris
 
 static sd_bus *pBus {};
 static int mpris_fd = -1;
-static bool ready = false;
 
 static int
 msgAppendDictSAS(sd_bus_message* m, const char* a, const char* b)
@@ -195,7 +194,6 @@ playbackStatus([[maybe_unused]] sd_bus* _bus,
     return sd_bus_message_append_basic(reply, 's', s);
 }
 
-/* TODO: implement this! */
 static int
 metadata([[maybe_unused]] sd_bus* _bus,
          [[maybe_unused]] const char* _path,
@@ -209,6 +207,7 @@ metadata([[maybe_unused]] sd_bus* _bus,
 
     CK(sd_bus_message_open_container(reply, 'a', "{sv}"));
 
+    /* TODO: more metadata? */
     CK(msgAppendDictSAS(reply, "xesam:artist", p.info.artist.data()));
     CK(msgAppendDictSS(reply, "xesam:title", p.info.title.data()));
     CK(msgAppendDictSS(reply, "xesam:album", p.info.album.data()));
@@ -220,12 +219,12 @@ metadata([[maybe_unused]] sd_bus* _bus,
 
 static const sd_bus_vtable vTmediaPlayer2[] {
 	SD_BUS_VTABLE_START(0),
-	// SD_BUS_METHOD("Raise", "", "", mpris_raise_vte, 0),
+	// SD_BUS_METHOD("Raise", "", "", raiseVte, 0),
 	SD_BUS_METHOD("Quit", "", "", msgIgnore, 0),
 	MPRIS_PROP("CanQuit", "b", readFalse),
 	// MPRIS_WPROP("Fullscreen", "b", readFalse, mpris_write_ignore),
 	MPRIS_PROP("CanSetFullscreen", "b", readFalse),
-	// MPRIS_PROP("CanRaise", "b", mpris_can_raise_vte),
+	// MPRIS_PROP("CanRaise", "b", canRaiseVte),
 	MPRIS_PROP("HasTrackList", "b", readFalse),
 	MPRIS_PROP("Identity", "s", identity),
 	// MPRIS_PROP("SupportedUriSchemes", "as", mpris_uri_schemes),
@@ -233,6 +232,7 @@ static const sd_bus_vtable vTmediaPlayer2[] {
 	SD_BUS_VTABLE_END,
 };
 
+/* TODO: more properties? */
 static const sd_bus_vtable vTmediaPlayer2Player[] = {
 	SD_BUS_VTABLE_START(0),
 	SD_BUS_METHOD("Next", "", "", next, 0),
@@ -266,12 +266,6 @@ static const sd_bus_vtable vTmediaPlayer2Player[] = {
 void
 init(app::PipeWirePlayer* p)
 {
-    if (ready)
-    {
-        LOG_WARN("mpris must be initialized only once\n");
-        return;
-    }
-
 	int res = 0;
 
 	res = sd_bus_default_user(&pBus);
@@ -308,14 +302,12 @@ out:
 
 		LOG_FATAL("{}: {}\n", strerror(-res), "mpris::Init error");
 	}
-
-    ready = true;
 }
 
 void
 process(app::PipeWirePlayer* p)
 {
-    if (pBus && ready)
+    if (pBus)
     {
         while (sd_bus_process(pBus, nullptr) > 0 && !p->bFinished)
             ;
@@ -326,7 +318,7 @@ void
 clean()
 {
     sd_bus_unref(pBus);
-    pBus = NULL;
+    pBus = nullptr;
     mpris_fd = -1;
 }
 

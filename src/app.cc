@@ -3,6 +3,9 @@
 #include "play.hh"
 #include "utils.hh"
 #include "color.hh"
+#ifdef MPRIS
+#include "mpris.hh"
+#endif
 
 #include <algorithm>
 #include <cmath>
@@ -508,7 +511,19 @@ void
 PipeWirePlayer::playAll()
 {
     while (!bFinished)
+    {
+#ifdef MPRIS
+        /* doing it here effectively raises kmp for playerctl without actually implementing raise method
+         * https://specifications.freedesktop.org/mpris-spec/latest/Media_Player.html#Method:Raise */
+    mpris::init(this);
+#endif
+
         playCurrent();
+
+#ifdef MPRIS
+        mpris::clean();
+#endif
+    }
 }
 
 void
