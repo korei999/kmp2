@@ -1,6 +1,5 @@
 #pragma once
 #include "search.hh"
-#include "ultratypes.h"
 #include "song.hh"
 #include "defaults.hh"
 

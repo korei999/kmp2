@@ -1,5 +1,5 @@
 project('kmp2', 'cpp',
-  version : '0.1',
+  version : '0.2',
   license : ['MIT', 'LGPL-2.1'],
   default_options : ['warning_level=2', 'cpp_std=c++20', 'buildtype=release', 'b_ndebug=if-release'])
 
@@ -34,6 +34,13 @@ if systemd.found()
   deps += [systemd]
   sources += ['src/mpris.cc']
   add_global_arguments('-DMPRIS', language : 'cpp')
+else
+  basu = dependency('basu ', required : false)
+  if basu.found()
+    deps += [basu]
+    sources += ['src/mpris.cc']
+    add_global_arguments('-DMPRIS', '-DBASU', language : 'cpp')
+  endif
 endif
 
 executable('kmp',

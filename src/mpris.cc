@@ -2,7 +2,11 @@
 
 #include "mpris.hh"
 
+#ifdef BASU
+#include <basu/sd-bus.h>
+#else
 #include <systemd/sd-bus.h>
+#endif
 
 #define MPRIS_PROP(name, type, read) \
 	SD_BUS_PROPERTY(name, type, read, 0, \
