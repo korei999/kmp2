@@ -22,6 +22,7 @@
 
 ### Dependencies:
 fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel meson fmt-devel(optional)`
+ubuntu: `sudo apt install libpipewire0.3-devlibsndfile1-dev libfmt-dev(optional)`
 
 ### Install:
 ```
