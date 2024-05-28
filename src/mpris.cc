@@ -217,7 +217,7 @@ setVolume([[maybe_unused]] sd_bus* _bus,
 {
     auto p = (app::PipeWirePlayer*)_data;
     f64 vol;
-	CK(sd_bus_message_read_basic(value, 'd', &vol));
+    CK(sd_bus_message_read_basic(value, 'd', &vol));
     p->setVolume(vol);
 
     return sd_bus_reply_method_return(value, "");
@@ -278,90 +278,89 @@ metadata([[maybe_unused]] sd_bus* _bus,
 }
 
 static const sd_bus_vtable vTmediaPlayer2[] {
-	SD_BUS_VTABLE_START(0),
-	// SD_BUS_METHOD("Raise", "", "", raiseVte, 0),
-	SD_BUS_METHOD("Quit", "", "", msgIgnore, 0),
-	MPRIS_PROP("CanQuit", "b", readFalse),
-	MPRIS_WPROP("Fullscreen", "b", readFalse, writeIgnore),
-	MPRIS_PROP("CanSetFullscreen", "b", readFalse),
-	MPRIS_PROP("CanRaise", "b", canRaiseVte),
-	MPRIS_PROP("HasTrackList", "b", readFalse),
-	MPRIS_PROP("Identity", "s", identity),
-	// MPRIS_PROP("SupportedUriSchemes", "as", mpris_uri_schemes),
-	// MPRIS_PROP("SupportedMimeTypes", "as", mpris_mime_types),
-	SD_BUS_VTABLE_END,
+    SD_BUS_VTABLE_START(0),
+    // SD_BUS_METHOD("Raise", "", "", raiseVte, 0),
+    SD_BUS_METHOD("Quit", "", "", msgIgnore, 0),
+    MPRIS_PROP("CanQuit", "b", readFalse),
+    MPRIS_WPROP("Fullscreen", "b", readFalse, writeIgnore),
+    MPRIS_PROP("CanSetFullscreen", "b", readFalse),
+    MPRIS_PROP("CanRaise", "b", canRaiseVte),
+    MPRIS_PROP("HasTrackList", "b", readFalse),
+    MPRIS_PROP("Identity", "s", identity),
+    // MPRIS_PROP("SupportedUriSchemes", "as", mpris_uri_schemes),
+    // MPRIS_PROP("SupportedMimeTypes", "as", mpris_mime_types),
+    SD_BUS_VTABLE_END,
 };
 
 /* TODO: more properties? */
 static const sd_bus_vtable vTmediaPlayer2Player[] = {
-	SD_BUS_VTABLE_START(0),
-	SD_BUS_METHOD("Next", "", "", next, 0),
-	SD_BUS_METHOD("Previous", "", "", prev, 0),
-	SD_BUS_METHOD("Pause", "", "", pause, 0),
-	SD_BUS_METHOD("PlayPause", "", "", togglePause, 0),
-	SD_BUS_METHOD("Stop", "", "", stop, 0),
-	SD_BUS_METHOD("Play", "", "", resume, 0),
-	// SD_BUS_METHOD("Seek", "x", "", mpris_seek, 0),
-	// SD_BUS_METHOD("SetPosition", "ox", "", mpris_seek_abs, 0),
-	// SD_BUS_METHOD("OpenUri", "s", "", mpris_play_file, 0),
-	MPRIS_PROP("PlaybackStatus", "s", playbackStatus),
-	// MPRIS_WPROP("LoopStatus", "s", mpris_loop_status, mpris_set_loop_status),
-	// MPRIS_WPROP("Rate", "d", mpris_rate, mpris_write_ignore),
-	// MPRIS_WPROP("Shuffle", "b", mpris_shuffle, mpris_set_shuffle),
-	MPRIS_WPROP("Volume", "d", volume, setVolume),
-	SD_BUS_PROPERTY("Position", "x", position, 0, 0),
-	// MPRIS_PROP("MinimumRate", "d", mpris_rate),
-	// MPRIS_PROP("MaximumRate", "d", mpris_rate),
-	MPRIS_PROP("CanGoNext", "b", readTrue),
-	MPRIS_PROP("CanGoPrevious", "b", readTrue),
-	MPRIS_PROP("CanPlay", "b", readTrue),
-	MPRIS_PROP("CanPause", "b", readTrue),
-	MPRIS_PROP("CanSeek", "b", readFalse),
-	SD_BUS_PROPERTY("CanControl", "b", readTrue, 0, 0),
-	MPRIS_PROP("Metadata", "a{sv}", metadata),
-	SD_BUS_SIGNAL("Seeked", "x", 0),
-	SD_BUS_VTABLE_END,
+    SD_BUS_VTABLE_START(0),
+    SD_BUS_METHOD("Next", "", "", next, 0),
+    SD_BUS_METHOD("Previous", "", "", prev, 0),
+    SD_BUS_METHOD("Pause", "", "", pause, 0),
+    SD_BUS_METHOD("PlayPause", "", "", togglePause, 0),
+    SD_BUS_METHOD("Stop", "", "", stop, 0),
+    SD_BUS_METHOD("Play", "", "", resume, 0),
+    // SD_BUS_METHOD("Seek", "x", "", mpris_seek, 0),
+    // SD_BUS_METHOD("SetPosition", "ox", "", mpris_seek_abs, 0),
+    // SD_BUS_METHOD("OpenUri", "s", "", mpris_play_file, 0),
+    MPRIS_PROP("PlaybackStatus", "s", playbackStatus),
+    // MPRIS_WPROP("LoopStatus", "s", mpris_loop_status, mpris_set_loop_status),
+    // MPRIS_WPROP("Rate", "d", mpris_rate, mpris_write_ignore),
+    // MPRIS_WPROP("Shuffle", "b", mpris_shuffle, mpris_set_shuffle),
+    MPRIS_WPROP("Volume", "d", volume, setVolume),
+    SD_BUS_PROPERTY("Position", "x", position, 0, 0),
+    // MPRIS_PROP("MinimumRate", "d", mpris_rate),
+    // MPRIS_PROP("MaximumRate", "d", mpris_rate),
+    MPRIS_PROP("CanGoNext", "b", readTrue),
+    MPRIS_PROP("CanGoPrevious", "b", readTrue),
+    MPRIS_PROP("CanPlay", "b", readTrue),
+    MPRIS_PROP("CanPause", "b", readTrue),
+    MPRIS_PROP("CanSeek", "b", readFalse),
+    SD_BUS_PROPERTY("CanControl", "b", readTrue, 0, 0),
+    MPRIS_PROP("Metadata", "a{sv}", metadata),
+    SD_BUS_SIGNAL("Seeked", "x", 0),
+    SD_BUS_VTABLE_END,
 };
 
 void
 init(app::PipeWirePlayer* p)
 {
-	int res = 0;
+    int res = 0;
 
-	res = sd_bus_default_user(&pBus);
-	if (res < 0) goto out;
+    res = sd_bus_default_user(&pBus);
+    if (res < 0)
+        goto out;
 
-	res = sd_bus_add_object_vtable(pBus,
+    res =
+        sd_bus_add_object_vtable(pBus,
+                                 nullptr,
+                                 "/org/mpris/MediaPlayer2",
+                                 "org.mpris.MediaPlayer2",
+                                 vTmediaPlayer2,
+                                 p);
+    if (res < 0) goto out;
+
+    res = sd_bus_add_object_vtable(pBus,
                                    nullptr,
                                    "/org/mpris/MediaPlayer2",
-			                       "org.mpris.MediaPlayer2",
-                                   vTmediaPlayer2,
+                                   "org.mpris.MediaPlayer2.Player",
+                                   vTmediaPlayer2Player,
                                    p);
-	if (res < 0) goto out;
+    if (res < 0) goto out;
 
-	res = sd_bus_add_object_vtable(pBus,
-                                   nullptr,
-                                   "/org/mpris/MediaPlayer2",
-			                       "org.mpris.MediaPlayer2.Player",
-			                       vTmediaPlayer2Player,
-                                   p);
-	if (res < 0) goto out;
-
-	res = sd_bus_request_name(pBus,
-                              "org.mpris.MediaPlayer2.kmp",
-                              0);
-
-	fdMpris = sd_bus_get_fd(pBus);
+    res = sd_bus_request_name(pBus, "org.mpris.MediaPlayer2.kmp", 0);
+    fdMpris = sd_bus_get_fd(pBus);
 
 out:
-	if (res < 0)
+    if (res < 0)
     {
-		sd_bus_unref(pBus);
-		pBus = nullptr;
-		fdMpris = -1;
+        sd_bus_unref(pBus);
+        pBus = nullptr;
+        fdMpris = -1;
 
-		LOG_FATAL("{}: {}\n", strerror(-res), "mpris::init error");
-	}
+        LOG_WARN("{}: {}\n", strerror(-res), "mpris::init error");
+    }
 }
 
 void
