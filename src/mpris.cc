@@ -1,7 +1,6 @@
 /* NOTE: thanks cmus! https://github.com/cmus/cmus/blob/master/mpris.c */
 
 #include "mpris.hh"
-#include "app.hh"
 
 #include <systemd/sd-bus.h>
 
