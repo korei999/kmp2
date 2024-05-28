@@ -110,7 +110,7 @@ struct PipeWirePlayer
     long pcmPos = 0;
     f64 volume = defaults::volume;
     bool bMuted = false;
-    std::atomic<bool> bPaused = false;
+    bool bPaused = false;
     bool bNext = false;
     bool bPrev = false;
     bool bNewSongSelected = false;

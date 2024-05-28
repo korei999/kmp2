@@ -702,33 +702,24 @@ PipeWirePlayer::jumpTo()
 void
 PipeWirePlayer::pause()
 {
-    if (mtxPauseSwitch.try_lock())
-    {
-        bPaused = true;
-        mtxPauseSwitch.unlock();
-    }
+    std::lock_guard lock(mtxPauseSwitch);
+    bPaused = true;
 }
 
 void
 PipeWirePlayer::resume()
 {
-    if (mtxPauseSwitch.try_lock())
-    {
-        bPaused = false;
-        mtxPauseSwitch.unlock();
-    }
+    std::lock_guard lock(mtxPauseSwitch);
+    bPaused = false;
+    cndPause.notify_one();
 }
 
 void
 PipeWirePlayer::togglePause()
 {
-    if (mtxPauseSwitch.try_lock())
-    {
-        bPaused = !bPaused;
-        if (!bPaused) cndPause.notify_one();
-
-        mtxPauseSwitch.unlock();
-    }
+    std::lock_guard lock(mtxPauseSwitch);
+    bPaused = !bPaused;
+    if (!bPaused) cndPause.notify_one();
 }
 
 } /* namespace app */
