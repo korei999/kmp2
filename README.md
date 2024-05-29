@@ -4,13 +4,14 @@
 - MPRIS controls.  
 
 ### Usage:
-- `kmp *`, `kmp **/*` or whatever your shell can do.
+- Play each song in the directory: `kmp *`, or recursively: `kmp **/*`.
+- With no arguments, stdin with pipe can be used: `find /path -iname '*.mp3' | kmp` or whatever your shell can do.
 - Navigate with vim-like keybinds.
 - `h` and `l` seek back/forward.
 - `o` and `i` next/prev song.
 - Searching: `/` or `?`, then `n` and `N` jump to next/prev found string.
 - `9` and `0` volume.
-- `t` set time like `4:20`, `40` or `60%`.
+- `t` select time: `4:20`, `40` or `60%`.
 - `:` jump to selected number in the playlist.
 - `z` center around currently playing song.
 - `r` repeat after last song.

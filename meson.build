@@ -1,11 +1,17 @@
 project('kmp2', 'cpp',
   version : '0.2',
   license : ['MIT', 'LGPL-2.1'],
-  default_options : ['warning_level=2', 'cpp_std=c++20', 'buildtype=release', 'b_ndebug=if-release'])
+  default_options : ['warning_level=2',
+                     'cpp_std=c++20',
+                     'buildtype=release',
+                     'b_ndebug=if-release'])
 
 compiler = meson.get_compiler('cpp')
 if compiler.get_id() == 'clang'
-  add_global_arguments('-fcolor-diagnostics', '-fansi-escape-codes', '-fdiagnostics-format=msvc', language : 'cpp')
+  add_global_arguments('-fcolor-diagnostics',
+                       '-fansi-escape-codes',
+                       '-fdiagnostics-format=msvc',
+                       language : 'cpp')
 endif
 
 add_global_arguments('-DLOGS', language : 'cpp')
@@ -43,7 +49,4 @@ else
   endif
 endif
 
-executable('kmp',
-           sources,
-           dependencies : deps,
-           install : true)
+executable('kmp', sources, dependencies : deps, install : true)

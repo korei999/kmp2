@@ -49,6 +49,9 @@ drawBorders(WINDOW* pWin, enum color::curses color = defaults::borderColor)
 
 Curses::Curses()
 {
+    if (!freopen("/dev/tty", "r", stdin))
+        LOG_BAD("freopen(\"/dev/tty\", \"r\", stdin)\n");
+
     initscr();
     start_color();
     if (defaults::bTransparentBg) use_default_colors();
@@ -479,7 +482,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
     pw.pLoop = pw_main_loop_new(nullptr);
 
     pw.pStream = pw_stream_new_simple(pw_main_loop_get_loop(pw.pLoop),
-                                      "kmpMusicPlayback",
+                                      "kmpStream",
                                       pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
                                                         PW_KEY_MEDIA_CATEGORY, "Playback",
                                                         PW_KEY_MEDIA_ROLE, "Music",
