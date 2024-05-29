@@ -442,7 +442,7 @@ PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
 
     term.firstInList = 0;
 
-    for (int i = 2; i < argc; i++)
+    for (int i = 1; i < argc; i++)
     {
         std::string s = argv[i];
 
@@ -515,7 +515,7 @@ PipeWirePlayer::playAll()
 #ifdef MPRIS
         /* doing it here effectively raises kmp for playerctl without actually implementing raise method
          * https://specifications.freedesktop.org/mpris-spec/latest/Media_Player.html#Method:Raise */
-    mpris::init(this);
+        mpris::init(this);
 #endif
 
         playCurrent();
