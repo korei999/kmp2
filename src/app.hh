@@ -135,7 +135,6 @@ public:
     void setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 channels);
     void playAll();
     void playCurrent();
-    
     const std::string_view currSongName() const { return m_songs[m_currSongIdx]; }
     bool subStringSearch(enum search::dir direction);
     void jumpToFound(enum search::dir direction);
