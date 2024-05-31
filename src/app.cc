@@ -14,7 +14,7 @@
 namespace app
 {
 
-f32 PipeWirePlayer::chunk[chunkSize] {};
+f32 PipeWirePlayer::m_chunk[chunkSize] {};
 std::mutex PipeWireData::mtx;
 const pw_stream_events PipeWireData::streamEvents {
     .version = PW_VERSION_STREAM_EVENTS,
@@ -49,6 +49,7 @@ drawBorders(WINDOW* pWin, enum color::curses color = defaults::borderColor)
 
 Curses::Curses()
 {
+    /* reopen stdin to fix getch if pipe was used */
     if (!freopen("/dev/tty", "r", stdin))
         LOG_BAD("freopen(\"/dev/tty\", \"r\", stdin)\n");
 
@@ -107,7 +108,7 @@ Curses::~Curses()
 {
     endwin();
 
-    if (p->songs.empty())
+    if (m_p->m_songs.empty())
         COUT("kmp: no input provided\n");
 }
 
@@ -115,7 +116,7 @@ void
 Curses::drawUI()
 {
     /* disallow drawing to ncurses from multiple threads */
-    std::lock_guard lock(mtx);
+    std::lock_guard lock(m_mtx);
 
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
@@ -123,14 +124,14 @@ Curses::drawUI()
     {
         touchwin(stdscr);
 
-        if (update.bStatus)     { update.bStatus     = false; drawStatus();     }
-        if (update.bInfo)       { update.bInfo       = false; drawInfo();       }
-        if (update.bBottomLine) { update.bBottomLine = false; drawBottomLine(); }
-        if (update.bPlayList)   { update.bPlayList   = false; drawPlayList();   }
+        if (m_update.bStatus)     { m_update.bStatus     = false; drawStatus();     }
+        if (m_update.bInfo)       { m_update.bInfo       = false; drawInfo();       }
+        if (m_update.bBottomLine) { m_update.bBottomLine = false; drawBottomLine(); }
+        if (m_update.bPlayList)   { m_update.bPlayList   = false; drawPlayList();   }
 
-        if (p->bDrawVisualizer && update.bVisualizer)
+        if (m_bDrawVisualizer && m_update.bVisualizer)
         {
-            update.bVisualizer = false;
+            m_update.bVisualizer = false;
             drawVisualizer();
         }
     }
@@ -150,24 +151,24 @@ Curses::resizeWindows()
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
     int visOff = 0;
-    if (p->bDrawVisualizer)
-        visOff = visualizerYSize;
+    if (m_bDrawVisualizer)
+        visOff = m_visualizerYSize;
 
-    vis.pBor = subwin(stdscr, visualizerYSize, maxx, listYPos, 0);
-    vis.pCon = derwin(vis.pBor, getmaxy(vis.pBor), getmaxx(vis.pBor) - 2, 0, 1);
+    m_vis.pBor = subwin(stdscr, m_visualizerYSize, maxx, m_listYPos, 0);
+    m_vis.pCon = derwin(m_vis.pBor, getmaxy(m_vis.pBor), getmaxx(m_vis.pBor) - 2, 0, 1);
 
-    pl.pBor = subwin(stdscr, maxy - (listYPos + visOff + 1), maxx, listYPos + visOff, 0);
-    pl.pCon = derwin(pl.pBor, getmaxy(pl.pBor) - 1, getmaxx(pl.pBor) - 2, 1, 1);
+    m_pl.pBor = subwin(stdscr, maxy - (m_listYPos + visOff + 1), maxx, m_listYPos + visOff, 0);
+    m_pl.pCon = derwin(m_pl.pBor, getmaxy(m_pl.pBor) - 1, getmaxx(m_pl.pBor) - 2, 1, 1);
 
     int iXW = std::round(maxx*0.4);
     int iYP = std::round(maxx*0.6);
     int sYP = iXW;
 
-    info.pBor = subwin(stdscr, listYPos, iYP, 0, iXW);
-    info.pCon = derwin(info.pBor, getmaxy(info.pBor) - 1, getmaxx(info.pBor) - 2, 1, 1);
+    m_info.pBor = subwin(stdscr, m_listYPos, iYP, 0, iXW);
+    m_info.pCon = derwin(m_info.pBor, getmaxy(m_info.pBor) - 1, getmaxx(m_info.pBor) - 2, 1, 1);
 
-    status.pBor = subwin(stdscr, listYPos, sYP, 0, 0);
-    status.pCon = derwin(status.pBor, getmaxy(status.pBor) - 1, getmaxx(status.pBor) - 2, 1, 1);
+    m_status.pBor = subwin(stdscr, m_listYPos, sYP, 0, 0);
+    m_status.pCon = derwin(m_status.pBor, getmaxy(m_status.pBor) - 1, getmaxx(m_status.pBor) - 2, 1, 1);
 
     redrawwin(stdscr);
     werase(stdscr);
@@ -175,10 +176,18 @@ Curses::resizeWindows()
 }
 
 void
+Curses::toggleVisualizer()
+{
+    m_bDrawVisualizer = !m_bDrawVisualizer;
+    resizeWindows();
+    m_update.bPlayList = true;
+}
+
+void
 Curses::drawTime()
 {
-    u64 t = (p->pcmPos/p->pw.channels) / p->pw.sampleRate;
-    u64 maxT = (p->pcmSize/p->pw.channels) / p->pw.sampleRate;
+    u64 t = (m_p->m_pcmPos/m_p->m_pw.channels) / m_p->m_pw.sampleRate;
+    u64 maxT = (m_p->m_pcmSize/m_p->m_pw.channels) / m_p->m_pw.sampleRate;
 
     f64 mF = t / 60.0;
     u64 m = u64(mF);
@@ -189,29 +198,29 @@ Curses::drawTime()
     u64 fracMax = 60 * (mFMax - mMax);
 
     auto timeStr = FMT("{}:{:02.0f} / {}:{:02d}", m, frac, mMax, fracMax);
-    if (p->bPaused) { timeStr = "(paused) " + timeStr; }
+    if (m_p->m_bPaused) { timeStr = "(paused) " + timeStr; }
     timeStr = "time: " + timeStr;
 
-    if (p->pw.sampleRate != p->pw.origSampleRate)
-        timeStr += FMT(" ({:.0f}% speed)", p->speedMul * 100);
+    if (m_p->m_pw.sampleRate != m_p->m_pw.origSampleRate)
+        timeStr += FMT(" ({:.0f}% speed)", m_p->m_speedMul * 100);
 
     auto col = COLOR_PAIR(color::white);
-    wattron(status.pCon, col);
-    mvwaddnstr(status.pCon, 0, 0, timeStr.data(), getmaxx(status.pCon));
-    wattroff(status.pCon, col);
+    wattron(m_status.pCon, col);
+    mvwaddnstr(m_status.pCon, 0, 0, timeStr.data(), getmaxx(m_status.pCon));
+    wattroff(m_status.pCon, col);
 }
 
 enum color::curses 
 Curses::drawVolume()
 {
-    auto volumeStr = FMT("volume: {:3.0f}%\n", 100.0 * p->volume);
-    int maxx = getmaxx(status.pCon);
+    auto volumeStr = FMT("volume: {:3.0f}%\n", 100.0 * m_p->m_volume);
+    int maxx = getmaxx(m_status.pCon);
 
     long maxWidth = maxx - volumeStr.size() - 1;
-    f64 maxLine = (p->volume * (f64)maxWidth) * (1.0 - (defaults::maxVolume - 1.0));
+    f64 maxLine = (m_p->m_volume * (f64)maxWidth) * (1.0 - (defaults::maxVolume - 1.0));
 
     auto getColor = [&](f64 i) -> int {
-        f64 val = p->volume * (i / (maxLine));
+        f64 val = m_p->m_volume * (i / (maxLine));
 
         if (val > 1.01) return color::curses::red;
         else if (val > 0.51) return color::curses::yellow;
@@ -219,16 +228,16 @@ Curses::drawVolume()
     };
 
     auto mutedColor = COLOR_PAIR(defaults::mutedColor);
-    int sCol = p->bMuted ? mutedColor : (A_BOLD | COLOR_PAIR(getColor(maxLine)));
-    wattron(status.pCon, sCol);
-    mvwaddnstr(status.pCon, 1, 0, volumeStr.data(), maxx);
-    wattroff(status.pCon, sCol);
+    int sCol = m_p->m_bMuted ? mutedColor : (A_BOLD | COLOR_PAIR(getColor(maxLine)));
+    wattron(m_status.pCon, sCol);
+    mvwaddnstr(m_status.pCon, 1, 0, volumeStr.data(), maxx);
+    wattroff(m_status.pCon, sCol);
 
     for (long i = 0; i < maxLine; i++)
     {
         int color;
         const wchar_t* icon;
-        if (p->bMuted)
+        if (m_p->m_bMuted)
         {
             color = mutedColor;
             icon = blockIcon2;
@@ -239,9 +248,9 @@ Curses::drawVolume()
             icon = blockIcon1;
         }
 
-        wattron(status.pCon, color);
-        mvwaddwstr(status.pCon, 1, 1 + i + volumeStr.size(), icon);
-        wattroff(status.pCon, color);
+        wattron(m_status.pCon, color);
+        mvwaddwstr(m_status.pCon, 1, 1 + i + volumeStr.size(), icon);
+        wattroff(m_status.pCon, color);
     }
 
     return (enum color::curses)sCol;
@@ -250,20 +259,20 @@ Curses::drawVolume()
 void
 Curses::drawPlayListCounter()
 {
-    auto songCounterStr = FMT("total: {} / {}", p->currSongIdx + 1, p->songs.size());
-    if (p->bRepeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
+    auto songCounterStr = FMT("total: {} / {}", m_p->m_currSongIdx + 1, m_p->m_songs.size());
+    if (m_p->m_bRepeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
 
     auto col = COLOR_PAIR(color::white);
-    wattron(status.pCon, col);
-    mvwaddnstr(status.pCon, 3, 0, songCounterStr.data(), getmaxx(status.pCon));
-    wattroff(status.pCon, col);
+    wattron(m_status.pCon, col);
+    mvwaddnstr(m_status.pCon, 3, 0, songCounterStr.data(), getmaxx(m_status.pCon));
+    wattroff(m_status.pCon, col);
 }
 
 void
 Curses::drawTitle()
 {
-    auto ls = "playing: " + p->info.title;
-    ls.resize(getmaxx(pl.pBor) - 1);
+    auto ls = "playing: " + m_p->m_info.title;
+    ls.resize(getmaxx(m_pl.pBor) - 1);
 
     move(5, 0);
     clrtoeol();
@@ -275,28 +284,28 @@ Curses::drawTitle()
 void
 Curses::drawPlayList()
 {
-    long maxy = getmaxy(pl.pCon);
+    long maxy = getmaxy(m_pl.pCon);
     long startFromY = 0; /* offset from border */
 
-    adjustListToCursor();
+    adjustListToPosition();
 
-    werase(pl.pBor);
-    for (long i = firstInList; i < (long)p->songs.size() && startFromY < maxy; i++, startFromY++)
+    werase(m_pl.pBor);
+    for (long i = m_firstInList; i < (long)m_p->m_songs.size() && startFromY < maxy; i++, startFromY++)
     {
-        auto lineStr = utils::removePath(p->songs[i]);
+        auto lineStr = utils::removePath(m_p->m_songs[i]);
         auto col = COLOR_PAIR(color::white);
-        wattron(pl.pCon, col);
+        wattron(m_pl.pCon, col);
 
-        if (i == selected)
-            wattron(pl.pCon, col | A_REVERSE);
-        if (i == p->currSongIdx)
-            wattron(pl.pCon, A_BOLD | COLOR_PAIR(color::curses::yellow));
+        if (i == m_selected)
+            wattron(m_pl.pCon, col | A_REVERSE);
+        if (i == m_p->m_currSongIdx)
+            wattron(m_pl.pCon, A_BOLD | COLOR_PAIR(color::curses::yellow));
 
-        mvwaddnstr(pl.pCon, startFromY, getbegx(pl.pCon), lineStr.data(), getmaxx(pl.pCon) - 1);
-        wattroff(pl.pCon, col | A_REVERSE | A_BOLD | COLOR_PAIR(color::curses::yellow));
+        mvwaddnstr(m_pl.pCon, startFromY, getbegx(m_pl.pCon), lineStr.data(), getmaxx(m_pl.pCon) - 1);
+        wattroff(m_pl.pCon, col | A_REVERSE | A_BOLD | COLOR_PAIR(color::curses::yellow));
     }
 
-    drawBorders(pl.pBor);
+    drawBorders(m_pl.pBor);
 }
 
 void
@@ -310,72 +319,72 @@ Curses::drawBottomLine()
     auto col = COLOR_PAIR(color::white);
     attron(col);
 
-    if (!p->searchingNow.empty() && !p->foundIndices.empty())
+    if (!m_p->m_searchingNow.empty() && !m_p->m_foundIndices.empty())
     {
-        auto ss = FMT(" [{}/{}]", p->currFoundIdx + 1, p->foundIndices.size());
-        auto s = L"'" + p->searchingNow + L"'" + std::wstring(ss.begin(), ss.end());
+        auto ss = FMT(" [{}/{}]", m_p->m_currFoundIdx + 1, m_p->m_foundIndices.size());
+        auto s = L"'" + m_p->m_searchingNow + L"'" + std::wstring(ss.begin(), ss.end());
         addwstr(s.data());
     }
 
     /* draw selected index */
-    auto sel = FMT("{}\n", p->term.selected + 1);
+    auto sel = FMT("{}\n", m_p->m_term.m_selected + 1);
 
     mvaddstr(maxy - 1, (getmaxx(stdscr) - 1) - sel.size(), sel.data());
-    wattroff(status.pCon, col);
+    wattroff(m_status.pCon, col);
 }
 
 void
 Curses::drawInfo()
 {
-    int maxx = getmaxx(info.pCon);
+    int maxx = getmaxx(m_info.pCon);
     constexpr std::string_view sTitle = "title: ";
     constexpr std::string_view sAlbum = "album: ";
     constexpr std::string_view sArtist = "artist: ";
 
-    werase(info.pBor);
+    werase(m_info.pBor);
 
     auto col = COLOR_PAIR(color::white);
 
-    wattron(info.pCon, col);
-    mvwaddnstr(info.pCon, 0, 0, sTitle.data(), maxx*2);
-    wattron(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
-    mvwaddnstr(info.pCon, 0, sTitle.size(), p->info.title.data(), (maxx*2) - sTitle.size());
-    wattroff(info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
+    wattron(m_info.pCon, col);
+    mvwaddnstr(m_info.pCon, 0, 0, sTitle.data(), maxx*2);
+    wattron(m_info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
+    mvwaddnstr(m_info.pCon, 0, sTitle.size(), m_p->m_info.title.data(), (maxx*2) - sTitle.size());
+    wattroff(m_info.pCon, A_BOLD | A_ITALIC | COLOR_PAIR(color::curses::yellow));
 
-    wattron(info.pCon, col);
-    mvwaddnstr(info.pCon, 2, 0, sAlbum.data(), maxx);
-    wattron(info.pCon, A_BOLD | col);
-    mvwaddnstr(info.pCon, 2, sAlbum.size(), p->info.album.data(), maxx - sAlbum.size());
-    wattroff(info.pCon, A_BOLD | col);
+    wattron(m_info.pCon, col);
+    mvwaddnstr(m_info.pCon, 2, 0, sAlbum.data(), maxx);
+    wattron(m_info.pCon, A_BOLD | col);
+    mvwaddnstr(m_info.pCon, 2, sAlbum.size(), m_p->m_info.album.data(), maxx - sAlbum.size());
+    wattroff(m_info.pCon, A_BOLD | col);
 
-    wattron(info.pCon, col);
-    mvwaddnstr(info.pCon, 3, 0, sArtist.data(), maxx);
-    wattron(info.pCon, A_BOLD | col);
-    mvwaddnstr(info.pCon, 3, sArtist.size(), p->info.artist.data(), maxx - sArtist.size());
-    wattroff(info.pCon, A_BOLD | col);
+    wattron(m_info.pCon, col);
+    mvwaddnstr(m_info.pCon, 3, 0, sArtist.data(), maxx);
+    wattron(m_info.pCon, A_BOLD | col);
+    mvwaddnstr(m_info.pCon, 3, sArtist.size(), m_p->m_info.artist.data(), maxx - sArtist.size());
+    wattroff(m_info.pCon, A_BOLD | col);
 
-    drawBorders(info.pBor);
+    drawBorders(m_info.pBor);
 }
 
 void
 Curses::drawStatus()
 {
-    werase(status.pBor);
+    werase(m_status.pBor);
 
     drawTime();
     auto color = drawVolume();
     drawPlayListCounter();
 
-    drawBorders(status.pBor, (color::curses)PAIR_NUMBER(color));
+    drawBorders(m_status.pBor, (color::curses)PAIR_NUMBER(color));
 }
 
 void
 Curses::drawVisualizer()
 {
-    werase(vis.pBor);
+    werase(m_vis.pBor);
 
-    int maxy = getmaxy(vis.pCon), maxx = getmaxx(vis.pCon);
-    int lastChunkSize = p->pw.lastNFrames * p->pw.channels;
+    int maxy = getmaxy(m_vis.pCon), maxx = getmaxx(m_vis.pCon);
+    int lastChunkSize = m_p->m_pw.lastNFrames * m_p->m_pw.channels;
 
     std::vector<u32> bars(maxx);
     int accSize = lastChunkSize / bars.size();
@@ -387,7 +396,7 @@ Curses::drawVisualizer()
         f32 acc = 0;
         for (long j = 0; j < accSize; j++)
         {
-            auto newAcc = std::abs((p->chunk[chunkPos++]));
+            auto newAcc = std::abs((m_p->m_chunk[chunkPos++]));
             if (newAcc > acc) acc = newAcc;
         }
 
@@ -409,57 +418,57 @@ Curses::drawVisualizer()
         {
             short color = COLOR_PAIR(barHeightColors[c]);
 
-            wattron(vis.pCon, color);
-            mvwaddwstr(vis.pCon, c, r, defaults::visualizerSymbol);
-            wattroff(vis.pCon, color);
+            wattron(m_vis.pCon, color);
+            mvwaddwstr(m_vis.pCon, c, r, defaults::visualizerSymbol);
+            wattroff(m_vis.pCon, color);
         }
     }
 }
 
 void
-Curses::adjustListToCursor()
+Curses::adjustListToPosition()
 {
-    long maxy = getmaxy(pl.pCon);
+    long maxy = getmaxy(m_pl.pCon);
 
-    if (((long)(p->songs.size() - 1) - firstInList) < (maxy - 1))
-        firstInList = (p->songs.size() - 1) - (maxy - 2);
-    if ((long)p->songs.size() < maxy - 1)
-        firstInList = 0;
-    else if (firstInList < 0)
-        firstInList = 0;
+    if (((long)(m_p->m_songs.size() - 1) - m_firstInList) < (maxy - 1))
+        m_firstInList = (m_p->m_songs.size() - 1) - (maxy - 2);
+    if ((long)m_p->m_songs.size() < maxy - 1)
+        m_firstInList = 0;
+    else if (m_firstInList < 0)
+        m_firstInList = 0;
 
-    long listSizeBound = firstInList + (maxy - 1);
+    long listSizeBound = m_firstInList + (maxy - 1);
 
-    if (selected > listSizeBound - 1)
-        firstInList = selected - (maxy - 2);
-    else if (selected < firstInList)
-        firstInList = selected;
+    if (m_selected > listSizeBound - 1)
+        m_firstInList = m_selected - (maxy - 2);
+    else if (m_selected < m_firstInList)
+        m_firstInList = m_selected;
 }
 
 PipeWirePlayer::PipeWirePlayer(int argc, char** argv)
 {
-    term.p = this;
-    term.resizeWindows();
+    m_term.m_p = this;
+    m_term.resizeWindows();
 
     pw_init(&argc, &argv);
 
-    term.firstInList = 0;
+    m_term.m_firstInList = 0;
 
     for (int i = 1; i < argc; i++)
     {
         std::string s = argv[i];
 
-        for (auto& f : formatsSupported)
+        for (auto& f : m_supportedFormats)
             if (s.ends_with(f))
             {
-                songs.push_back(std::move(s));
+                m_songs.push_back(std::move(s));
                 break;
             }
     }
 
-    if (songs.empty())
+    if (m_songs.empty())
     {
-        bFinished = true;
+        m_bFinished = true;
         return;
     }
 
@@ -479,15 +488,15 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
     const spa_pod* params[1] {};
     spa_pod_builder b = SPA_POD_BUILDER_INIT(setupBuffer, sizeof(setupBuffer));
 
-    pw.pLoop = pw_main_loop_new(nullptr);
+    m_pw.pLoop = pw_main_loop_new(nullptr);
 
-    pw.pStream = pw_stream_new_simple(pw_main_loop_get_loop(pw.pLoop),
+    m_pw.pStream = pw_stream_new_simple(pw_main_loop_get_loop(m_pw.pLoop),
                                       "kmpStream",
                                       pw_properties_new(PW_KEY_MEDIA_TYPE, "Audio",
                                                         PW_KEY_MEDIA_CATEGORY, "Playback",
                                                         PW_KEY_MEDIA_ROLE, "Music",
                                                         nullptr),
-                                      &pw.streamEvents,
+                                      &m_pw.streamEvents,
                                       this);
 
 
@@ -501,7 +510,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 
     params[0] = spa_format_audio_raw_build(&b, SPA_PARAM_EnumFormat, &rawInfo);
 
-    pw_stream_connect(pw.pStream,
+    pw_stream_connect(m_pw.pStream,
                       PW_DIRECTION_OUTPUT,
                       PW_ID_ANY,
                       (enum pw_stream_flags)(PW_STREAM_FLAG_AUTOCONNECT |
@@ -513,7 +522,7 @@ PipeWirePlayer::setupPlayer(enum spa_audio_format format, u32 sampleRate, u32 ch
 void
 PipeWirePlayer::playAll()
 {
-    while (!bFinished)
+    while (!m_bFinished)
     {
 #ifdef MPRIS
         /* doing it here effectively raises kmp for playerctl without actually implementing raise method
@@ -532,96 +541,96 @@ PipeWirePlayer::playAll()
 void
 PipeWirePlayer::playCurrent()
 {
-    hSnd = SndfileHandle(currSongName().data(), SFM_READ);
+    m_hSnd = SndfileHandle(currSongName().data(), SFM_READ);
 
     /* skip song on error */
-    if (hSnd.error() == 0)
+    if (m_hSnd.error() == 0)
     {
-        pw.format = SPA_AUDIO_FORMAT_F32;
-        pw.sampleRate = hSnd.samplerate();
-        pw.channels = hSnd.channels();
-        pw.origSampleRate = pw.sampleRate;
+        m_pw.eformat = SPA_AUDIO_FORMAT_F32;
+        m_pw.sampleRate = m_hSnd.samplerate();
+        m_pw.channels = m_hSnd.channels();
+        m_pw.origSampleRate = m_pw.sampleRate;
 
-        pcmPos = 0;
-        pcmSize = hSnd.frames() * pw.channels;
+        m_pcmPos = 0;
+        m_pcmSize = m_hSnd.frames() * m_pw.channels;
 
-        info = song::Info(currSongName(), hSnd);
+        m_info = song::Info(currSongName(), m_hSnd);
 
         /* restore speed multiplier */
-        pw.sampleRate *= speedMul;
-        setupPlayer(pw.format, pw.sampleRate, pw.channels);
+        m_pw.sampleRate *= m_speedMul;
+        setupPlayer(m_pw.eformat, m_pw.sampleRate, m_pw.channels);
 
-        term.updateAll();
-        term.drawUI();
+        m_term.updateAll();
+        m_term.drawUI();
 
-        if (!ready)
+        if (!m_ready)
             refresh(); /* refresh before first getch update */
-        ready = true;
+        m_ready = true;
 
         /* TODO: there is probably a better way to update params than just to reset the whole thing */
 updateParams:
-        if (bChangeParams)
+        if (m_bChangeParams)
         {
-            bChangeParams = false;
-            setupPlayer(pw.format, pw.sampleRate, pw.channels);
-            term.resizeWindows();
-            term.drawUI();
+            m_bChangeParams = false;
+            setupPlayer(m_pw.eformat, m_pw.sampleRate, m_pw.channels);
+            m_term.resizeWindows();
+            m_term.drawUI();
         }
 
-        pw_main_loop_run(pw.pLoop);
+        pw_main_loop_run(m_pw.pLoop);
 
         /* in this order */
-        pw_stream_destroy(pw.pStream);
-        pw_main_loop_destroy(pw.pLoop);
+        pw_stream_destroy(m_pw.pStream);
+        pw_main_loop_destroy(m_pw.pLoop);
 
-        if (bPaused)
+        if (m_bPaused)
         {
             /* let input thread wake up cndPause */
-            mtxPauseSwitch.unlock();
+            m_mtxPauseSwitch.unlock();
 
-            std::unique_lock lock(mtxPause);
-            cndPause.wait(lock);
-            bChangeParams = true;
+            std::unique_lock lock(m_mtxPause);
+            m_cndPause.wait(lock);
+            m_bChangeParams = true;
         }
 
-        if (bChangeParams)
+        if (m_bChangeParams)
             goto updateParams;
     }
     else
     {
-        bNext = true;
+        m_bNext = true;
     }
 
-    if (bNewSongSelected)
+    if (m_bNewSongSelected)
     {
-        bNewSongSelected = false;
-        currSongIdx = term.selected;
+        m_bNewSongSelected = false;
+        m_currSongIdx = m_term.m_selected;
     }
-    else if (bNext)
+    else if (m_bNext)
     {
-        bNext = false;
-        currSongIdx++;
-        if (currSongIdx > (long)songs.size() - 1)
-            currSongIdx = 0;
+        m_bNext = false;
+        m_currSongIdx++;
+        if (m_currSongIdx > (long)m_songs.size() - 1)
+            m_currSongIdx = 0;
     }
-    else if (bPrev)
+    else if (m_bPrev)
     {
-        bPrev = false;
-        currSongIdx--;
-        if (currSongIdx < 0)
-            currSongIdx = songs.size() - 1;
+        m_bPrev = false;
+        m_currSongIdx--;
+        if (m_currSongIdx < 0)
+            m_currSongIdx = m_songs.size() - 1;
     }
     else
     {
-        currSongIdx++;
+        m_currSongIdx++;
     }
 
-    if (currSongIdx > (long)songs.size() - 1)
+    if (m_currSongIdx > (long)m_songs.size() - 1)
     {
-        if (bRepeatAfterLast)
-            currSongIdx = 0;
+        if (m_bRepeatAfterLast)
+            m_currSongIdx = 0;
         else
-            bFinished = true;
+            m_bFinished = true;
     }
 }
 
@@ -636,14 +645,14 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
     timeout(defaults::updateRate);
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
-        searchingNow = (wchar_t*)wb;
+        m_searchingNow = (wchar_t*)wb;
     else
         return false;
 
-    if (!searchingNow.empty())
+    if (!m_searchingNow.empty())
     {
-        foundIndices = search::getIndexList(songs, searchingNow, direction);
-        currFoundIdx = 0;
+        m_foundIndices = search::getIndexList(m_songs, m_searchingNow, direction);
+        m_currFoundIdx = 0;
 
         return true;
     }
@@ -654,26 +663,26 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
 void
 PipeWirePlayer::jumpToFound(enum search::dir direction)
 {
-    if (!foundIndices.empty())
+    if (!m_foundIndices.empty())
     {
         int next = direction == search::dir::forward ? 1 : -1;
-        currFoundIdx += next;
+        m_currFoundIdx += next;
 
-        if (currFoundIdx > (long)foundIndices.size() - 1)
-            currFoundIdx = 0;
-        else if (currFoundIdx < 0)
-            currFoundIdx = foundIndices.size() - 1;
+        if (m_currFoundIdx > (long)m_foundIndices.size() - 1)
+            m_currFoundIdx = 0;
+        else if (m_currFoundIdx < 0)
+            m_currFoundIdx = m_foundIndices.size() - 1;
 
-        term.selected = foundIndices[currFoundIdx];
-        centerOn(term.selected);
+        m_term.m_selected = m_foundIndices[m_currFoundIdx];
+        centerOn(m_term.m_selected);
     }
 }
 
 void
 PipeWirePlayer::centerOn(size_t i)
 {
-    term.selected = i;
-    term.firstInList = (term.selected - (term.playListMaxY() - 3) / 2);
+    select(i);
+    m_term.m_firstInList = (m_term.m_selected - (m_term.playListMaxY() - 3) / 2);
 }
 
 void
@@ -687,14 +696,14 @@ PipeWirePlayer::setSeek()
 
     if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
     {
-        std::lock_guard lock(pw.mtx);
+        std::lock_guard lock(m_pw.mtx);
 
         auto n = input::parseTimeString((wchar_t*)wb, this);
         if (n.has_value())
         {
-            n.value() *= pw.sampleRate;
-            hSnd.seek(n.value(), SEEK_SET);
-            pcmPos = hSnd.seek(0, SEEK_CUR) * pw.channels;
+            n.value() *= m_pw.sampleRate;
+            m_hSnd.seek(n.value(), SEEK_SET);
+            m_pcmPos = m_hSnd.seek(0, SEEK_CUR) * m_pw.channels;
         }
     }
 }
@@ -712,49 +721,95 @@ PipeWirePlayer::jumpTo()
     {
         wchar_t* end;
         long num = wcstol((wchar_t*)wb, &end, std::size(wb));
-        num = std::clamp((long)num, 1L, (long)songs.size());
-        term.selected = num - 1;
+        num = std::clamp((long)num, 1L, (long)m_songs.size());
+        m_term.m_selected = num - 1;
     }
 }
 
 void
 PipeWirePlayer::pause()
 {
-    std::lock_guard lock(mtxPauseSwitch);
-    bPaused = true;
+    std::lock_guard lock(m_mtxPauseSwitch);
+    m_bPaused = true;
 }
 
 void
 PipeWirePlayer::resume()
 {
-    std::lock_guard lock(mtxPauseSwitch);
-    bPaused = false;
-    cndPause.notify_one();
+    std::lock_guard lock(m_mtxPauseSwitch);
+    m_bPaused = false;
+    m_cndPause.notify_one();
 }
 
-void
+bool
 PipeWirePlayer::togglePause()
 {
-    std::lock_guard lock(mtxPauseSwitch);
-    bPaused = !bPaused;
-    if (!bPaused) cndPause.notify_one();
+    std::lock_guard lock(m_mtxPauseSwitch);
+    m_bPaused = !m_bPaused;
+    if (!m_bPaused) m_cndPause.notify_one();
+
+    return m_bPaused;
 }
 
 void
 PipeWirePlayer::setVolume(f64 vol)
 {
-    volume = std::clamp(vol, defaults::minVolume, defaults::maxVolume);
+    m_volume = std::clamp(vol, defaults::minVolume, defaults::maxVolume);
 }
 
 void
 PipeWirePlayer::addSampleRate(long val)
 {
-    long nSr = (f64)pw.sampleRate + val;
+    long nSr = (f64)m_pw.sampleRate + val;
     nSr = std::clamp(nSr, defaults::minSampleRate, defaults::maxSampleRate);
 
-    pw.sampleRate = nSr;
-    speedMul = (f64)pw.sampleRate / (f64)pw.origSampleRate;
-    bChangeParams = true;
+    m_pw.sampleRate = nSr;
+    m_speedMul = (f64)m_pw.sampleRate / (f64)m_pw.origSampleRate;
+    m_bChangeParams = true;
+}
+
+void
+PipeWirePlayer::restoreOrigSampleRate()
+{
+    m_pw.sampleRate = m_pw.origSampleRate;
+    m_speedMul = 1.0;
+    m_bChangeParams = true;
+}
+
+void
+PipeWirePlayer::finish()
+{
+    m_bFinished = true;
+    if (m_bPaused)
+    {
+        m_bPaused = false;
+        m_cndPause.notify_all();
+    }
+}
+
+void
+PipeWirePlayer::select(long pos, bool bWrap)
+{
+    bool bWrapOverride = (bWrap == defaults::bWrapSelection ? m_bWrapSelection : bWrap);
+
+    if (pos > (long)m_songs.size() - 1)
+    {
+        if (bWrapOverride) pos = 0;
+        else pos = m_songs.size() - 1;
+    }
+    else if (pos < 0)
+    {
+        if (bWrapOverride) pos = m_songs.size() - 1;
+        else pos = 0;
+    }
+    m_term.m_selected = m_selected = pos;
+}
+
+void
+PipeWirePlayer::playSelected()
+{
+    m_currSongIdx = m_term.m_selected;
+    m_bNewSongSelected = true;
 }
 
 } /* namespace app */

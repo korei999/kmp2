@@ -8,55 +8,31 @@
 #endif
 
 #include <ncurses.h>
-#include <thread>
 
 namespace input
 {
-
-[[maybe_unused]] static void
-drawVisualizer(app::PipeWirePlayer* p)
-{
-    while (!p->bFinished)
-    {
-        if (p->bPaused || !p->bDrawVisualizer)
-        {
-            std::unique_lock lock(p->mtxPause);
-            p->cndPause.wait(lock);
-        }
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(defaults::visualizerUpdateRate));
-
-        if (!p->bPaused && p->bDrawVisualizer)
-        {
-            std::lock_guard lock(p->term.mtx);
-
-            p->term.drawVisualizer();
-            wrefresh(p->term.vis.pCon);
-        }
-    }
-}
 
 void
 read(app::PipeWirePlayer* p)
 {
     /* avoid possible multiple `refresh()` at start */
-    while (!p->ready) {};
+    while (!p->m_ready) {};
 
     int c;
 
     auto search = [p](enum search::dir d) -> void {
         bool succes = p->subStringSearch(d);
-        if (!p->foundIndices.empty() && succes)
+        if (!p->m_foundIndices.empty() && succes)
         {
-            p->term.selected = p->foundIndices[p->currFoundIdx];
-            p->term.update.bPlayList = true;
-            p->term.update.bBottomLine = true;
-            p->centerOn(p->term.selected);
+            p->select(p->m_foundIndices[p->m_currFoundIdx]);
+            p->m_term.updatePlayList();
+            p->m_term.updateBottomLine();
+            p->centerOn(p->m_selected);
         }
     };
 
     auto seek = [&]() -> void {
-        std::lock_guard lock(p->pw.mtx);
+        std::lock_guard lock(p->m_pw.mtx);
 
         int step;
         int key0;
@@ -78,11 +54,11 @@ read(app::PipeWirePlayer* p)
         timeout(50);
         while (c == key0 || c == key1)
         {
-            p->hSnd.seek(step, SEEK_CUR);
-            p->term.update.bStatus = true;
-            p->term.update.bBottomLine = true;
-            p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
-            p->term.drawUI();
+            p->m_hSnd.seek(step, SEEK_CUR);
+            p->m_term.updateStatus();
+            p->m_term.updateBottomLine();
+            p->m_pcmPos = p->m_hSnd.seek(0, SEEK_CUR) * p->m_pw.channels;
+            p->m_term.drawUI();
             c = getch();
         }
         timeout(defaults::updateRate);
@@ -90,34 +66,28 @@ read(app::PipeWirePlayer* p)
 
     while ((c = getch()))
     {
+        f64 newVol = p->m_volume;
         switch (c)
         {
             case 'q':
-                p->bFinished = true;
-                if (p->bPaused)
-                {
-                    p->bPaused = false;
-                    p->cndPause.notify_all();
-                }
+                p->finish();
                 return;
                 break;
 
             case '0':
-                p->volume += 0.04;
+                newVol += 0.04;
                 [[fallthrough]];
             case ')':
-                p->volume += 0.01;
-                if (p->volume > defaults::maxVolume)
-                    p->volume = defaults::maxVolume;
+                newVol += 0.01;
+                p->setVolume(newVol);
                 break;
 
             case '9':
-                p->volume -= 0.04;
+                newVol -= 0.04;
                 [[fallthrough]];
             case '(':
-                p->volume -= 0.01;
-                if (p->volume < defaults::minVolume)
-                    p->volume = defaults::minVolume;
+                newVol -= 0.01;
+                p->setVolume(newVol);
                 break;
 
             case KEY_RIGHT:
@@ -131,147 +101,116 @@ read(app::PipeWirePlayer* p)
                 break;
 
             case 'o':
-                p->bNext = true;
+                p->next();
                 break;
 
             case 'i':
-                p->bPrev = true;
+                p->prev();
                 break;
 
             case KEY_DOWN:
             case 'j':
-                {
-                    auto newSel = p->term.selected + 1;
-                    if (newSel > (long)p->songs.size() - 1)
-                    {
-                        if (p->bWrapSelection)
-                            newSel = 0;
-                        else
-                            newSel = p->songs.size() - 1;
-                    }
-                    p->term.selected = newSel;
-                    p->term.update.bPlayList = true;
-                    p->term.update.bBottomLine = true;
-                }
+                p->selectNext();
+                p->m_term.updatePlayList();
+                p->m_term.updateBottomLine();
                 break;
 
             case KEY_UP:
             case 'k':
-                {
-                    auto newSel = p->term.selected - 1;
-                    if (newSel < 0)
-                    {
-                        if (p->bWrapSelection) newSel = p->songs.size() - 1;
-                        else newSel = 0;
-                    }
-                    p->term.selected = newSel;
-                    p->term.update.bPlayList = true;
-                    p->term.update.bBottomLine = true;
-                }
+                p->selectPrev();
+                p->m_term.updatePlayList();
+                p->m_term.updateBottomLine();
                 break;
 
             case 'g':
-                p->term.selected = 0;
-                p->term.update.bPlayList = true;
-                p->term.update.bBottomLine = true;
+                p->selectFirst();
+                p->m_term.updatePlayList();
+                p->m_term.updateBottomLine();
                 break;
 
             case 'G':
-                p->term.selected = p->songs.size() - 1;
-                p->term.update.bPlayList = true;
-                p->term.update.bBottomLine = true;
+                p->selectLast();
+                p->m_term.updatePlayList();
+                p->m_term.updateBottomLine();
                 break;
 
             case KEY_NPAGE:
             case 4: /* C-d */
             case 6: /* C-f */
-                {
-                    long newSel = p->term.selected + 22;
-                    if (newSel >= (long)p->songs.size())
-                        newSel = p->songs.size() - 1;
-
-                    p->term.selected = newSel;
-                    p->term.update.bPlayList = true;
-                    p->term.update.bBottomLine = true;
-                }
+                p->select(p->m_selected + 22, false);
+                p->m_term.updatePlayList();
+                p->m_term.updateBottomLine();
                 break;
 
             case KEY_PPAGE:
             case 2: /* C-b */
             case 21: /* C-u */
-                {
-                    long newSel = p->term.selected - 22;
-                    if (newSel < 0) newSel = 0;
-
-                    p->term.selected = newSel;
-                    p->term.update.bPlayList = true;
-                    p->term.update.bBottomLine = true;
-                }
+                p->select(p->m_selected - 22, false);
+                p->m_term.updatePlayList();
+                p->m_term.updateBottomLine();
                 break;
 
             case 46:
             case '/':
                 search(search::dir::forward);
-                p->term.update.bBottomLine = true;
+                p->m_term.updateBottomLine();
                 break;
 
             case 44:
             case '?':
                 search(search::dir::backwards);
-                p->term.update.bBottomLine = true;
+                p->m_term.updateBottomLine();
                 break;
 
             case 'n':
                 p->jumpToFound(search::dir::forward);
-                p->term.update.bPlayList = true;
-                p->term.update.bBottomLine = true;
+                p->m_term.updatePlayList();
+                p->m_term.updateBottomLine();
                 break;
 
             case 'N':
                 p->jumpToFound(search::dir::backwards);
-                p->term.update.bPlayList = true;
-                p->term.update.bBottomLine = true;
+                p->m_term.updatePlayList();
+                p->m_term.updateBottomLine();
                 break;
 
             case 'r':
-                p->bRepeatAfterLast = !p->bRepeatAfterLast;
+                p->toggleRepeatAfterLast();
                 break;
 
             case ' ':
-                {
-                    p->togglePause();
-                }
+                p->togglePause();
                 break;
 
             case '\n':
-                p->currSongIdx = p->term.selected;
-                p->bNewSongSelected = true;
-                p->term.updateAll();
+                p->playSelected();
+                p->m_term.updateAll();
                 break;
                 
             case 'z':
-                p->centerOn(p->currSongIdx);
-                p->term.update.bPlayList = true;
-                p->term.update.bBottomLine = true;
+            case 'Z':
+                p->centerOn(p->m_currSongIdx);
+                p->m_term.updatePlayList();
+                p->m_term.updateBottomLine();
                 break;
 
             case 't':
                 p->setSeek();
-                p->term.update.bBottomLine = true;
+                p->m_term.updateBottomLine();
                 break;
 
             case ':':
                 p->jumpTo();
-                p->term.update.bPlayList = true;
+                p->m_term.updatePlayList();
                 break;
 
             case 'm':
-                p->bMuted = !p->bMuted;
+                p->toggleMute();
                 break;
 
             case KEY_RESIZE:
             case 12: /* C-l */
-                p->term.resizeWindows();
+                p->m_term.resizeWindows();
                 break;
 
             case '[':
@@ -292,18 +231,11 @@ read(app::PipeWirePlayer* p)
 
             case 'v':
             case 'V':
-                p->bDrawVisualizer = !p->bDrawVisualizer;
-                p->term.resizeWindows();
-                p->term.update.bPlayList = true;
+                p->m_term.toggleVisualizer();
                 break;
 
             case '\\':
-                {
-                    std::lock_guard lock(p->pw.mtx);
-                    p->pw.sampleRate = p->pw.origSampleRate;
-                    p->speedMul = 1.0;
-                    p->bChangeParams = true;
-                }
+                p->restoreOrigSampleRate();
                 break;
 
             case ERR:
@@ -316,13 +248,14 @@ read(app::PipeWirePlayer* p)
                 break;
         }
 
-        p->term.update.bStatus = true;
-        if (!p->bPaused) p->term.update.bVisualizer = true;
+        p->m_term.updateStatus();
+        if (!p->m_bPaused) p->m_term.updateVisualizer();
 
 #ifdef MPRIS
         mpris::process(p);
 #endif
-        p->term.drawUI();
+
+        p->m_term.drawUI();
     }
 }
 
@@ -437,7 +370,7 @@ parseTimeString(std::wstring_view ts, app::PipeWirePlayer* p)
         ret = wcstoul(numbers[0].data(), &end, 10);
 
         if (percent)
-            ret = (p->pcmSize * ((f64)ret/100.0)) / p->pw.channels / p->pw.sampleRate;
+            ret = (p->m_pcmSize * ((f64)ret/100.0)) / p->m_pw.channels / p->m_pw.sampleRate;
     }
     else
     {

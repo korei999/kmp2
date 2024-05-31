@@ -109,7 +109,7 @@ next([[maybe_unused]] sd_bus_message* m,
      [[maybe_unused]] sd_bus_error* _retError)
 {
     auto p = (app::PipeWirePlayer*)_data;
-    p->bNext = true;
+    p->m_bNext = true;
     return sd_bus_reply_method_return(m, "");
 }
 
@@ -119,7 +119,7 @@ prev([[maybe_unused]] sd_bus_message* m,
      [[maybe_unused]] sd_bus_error* _retError)
 {
     auto p = (app::PipeWirePlayer*)_data;
-    p->bPrev = true;
+    p->m_bPrev = true;
     return sd_bus_reply_method_return(m, "");
 }
 
@@ -188,7 +188,7 @@ playbackStatus([[maybe_unused]] sd_bus* _bus,
                [[maybe_unused]] sd_bus_error* _retError)
 {
     const auto p = (app::PipeWirePlayer*)_data;
-    const char* s = p->bPaused ? "Paused" : "Playing"; /* NOTE: "Stopped" ignored */
+    const char* s = p->m_bPaused ? "Paused" : "Playing"; /* NOTE: "Stopped" ignored */
     return sd_bus_message_append_basic(reply, 's', s);
 }
 
@@ -202,7 +202,7 @@ volume([[maybe_unused]] sd_bus* _bus,
        [[maybe_unused]] sd_bus_error* _retError)
 {
     const auto p = (app::PipeWirePlayer*)_data;
-    f64 vol = p->volume;
+    f64 vol = p->m_volume;
     return sd_bus_message_append_basic(reply, 'd', &vol);
 }
 
@@ -233,7 +233,7 @@ position([[maybe_unused]] sd_bus* _bus,
          [[maybe_unused]] sd_bus_error* _retError)
 {
     auto p = (app::PipeWirePlayer*)_data;
-    u64 t = (p->pcmPos/p->pw.channels) / p->pw.sampleRate;
+    u64 t = (p->m_pcmPos/p->m_pw.channels) / p->m_pw.sampleRate;
     t *= 1000 * 1000;
 
     return sd_bus_message_append_basic(reply, 'x', &t);
@@ -249,7 +249,7 @@ rate([[maybe_unused]] sd_bus* _bus,
      [[maybe_unused]] sd_bus_error* _retError)
 {
     const auto p = (app::PipeWirePlayer*)_data;
-    f64 mul = (f64)p->pw.sampleRate / (f64)p->pw.origSampleRate;
+    f64 mul = (f64)p->m_pw.sampleRate / (f64)p->m_pw.origSampleRate;
     return sd_bus_message_append_basic(reply, 'd', &mul);
 }
 
@@ -263,7 +263,7 @@ minRate([[maybe_unused]] sd_bus* _bus,
         [[maybe_unused]] sd_bus_error* _retError)
 {
     const auto p = (app::PipeWirePlayer*)_data;
-    f64 mul = (f64)defaults::minSampleRate / (f64)p->pw.origSampleRate;
+    f64 mul = (f64)defaults::minSampleRate / (f64)p->m_pw.origSampleRate;
     return sd_bus_message_append_basic(reply, 'd', &mul);
 }
 
@@ -277,7 +277,7 @@ maxRate([[maybe_unused]] sd_bus* _bus,
         [[maybe_unused]] sd_bus_error* _retError)
 {
     const auto p = (app::PipeWirePlayer*)_data;
-    f64 mul = (f64)defaults::maxSampleRate / (f64)p->pw.origSampleRate;
+    f64 mul = (f64)defaults::maxSampleRate / (f64)p->m_pw.origSampleRate;
     return sd_bus_message_append_basic(reply, 'd', &mul);
 }
 
@@ -307,12 +307,12 @@ metadata([[maybe_unused]] sd_bus* _bus,
 
     CK(sd_bus_message_open_container(reply, 'a', "{sv}"));
 
-    if (!p->info.title.empty())
-        CK(msgAppendDictSS(reply, "xesam:title", p->info.title.data()));
-    if (!p->info.album.empty())
-        CK(msgAppendDictSS(reply, "xesam:album", p->info.album.data()));
-    if (!p->info.artist.empty())
-        CK(msgAppendDictSAS(reply, "xesam:artist", p->info.artist.data()));
+    if (!p->m_info.title.empty())
+        CK(msgAppendDictSS(reply, "xesam:title", p->m_info.title.data()));
+    if (!p->m_info.album.empty())
+        CK(msgAppendDictSS(reply, "xesam:album", p->m_info.album.data()));
+    if (!p->m_info.artist.empty())
+        CK(msgAppendDictSAS(reply, "xesam:artist", p->m_info.artist.data()));
 
     CK(sd_bus_message_close_container(reply));
 
@@ -409,7 +409,7 @@ process(app::PipeWirePlayer* p)
 {
     if (pBus)
     {
-        while (sd_bus_process(pBus, nullptr) > 0 && !p->bFinished)
+        while (sd_bus_process(pBus, nullptr) > 0 && !p->m_bFinished)
             ;
     }
 }

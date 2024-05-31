@@ -24,8 +24,8 @@ struct rgb
 
     constexpr rgb(int hex)
         : r{utils::cRound((((hex >> 16) & 0xff) / 255.0) * 1000.0)},
-          g{utils::cRound((((hex >> 8) & 0xff) / 255.0) * 1000.0)},
-          b{utils::cRound(((hex & 0xff) / 255.0) * 1000.0)}
+          g{utils::cRound((((hex >> 8 ) & 0xff) / 255.0) * 1000.0)},
+          b{utils::cRound((((hex >> 0 ) & 0xff) / 255.0) * 1000.0)}
     {}
 };
 

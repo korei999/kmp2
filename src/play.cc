@@ -14,22 +14,22 @@ onProcessCB(void* data)
 {
     auto* p = (app::PipeWirePlayer*)data;
 
-    std::lock_guard lock(p->pw.mtx);
+    std::lock_guard lock(p->m_pw.mtx);
 
-    if (p->bChangeParams)
-        pw_main_loop_quit(p->pw.pLoop);
+    if (p->m_bChangeParams)
+        pw_main_loop_quit(p->m_pw.pLoop);
 
-    p->mtxPauseSwitch.lock();
-    if (p->bPaused)
+    p->m_mtxPauseSwitch.lock();
+    if (p->m_bPaused)
     {
-        pw_main_loop_quit(p->pw.pLoop);
+        pw_main_loop_quit(p->m_pw.pLoop);
         /* NOTE: unlock in `PipeWirePlayer::playCurrent()` */
         return;
     }
-    p->mtxPauseSwitch.unlock();
+    p->m_mtxPauseSwitch.unlock();
 
     pw_buffer* b;
-    if ((b = pw_stream_dequeue_buffer(p->pw.pStream)) == nullptr)
+    if ((b = pw_stream_dequeue_buffer(p->m_pw.pStream)) == nullptr)
     {
         pw_log_warn("out of buffers: %m");
         return;
@@ -44,52 +44,49 @@ onProcessCB(void* data)
         return;
     }
 
-    int stride = sizeof(f32) * p->pw.channels;
+    int stride = sizeof(f32) * p->m_pw.channels;
     int nFrames = buf->datas[0].maxsize / stride;
     if (b->requested) nFrames = SPA_MIN(b->requested, (u64)nFrames);
 
-    /* BUG: sometimes linsndfile crashes when nFrames gets too big for some reason */
-    /* for example by default nFrames == 1024, but when system has > 1 active playback, it goes to 2048 */
-    /* last coredump i got shows nFrames = 13312 (1024*13?) */
     if (nFrames > 1024*4) nFrames = 1024*4; /* limit to arbitrary number, `SPA_MAX` maybe? */
 
-    p->pw.lastNFrames = nFrames;
-    p->hSnd.readf(p->chunk, nFrames);
+    p->m_pw.lastNFrames = nFrames;
+    p->m_hSnd.readf(p->m_chunk, nFrames);
     int chunkPos = 0;
 
     /* non linear nicer ramping */
-    f32 vol = p->bMuted ? 0.0 : std::pow(p->volume, defaults::volumePower);
+    f32 vol = p->m_bMuted ? 0.0 : std::pow(p->m_volume, defaults::volumePower);
 
     for (int i = 0; i < nFrames; i++)
     {
-        for (int j = 0; j < (int)p->pw.channels; j++)
+        for (int j = 0; j < (int)p->m_pw.channels; j++)
         {
             /* modify each sample here */
-            f32 val = p->chunk[chunkPos] * vol;
+            f32 val = p->m_chunk[chunkPos] * vol;
 
             *dst++ = val;
 
             chunkPos++;
-            p->pcmPos++;
+            p->m_pcmPos++;
         }
     }
 
     /* update position last time */
-    p->pcmPos = p->hSnd.seek(0, SEEK_CUR) * p->pw.channels;
+    p->m_pcmPos = p->m_hSnd.seek(0, SEEK_CUR) * p->m_pw.channels;
 
     buf->datas[0].chunk->offset = 0;
     buf->datas[0].chunk->stride = stride;
     buf->datas[0].chunk->size = nFrames * stride;
 
-    pw_stream_queue_buffer(p->pw.pStream, b);
+    pw_stream_queue_buffer(p->m_pw.pStream, b);
 
-    if (p->bNext                          ||
-        p->bPrev                          ||
-        p->bNewSongSelected               ||
-        p->bFinished                      ||
-        p->pcmPos > (long)p->pcmSize - 1)
+    if (p->m_bNext                          ||
+        p->m_bPrev                          ||
+        p->m_bNewSongSelected               ||
+        p->m_bFinished                      ||
+        p->m_pcmPos > (long)p->m_pcmSize - 1)
     {
-        pw_main_loop_quit(p->pw.pLoop);
+        pw_main_loop_quit(p->m_pw.pLoop);
     }
 }
 
