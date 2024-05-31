@@ -248,12 +248,12 @@ read(app::PipeWirePlayer* p)
                 break;
         }
 
-        p->m_term.updateStatus();
-        if (!p->m_bPaused) p->m_term.updateVisualizer();
-
 #ifdef MPRIS
         mpris::process(p);
 #endif
+
+        p->m_term.updateStatus();
+        if (!p->m_bPaused) p->m_term.updateVisualizer();
 
         p->m_term.drawUI();
     }

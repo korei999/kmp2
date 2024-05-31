@@ -45,7 +45,7 @@ struct BCWin
     WINDOW* pCon {};
 };
 
-class Curses
+class CursesUI
 {
 public:
     /* parent pointer */
@@ -69,8 +69,8 @@ public:
     std::mutex m_mtx {};
     std::atomic<bool> m_bDrawVisualizer = defaults::bDrawVisualizer;
 
-    Curses();
-    ~Curses();
+    CursesUI();
+    ~CursesUI();
 
     size_t playListMaxY() const { return getmaxy(m_pl.pBor); }
     void updatePlayList() { m_update.bPlayList = true; }
@@ -78,7 +78,7 @@ public:
     void updateStatus() { m_update.bStatus = true; }
     void updateInfo() { m_update.bInfo = true; }
     void updateVisualizer() { m_update.bVisualizer = true; }
-    bool toggleVisualizer();
+    void toggleVisualizer();
     void resizeWindows();
     void updateAll() { m_update.bPlayList = m_update.bBottomLine = m_update.bStatus = m_update.bInfo = m_update.bVisualizer = true; }
     void drawUI();
@@ -107,7 +107,7 @@ public:
     PipeWireData m_pw {};
     SndfileHandle m_hSnd {};
     song::Info m_info {};
-    Curses m_term {};
+    CursesUI m_term {};
     long m_selected = 0;
     std::vector<std::string> m_songs {};
     std::vector<int> m_foundIndices {};
@@ -143,9 +143,9 @@ public:
     void jumpTo();
     void pause();
     void resume();
-    bool togglePause();
-    bool toggleMute() { return (m_bMuted = !m_bMuted); }
-    bool toggleRepeatAfterLast() { return m_bRepeatAfterLast = !m_bRepeatAfterLast; }
+    void togglePause();
+    void toggleMute() { m_bMuted = !m_bMuted; }
+    void toggleRepeatAfterLast() { m_bRepeatAfterLast = !m_bRepeatAfterLast; }
     void setVolume(f64 vol);
     void addSampleRate(long val);
     void restoreOrigSampleRate();

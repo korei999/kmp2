@@ -47,7 +47,7 @@ drawBorders(WINDOW* pWin, enum color::curses color = defaults::borderColor)
 }
 
 
-Curses::Curses()
+CursesUI::CursesUI()
 {
     /* reopen stdin to fix getch if pipe was used */
     if (!freopen("/dev/tty", "r", stdin))
@@ -104,7 +104,7 @@ Curses::Curses()
     init_pair(color::black, COLOR_BLACK, td);
 }
 
-Curses::~Curses()
+CursesUI::~CursesUI()
 {
     endwin();
 
@@ -113,9 +113,9 @@ Curses::~Curses()
 }
 
 void
-Curses::drawUI()
+CursesUI::drawUI()
 {
-    /* disallow drawing to ncurses from multiple threads */
+    /* disallow drawing to ncurses screen from multiple threads */
     std::lock_guard lock(m_mtx);
 
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
@@ -146,7 +146,7 @@ Curses::drawUI()
 }
 
 void
-Curses::resizeWindows()
+CursesUI::resizeWindows()
 {
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
@@ -175,18 +175,16 @@ Curses::resizeWindows()
     updateAll();
 }
 
-bool
-Curses::toggleVisualizer()
+void
+CursesUI::toggleVisualizer()
 {
     m_bDrawVisualizer = !m_bDrawVisualizer;
     resizeWindows();
     m_update.bPlayList = true;
-
-    return m_bDrawVisualizer;
 }
 
 void
-Curses::drawTime()
+CursesUI::drawTime()
 {
     u64 t = (m_p->m_pcmPos/m_p->m_pw.channels) / m_p->m_pw.sampleRate;
     u64 maxT = (m_p->m_pcmSize/m_p->m_pw.channels) / m_p->m_pw.sampleRate;
@@ -213,7 +211,7 @@ Curses::drawTime()
 }
 
 enum color::curses 
-Curses::drawVolume()
+CursesUI::drawVolume()
 {
     auto volumeStr = FMT("volume: {:3.0f}%\n", 100.0 * m_p->m_volume);
     int maxx = getmaxx(m_status.pCon);
@@ -259,7 +257,7 @@ Curses::drawVolume()
 }
 
 void
-Curses::drawPlayListCounter()
+CursesUI::drawPlayListCounter()
 {
     auto songCounterStr = FMT("total: {} / {}", m_p->m_currSongIdx + 1, m_p->m_songs.size());
     if (m_p->m_bRepeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
@@ -271,7 +269,7 @@ Curses::drawPlayListCounter()
 }
 
 void
-Curses::drawTitle()
+CursesUI::drawTitle()
 {
     auto ls = "playing: " + m_p->m_info.title;
     ls.resize(getmaxx(m_pl.pBor) - 1);
@@ -284,7 +282,7 @@ Curses::drawTitle()
 }
 
 void
-Curses::drawPlayList()
+CursesUI::drawPlayList()
 {
     long maxy = getmaxy(m_pl.pCon);
     long startFromY = 0; /* offset from border */
@@ -311,7 +309,7 @@ Curses::drawPlayList()
 }
 
 void
-Curses::drawBottomLine()
+CursesUI::drawBottomLine()
 {
     int maxy = getmaxy(stdscr);
     move(maxy - 1, 0);
@@ -336,7 +334,7 @@ Curses::drawBottomLine()
 }
 
 void
-Curses::drawInfo()
+CursesUI::drawInfo()
 {
     int maxx = getmaxx(m_info.pCon);
     constexpr std::string_view sTitle = "title: ";
@@ -369,7 +367,7 @@ Curses::drawInfo()
 }
 
 void
-Curses::drawStatus()
+CursesUI::drawStatus()
 {
     werase(m_status.pBor);
 
@@ -381,7 +379,7 @@ Curses::drawStatus()
 }
 
 void
-Curses::drawVisualizer()
+CursesUI::drawVisualizer()
 {
     werase(m_vis.pBor);
 
@@ -428,7 +426,7 @@ Curses::drawVisualizer()
 }
 
 void
-Curses::adjustListToPosition()
+CursesUI::adjustListToPosition()
 {
     long maxy = getmaxy(m_pl.pCon);
 
@@ -743,14 +741,12 @@ PipeWirePlayer::resume()
     m_cndPause.notify_one();
 }
 
-bool
+void
 PipeWirePlayer::togglePause()
 {
     std::lock_guard lock(m_mtxPauseSwitch);
     m_bPaused = !m_bPaused;
     if (!m_bPaused) m_cndPause.notify_one();
-
-    return m_bPaused;
 }
 
 void
