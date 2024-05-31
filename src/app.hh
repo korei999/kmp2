@@ -78,7 +78,7 @@ public:
     void updateStatus() { m_update.bStatus = true; }
     void updateInfo() { m_update.bInfo = true; }
     void updateVisualizer() { m_update.bVisualizer = true; }
-    void toggleVisualizer();
+    bool toggleVisualizer();
     void resizeWindows();
     void updateAll() { m_update.bPlayList = m_update.bBottomLine = m_update.bStatus = m_update.bInfo = m_update.bVisualizer = true; }
     void drawUI();

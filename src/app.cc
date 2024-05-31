@@ -175,12 +175,14 @@ Curses::resizeWindows()
     updateAll();
 }
 
-void
+bool
 Curses::toggleVisualizer()
 {
     m_bDrawVisualizer = !m_bDrawVisualizer;
     resizeWindows();
     m_update.bPlayList = true;
+
+    return m_bDrawVisualizer;
 }
 
 void
