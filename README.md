@@ -1,6 +1,7 @@
 ![kmp9](https://github.com/korei999/kmp2/assets/93387739/c9f11af2-64b5-40d5-93b3-b0b1bd2bc4f9)
 
-- Formats supported: flac, opus, mp3, ogg, wav, caf, aif.
+### Features
+- Formats: flac, opus, mp3, ogg, wav, caf, aif.
 - MPRIS controls.  
 
 ### Usage:
