@@ -163,10 +163,11 @@ seek([[maybe_unused]] sd_bus_message* m,
 
     s64 val = 0;
     CK(sd_bus_message_read_basic(m, 'x', &val));
-    val /= 1000*1000;
-    val += p->getCurrTimeInSec();
+    f64 fval = (f64)val;
+    fval /= 1000*1000;
+    fval += p->getCurrTimeInSec();
 
-    p->setSeek(val);
+    p->setSeek(fval);
 
     return sd_bus_reply_method_return(m, "");
 }
@@ -178,7 +179,6 @@ seekAbs([[maybe_unused]] sd_bus_message* m,
         [[maybe_unused]] sd_bus_error* _retError)
 {
     [[maybe_unused]] auto p = (app::PipeWirePlayer*)_data;
-    LOG_WARN("HELLO BIDEN?\n");
     return sd_bus_reply_method_return(m, "");
 }
 
