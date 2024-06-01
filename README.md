@@ -4,6 +4,7 @@
 - Formats: flac, opus, mp3, ogg, wav, caf, aif.
 - MPRIS D-Bus controls.
 - Any playback speed (no pitch correction).
+- Visualizer.
 
 ### Usage:
 - Play each song in the directory: `kmp *`, or recursively: `kmp **/*`.
