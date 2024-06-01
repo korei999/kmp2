@@ -2,7 +2,8 @@
 
 ### Features
 - Formats: flac, opus, mp3, ogg, wav, caf, aif.
-- MPRIS controls.  
+- MPRIS D-Bus controls.
+- Any playback speed (no pitch correction).
 
 ### Usage:
 - Play each song in the directory: `kmp *`, or recursively: `kmp **/*`.
@@ -15,7 +16,7 @@
 - `t` select time: `4:20`, `40` or `60%`.
 - `:` jump to selected number in the playlist.
 - `z` center around currently playing song.
-- `r` repeat after last song.
+- `r` and 'R' cycle between repeat methods (None, Track, Playlist).
 - `m` mute.
 - `q` quit.
 - `[` and `]` playback speed shifting fun. `\` Set original speed back.
@@ -23,8 +24,8 @@
 - `ctrl-l` refresh screen.
 
 ### Dependencies:
-fedora: `sudo dnf install cmake pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel # fmt-devel(optional)`\
-ubuntu: `sudo apt install cmake libpipewire0.3-dev libsndfile1-dev libncurses-dev # libfmt-dev(optional)`
+fedora: `sudo dnf install cmake pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel # (optional) systemd-devel fmt-devel`\
+ubuntu: `sudo apt install cmake libpipewire0.3-dev libsndfile1-dev libncurses-dev # (optional) libsystemd-dev libfmt-dev`
 
 ### Install:
 ```

@@ -8,6 +8,7 @@
 #endif
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <thread>
 
@@ -260,7 +261,20 @@ void
 CursesUI::drawPlayListCounter()
 {
     auto songCounterStr = FMT("total: {} / {}", m_p->m_currSongIdx + 1, m_p->m_songs.size());
-    if (m_p->m_bRepeatAfterLast) { songCounterStr += " (Repeat After Last)" ; }
+
+    switch (m_p->m_eRepeat)
+    {
+        case repeatMethod::track:
+            songCounterStr += FMT(" (repeat {})", repeatMethodStrings[(int)repeatMethod::track]);
+            break;
+
+        case repeatMethod::playlist:
+            songCounterStr += FMT(" (repeat {})", repeatMethodStrings[(int)repeatMethod::playlist]);
+            break;
+
+        default:
+            break;
+    }
 
     auto col = COLOR_PAIR(color::white);
     wattron(m_status.pCon, col);
@@ -622,12 +636,12 @@ updateParams:
     }
     else
     {
-        m_currSongIdx++;
+        if (m_eRepeat != repeatMethod::track) m_currSongIdx++;
     }
 
     if (m_currSongIdx > (long)m_songs.size() - 1)
     {
-        if (m_bRepeatAfterLast)
+        if (m_eRepeat == repeatMethod::playlist)
             m_currSongIdx = 0;
         else
             m_bFinished = true;
@@ -686,26 +700,15 @@ PipeWirePlayer::centerOn(size_t i)
 }
 
 void
-PipeWirePlayer::setSeek()
+PipeWirePlayer::setSeek(f64 value)
 {
-    wint_t wb[10] {};
+    std::lock_guard lock(m_pw.mtx);
 
-    timeout(defaults::timeOut);
-    input::readWString(L"time: ", wb, std::size(wb));
-    timeout(defaults::updateRate);
+    value = std::clamp(value, 0.0, getMaxTimeInSec());
 
-    if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
-    {
-        std::lock_guard lock(m_pw.mtx);
-
-        auto n = input::parseTimeString((wchar_t*)wb, this);
-        if (n.has_value())
-        {
-            n.value() *= m_pw.sampleRate;
-            m_hSnd.seek(n.value(), SEEK_SET);
-            m_pcmPos = m_hSnd.seek(0, SEEK_CUR) * m_pw.channels;
-        }
-    }
+    value *= m_pw.sampleRate;
+    m_hSnd.seek(value, SEEK_SET);
+    m_pcmPos = m_hSnd.seek(0, SEEK_CUR) * m_pw.channels;
 }
 
 void
@@ -747,6 +750,20 @@ PipeWirePlayer::togglePause()
     std::lock_guard lock(m_mtxPauseSwitch);
     m_bPaused = !m_bPaused;
     if (!m_bPaused) m_cndPause.notify_one();
+}
+
+void
+PipeWirePlayer::cycleRepeatMethods(int i)
+{
+    assert((i == -1 || i == 1) && "wrong i");
+
+    auto m = (int)m_eRepeat + i;
+    if (m >= (int)repeatMethod::size)
+        m = 0;
+    else if (m < 0)
+        m = (int)repeatMethod::size - 1;
+
+    setRepeatMethod((enum repeatMethod)m);
 }
 
 void

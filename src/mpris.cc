@@ -26,6 +26,8 @@ namespace mpris
 
 static sd_bus *pBus {};
 static int fdMpris = -1;
+static bool ready = false;
+std::mutex mtx {};
 
 static int
 msgAppendDictSAS(sd_bus_message* m, const char* a, const char* b)
@@ -109,7 +111,7 @@ next([[maybe_unused]] sd_bus_message* m,
      [[maybe_unused]] sd_bus_error* _retError)
 {
     auto p = (app::PipeWirePlayer*)_data;
-    p->m_bNext = true;
+    p->next();
     return sd_bus_reply_method_return(m, "");
 }
 
@@ -119,7 +121,7 @@ prev([[maybe_unused]] sd_bus_message* m,
      [[maybe_unused]] sd_bus_error* _retError)
 {
     auto p = (app::PipeWirePlayer*)_data;
-    p->m_bPrev = true;
+    p->next();
     return sd_bus_reply_method_return(m, "");
 }
 
@@ -153,6 +155,34 @@ resume([[maybe_unused]] sd_bus_message* m,
 }
 
 static int
+seek([[maybe_unused]] sd_bus_message* m,
+     [[maybe_unused]] void* _data,
+     [[maybe_unused]] sd_bus_error* _retError)
+{
+    auto p = (app::PipeWirePlayer*)_data;
+
+    s64 val = 0;
+    CK(sd_bus_message_read_basic(m, 'x', &val));
+    val /= 1000*1000;
+    val += p->getCurrTimeInSec();
+
+    p->setSeek(val);
+
+    return sd_bus_reply_method_return(m, "");
+}
+
+/* TODO: not sure how this can be called, and where to put `track id` */
+static int
+seekAbs([[maybe_unused]] sd_bus_message* m,
+        [[maybe_unused]] void* _data,
+        [[maybe_unused]] sd_bus_error* _retError)
+{
+    [[maybe_unused]] auto p = (app::PipeWirePlayer*)_data;
+    LOG_WARN("HELLO BIDEN?\n");
+    return sd_bus_reply_method_return(m, "");
+}
+
+static int
 readTrue([[maybe_unused]] sd_bus* _bus,
          [[maybe_unused]] const char* _path,
          [[maybe_unused]] const char* _interface,
@@ -179,6 +209,31 @@ identity([[maybe_unused]] sd_bus* _bus,
 }
 
 static int
+uriSchemes([[maybe_unused]] sd_bus* _bus,
+           [[maybe_unused]] const char* _path,
+           [[maybe_unused]] const char* _interface,
+           [[maybe_unused]] const char* _property,
+           [[maybe_unused]] sd_bus_message* reply,
+           [[maybe_unused]] void* _userdata,
+           [[maybe_unused]] sd_bus_error* _ret_error)
+{
+    static const char* const schemes[] {{}, {}}; /* NOTE: has to end with nullptr array */
+    return sd_bus_message_append_strv(reply, (char**)schemes);
+}
+static int
+mimeTypes([[maybe_unused]] sd_bus* _bus,
+          [[maybe_unused]] const char* _path,
+          [[maybe_unused]] const char* _interface,
+          [[maybe_unused]] const char* _property,
+          [[maybe_unused]] sd_bus_message* reply,
+          [[maybe_unused]] void* _data,
+          [[maybe_unused]] sd_bus_error* _retError)
+{
+    static const char* const types[] {};
+    return sd_bus_message_append_strv(reply, (char**)types);
+}
+
+static int
 playbackStatus([[maybe_unused]] sd_bus* _bus,
                [[maybe_unused]] const char* _path,
                [[maybe_unused]] const char* _interface,
@@ -190,6 +245,46 @@ playbackStatus([[maybe_unused]] sd_bus* _bus,
     const auto p = (app::PipeWirePlayer*)_data;
     const char* s = p->m_bPaused ? "Paused" : "Playing"; /* NOTE: "Stopped" ignored */
     return sd_bus_message_append_basic(reply, 's', s);
+}
+
+static int
+loopStatus([[maybe_unused]] sd_bus* _bus,
+           [[maybe_unused]] const char* _path,
+           [[maybe_unused]] const char* _interface,
+           [[maybe_unused]] const char* _property,
+           [[maybe_unused]] sd_bus_message* reply,
+           [[maybe_unused]] void* _data,
+           [[maybe_unused]] sd_bus_error* _retError)
+{
+    const auto p = (app::PipeWirePlayer*)_data;
+    auto t = p->getRepeatMethod();
+    return sd_bus_message_append_basic(reply, 's', t.data());
+}
+
+static int
+setLoopStatus([[maybe_unused]] sd_bus* _bus,
+              [[maybe_unused]] const char* _path,
+              [[maybe_unused]] const char* _interface,
+              [[maybe_unused]] const char* _property,
+              [[maybe_unused]] sd_bus_message* value,
+              [[maybe_unused]] void* _data,
+              [[maybe_unused]] sd_bus_error* _retError)
+{
+    const auto p = (app::PipeWirePlayer*)_data;
+
+    const char* t = nullptr;
+    CK(sd_bus_message_read_basic(value, 's', &t));
+
+    LOG_WARN("t: {}\n", t);
+    enum app::repeatMethod method = p->m_eRepeat;
+    for (size_t i = 0; i < std::size(app::repeatMethodStrings); i++)
+    {
+        if (t == app::repeatMethodStrings[i])
+            method = (app::repeatMethod)i;
+    }
+
+    p->setRepeatMethod(method);
+    return sd_bus_reply_method_return(value, "");
 }
 
 static int
@@ -319,9 +414,9 @@ metadata([[maybe_unused]] sd_bus* _bus,
     return 0;
 }
 
-static const sd_bus_vtable vTmediaPlayer2[] {
+static const sd_bus_vtable vtMediaPlayer2[] {
     SD_BUS_VTABLE_START(0),
-    // SD_BUS_METHOD("Raise", "", "", raiseVte, 0),
+    SD_BUS_METHOD("Raise", "", "", msgIgnore, 0),
     SD_BUS_METHOD("Quit", "", "", msgIgnore, 0),
     MPRIS_PROP("CanQuit", "b", readFalse),
     MPRIS_WPROP("Fullscreen", "b", readFalse, writeIgnore),
@@ -329,12 +424,12 @@ static const sd_bus_vtable vTmediaPlayer2[] {
     MPRIS_PROP("CanRaise", "b", readFalse),
     MPRIS_PROP("HasTrackList", "b", readFalse),
     MPRIS_PROP("Identity", "s", identity),
-    // MPRIS_PROP("SupportedUriSchemes", "as", mpris_uri_schemes),
-    // MPRIS_PROP("SupportedMimeTypes", "as", mpris_mime_types),
+    MPRIS_PROP("SupportedUriSchemes", "as", uriSchemes),
+    MPRIS_PROP("SupportedMimeTypes", "as", mimeTypes),
     SD_BUS_VTABLE_END,
 };
 
-static const sd_bus_vtable vTmediaPlayer2Player[] = {
+static const sd_bus_vtable vtMediaPlayer2Player[] = {
     SD_BUS_VTABLE_START(0),
     SD_BUS_METHOD("Next", "", "", next, 0),
     SD_BUS_METHOD("Previous", "", "", prev, 0),
@@ -342,11 +437,11 @@ static const sd_bus_vtable vTmediaPlayer2Player[] = {
     SD_BUS_METHOD("PlayPause", "", "", togglePause, 0),
     SD_BUS_METHOD("Stop", "", "", stop, 0),
     SD_BUS_METHOD("Play", "", "", resume, 0),
-    // SD_BUS_METHOD("Seek", "x", "", mpris_seek, 0),
-    // SD_BUS_METHOD("SetPosition", "ox", "", mpris_seek_abs, 0),
-    // SD_BUS_METHOD("OpenUri", "s", "", mpris_play_file, 0),
+    SD_BUS_METHOD("Seek", "x", "", seek, 0),
+    SD_BUS_METHOD("SetPosition", "ox", "", seekAbs, 0),
+    SD_BUS_METHOD("OpenUri", "s", "", msgIgnore, 0),
     MPRIS_PROP("PlaybackStatus", "s", playbackStatus),
-    // MPRIS_WPROP("LoopStatus", "s", mpris_loop_status, mpris_set_loop_status),
+    MPRIS_WPROP("LoopStatus", "s", loopStatus, setLoopStatus),
     MPRIS_WPROP("Rate", "d", rate, writeIgnore), /* this one is not used by playerctl afaik */
     MPRIS_WPROP("Shuffle", "b", shuffle, writeIgnore),
     MPRIS_WPROP("Volume", "d", volume, setVolume),
@@ -357,7 +452,7 @@ static const sd_bus_vtable vTmediaPlayer2Player[] = {
     MPRIS_PROP("CanGoPrevious", "b", readTrue),
     MPRIS_PROP("CanPlay", "b", readTrue),
     MPRIS_PROP("CanPause", "b", readTrue),
-    MPRIS_PROP("CanSeek", "b", readFalse),
+    MPRIS_PROP("CanSeek", "b", readTrue),
     SD_BUS_PROPERTY("CanControl", "b", readTrue, 0, 0),
     MPRIS_PROP("Metadata", "a{sv}", metadata),
     SD_BUS_SIGNAL("Seeked", "x", 0),
@@ -367,26 +462,27 @@ static const sd_bus_vtable vTmediaPlayer2Player[] = {
 void
 init(app::PipeWirePlayer* p)
 {
+    std::lock_guard lock(mtx);
+
+    ready = false;
     int res = 0;
 
     res = sd_bus_default_user(&pBus);
-    if (res < 0)
-        goto out;
+    if (res < 0) goto out;
 
-    res =
-        sd_bus_add_object_vtable(pBus,
-                                 nullptr,
-                                 "/org/mpris/MediaPlayer2",
-                                 "org.mpris.MediaPlayer2",
-                                 vTmediaPlayer2,
-                                 p);
+    res = sd_bus_add_object_vtable(pBus,
+                                   nullptr,
+                                   "/org/mpris/MediaPlayer2",
+                                   "org.mpris.MediaPlayer2",
+                                   vtMediaPlayer2,
+                                   p);
     if (res < 0) goto out;
 
     res = sd_bus_add_object_vtable(pBus,
                                    nullptr,
                                    "/org/mpris/MediaPlayer2",
                                    "org.mpris.MediaPlayer2.Player",
-                                   vTmediaPlayer2Player,
+                                   vtMediaPlayer2Player,
                                    p);
     if (res < 0) goto out;
 
@@ -399,16 +495,24 @@ out:
         sd_bus_unref(pBus);
         pBus = nullptr;
         fdMpris = -1;
+        ready = false;
 
         LOG_WARN("{}: {}\n", strerror(-res), "mpris::init error");
+    }
+    else
+    {
+        ready = true;
     }
 }
 
 void
 process(app::PipeWirePlayer* p)
 {
-    if (pBus)
+    std::lock_guard lock(mtx);
+
+    if (pBus && ready)
     {
+
         while (sd_bus_process(pBus, nullptr) > 0 && !p->m_bFinished)
             ;
     }
@@ -417,9 +521,12 @@ process(app::PipeWirePlayer* p)
 void
 clean()
 {
+    std::lock_guard lock(mtx);
+
     sd_bus_unref(pBus);
     pBus = nullptr;
     fdMpris = -1;
+    ready = false;
 }
 
 } /* namespace mpris */

@@ -38,6 +38,11 @@ asan()
     fi
 }
 
+build()
+{
+    cmake --build build/ -j
+}
+
 run()
 {
     BIN=kmp
@@ -65,6 +70,7 @@ _uninstall()
 cd $(dirname $0)
 
 case "$1" in
+    build) build ;;
     run) run "$@" ;;
     debug) debug ;;
     asan) asan ;;

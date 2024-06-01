@@ -96,6 +96,18 @@ private:
     void adjustListToPosition();
 };
 
+enum class repeatMethod : int
+{
+    none,
+    track,
+    playlist,
+    size
+};
+
+constexpr std::string_view repeatMethodStrings[] {
+    "None", "Track", "Playlist"
+};
+
 class PipeWirePlayer
 {
 public:
@@ -123,7 +135,7 @@ public:
     bool m_bNext = false;
     bool m_bPrev = false;
     bool m_bNewSongSelected = false;
-    bool m_bRepeatAfterLast = false;
+    enum repeatMethod m_eRepeat = repeatMethod::none;
     bool m_bWrapSelection = defaults::bWrapSelection;
     std::atomic<bool> m_bFinished = false;
     bool m_bChangeParams = false;
@@ -139,13 +151,13 @@ public:
     bool subStringSearch(enum search::dir direction);
     void jumpToFound(enum search::dir direction);
     void centerOn(size_t i);
-    void setSeek();
+    void setSeek(f64 value);
     void jumpTo();
     void pause();
     void resume();
     void togglePause();
     void toggleMute() { m_bMuted = !m_bMuted; }
-    void toggleRepeatAfterLast() { m_bRepeatAfterLast = !m_bRepeatAfterLast; }
+    void cycleRepeatMethods(int i = 1);
     void setVolume(f64 vol);
     void addSampleRate(long val);
     void restoreOrigSampleRate();
@@ -158,6 +170,11 @@ public:
     void selectFirst() { select(0); }
     void selectLast() { select(m_songs.size() - 1); }
     void playSelected();
+    std::string_view getRepeatMethod() const { return repeatMethodStrings[(int)m_eRepeat]; }
+    void setRepeatMethod(enum repeatMethod eM) { m_eRepeat = eM; }
+    f64 getCurrTimeInSec() const { return ((f64)m_pcmPos/(f64)m_pw.channels) / (f64)m_pw.sampleRate; };
+    f64 getMaxTimeInSec() const { return ((f64)m_pcmSize/(f64)m_pw.channels) / (f64)m_pw.sampleRate; };
+    s64 secToPcm(f64 sec) const { return sec*(f64)m_pw.sampleRate; }
 };
 
 } /* namespace app */

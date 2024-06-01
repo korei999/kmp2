@@ -31,7 +31,7 @@ read(app::PipeWirePlayer* p)
         }
     };
 
-    auto seek = [&]() -> void {
+    auto holdSeek = [&]() -> void {
         std::lock_guard lock(p->m_pw.mtx);
 
         int step;
@@ -54,7 +54,7 @@ read(app::PipeWirePlayer* p)
         timeout(50);
         while (c == key0 || c == key1)
         {
-            p->m_hSnd.seek(step, SEEK_CUR);
+            p->m_hSnd.seek(p->secToPcm(step), SEEK_CUR);
             p->m_term.updateStatus();
             p->m_term.updateBottomLine();
             p->m_pcmPos = p->m_hSnd.seek(0, SEEK_CUR) * p->m_pw.channels;
@@ -62,6 +62,21 @@ read(app::PipeWirePlayer* p)
             c = getch();
         }
         timeout(defaults::updateRate);
+    };
+
+    auto setSeekFromInput = [p]() -> void {
+        wint_t wb[10] {};
+
+        timeout(defaults::timeOut);
+        input::readWString(L"time: ", wb, std::size(wb));
+        timeout(defaults::updateRate);
+
+        if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
+        {
+            auto n = input::parseTimeString((wchar_t*)wb, p);
+            LOG_OK("value: {}\n", n.value());
+            if (n.has_value()) p->setSeek(n.value());
+        }
     };
 
     while ((c = getch()))
@@ -92,12 +107,12 @@ read(app::PipeWirePlayer* p)
 
             case KEY_RIGHT:
             case 'l':
-                seek();
+                holdSeek();
                 break;
 
             case KEY_LEFT:
             case 'h':
-                seek();
+                holdSeek();
                 break;
 
             case 'o':
@@ -175,7 +190,11 @@ read(app::PipeWirePlayer* p)
                 break;
 
             case 'r':
-                p->toggleRepeatAfterLast();
+                p->cycleRepeatMethods(1);
+                break;
+
+            case 'R':
+                p->cycleRepeatMethods(-1);
                 break;
 
             case ' ':
@@ -195,7 +214,7 @@ read(app::PipeWirePlayer* p)
                 break;
 
             case 't':
-                p->setSeek();
+                setSeekFromInput();
                 p->m_term.updateBottomLine();
                 break;
 
