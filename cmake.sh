@@ -14,7 +14,7 @@ release()
 default()
 {
     rm -rf build
-    if cmake -G "Ninja" -S . -B build/ -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    if cmake -G "Ninja" -S . -B build/
     then
         cmake --build build/
     fi

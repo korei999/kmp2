@@ -5,7 +5,10 @@ include(FindPkgConfig)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(DEFAULT_BUILD_TYPE "Release")
+
+if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
 
 project(kmp2
         VERSION 0.2 
@@ -24,6 +27,8 @@ if (CMAKE_BUILD_TYPE MATCHES "Asan")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fsanitize=address")
     target_link_options(kmp BEFORE PUBLIC -fsanitize=undefined PUBLIC -fsanitize=address)
 endif()
+
+message(STATUS "Build type: '${CMAKE_BUILD_TYPE}'")
 
 set_property(TARGET kmp PROPERTY CXX_STANDARD 20)
 add_definitions("-DLOGS") # used for LOG_* macros
