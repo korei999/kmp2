@@ -19,6 +19,11 @@ add_executable(kmp
                src/song.cc
                src/utils.cc)
 
+if (CMAKE_BUILD_TYPE MATCHES "Asan")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=undefined -fsanitize=address")
+    target_link_options(kmp BEFORE PUBLIC -fsanitize=undefined PUBLIC -fsanitize=address)
+endif()
+
 set_property(TARGET kmp PROPERTY CXX_STANDARD 20)
 add_definitions("-DLOGS") # used for LOG_* macros
 
@@ -52,4 +57,4 @@ if (${FMT_FOUND})
     target_link_libraries(kmp PUBLIC ${FMT_LIBRARIES})
 endif()
 
-install(TARGETS kmp DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS kmp DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
