@@ -1,6 +1,6 @@
 ![kmp9](https://github.com/korei999/kmp2/assets/93387739/c9f11af2-64b5-40d5-93b3-b0b1bd2bc4f9)
 
-### Features
+### Features:
 - Formats: flac, opus, mp3, ogg, wav, caf, aif.
 - MPRIS D-Bus controls.
 - Any playback speed (no pitch correction).
