@@ -264,15 +264,11 @@ CursesUI::drawPlayListCounter()
 
     switch (m_p->m_eRepeat)
     {
-        case repeatMethod::track:
-            songCounterStr += FMT(" (repeat {})", repeatMethodStrings[(int)repeatMethod::track]);
-            break;
-
-        case repeatMethod::playlist:
-            songCounterStr += FMT(" (repeat {})", repeatMethodStrings[(int)repeatMethod::playlist]);
+        case repeatMethod::none:
             break;
 
         default:
+            songCounterStr += FMT(" (repeat {})", repeatMethodStrings[(int)m_p->m_eRepeat]);
             break;
     }
 

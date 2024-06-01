@@ -29,11 +29,12 @@ ubuntu: `sudo apt install cmake libpipewire0.3-dev libsndfile1-dev libncurses-de
 
 ### Install:
 ```
-./cmake.sh release
-sudo ./cmake.sh install
+cmake -S . -B build/
+cmake --build build/ -j
+sudo cmake --install build/
 ```
 
 ### Uninstall
 ```
-sudo ./cmake.sh uninstall
+sudo xargs rm < ./build/install_manifest.txt
 ```
