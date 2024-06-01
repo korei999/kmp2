@@ -5,6 +5,7 @@ include(FindPkgConfig)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+set(DEFAULT_BUILD_TYPE "Release")
 
 project(kmp2
         VERSION 0.2 
