@@ -27,7 +27,11 @@ ubuntu: `sudo apt install libpipewire0.3-dev libsndfile1-dev libncurses-dev libf
 
 ### Install:
 ```
-meson setup build
-ninja -C build
-sudo ninja -C build install
+./cmake.sh release
+sudo ./cmake.sh install
+```
+
+### Uninstall
+```
+sudo ./cmake.sh uninstall
 ```
