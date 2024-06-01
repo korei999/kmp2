@@ -121,7 +121,7 @@ prev([[maybe_unused]] sd_bus_message* m,
      [[maybe_unused]] sd_bus_error* _retError)
 {
     auto p = (app::PipeWirePlayer*)_data;
-    p->next();
+    p->prev();
     return sd_bus_reply_method_return(m, "");
 }
 
