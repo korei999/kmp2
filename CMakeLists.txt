@@ -26,7 +26,7 @@ if (CMAKE_BUILD_TYPE MATCHES "Asan")
     target_link_options(kmp BEFORE PRIVATE -fsanitize=undefined PRIVATE -fsanitize=address)
 endif()
 
-message(STATUS "Build type: '${CMAKE_BUILD_TYPE}'")
+message(STATUS "CMAKE_BUILD_TYPE: '${CMAKE_BUILD_TYPE}'")
 
 set_property(TARGET kmp PROPERTY CXX_STANDARD 20)
 target_compile_definitions(kmp PRIVATE "-DLOGS") # used for LOG_* macros
