@@ -5,7 +5,7 @@ set -x
 release()
 {
     rm -rf build
-    if cmake -S . -B build/ -DCMAKE_BUILD_TYPE=Release
+    if cmake -GNinja -S . -B build/ -DCMAKE_BUILD_TYPE=Release
     then
         cmake --build build/ -j
     fi
@@ -14,7 +14,7 @@ release()
 default()
 {
     rm -rf build
-    if cmake -S . -B build/ -DCMAKE_BUILD_TYPE=RelWithDebInfo
+    if cmake -GNinja -S . -B build/ -DCMAKE_BUILD_TYPE=RelWithDebInfo
     then
         cmake --build build/ -j
     fi

@@ -262,15 +262,8 @@ CursesUI::drawPlayListCounter()
 {
     auto songCounterStr = FMT("total: {} / {}", m_p->m_currSongIdx + 1, m_p->m_songs.size());
 
-    switch (m_p->m_eRepeat)
-    {
-        case repeatMethod::none:
-            break;
-
-        default:
-            songCounterStr += FMT(" (repeat {})", repeatMethodStrings[(int)m_p->m_eRepeat]);
-            break;
-    }
+    if (m_p->m_eRepeat != repeatMethod::none)
+        songCounterStr += FMT(" (repeat {})", repeatMethodStrings[(int)m_p->m_eRepeat]);
 
     auto col = COLOR_PAIR(color::white);
     wattron(m_status.pCon, col);
