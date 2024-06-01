@@ -11,7 +11,7 @@
 - `h` and `l` seek back/forward.
 - `o` and `i` next/prev song.
 - Searching: `/` or `?`, then `n` and `N` jump to next/prev found string.
-- `9` and `0` volume.
+- `9` and `0` change volume, or `(`, `)` for smaller steps.
 - `t` select time: `4:20`, `40` or `60%`.
 - `:` jump to selected number in the playlist.
 - `z` center around currently playing song.
@@ -23,8 +23,8 @@
 - `ctrl-l` refresh screen.
 
 ### Dependencies:
-fedora: `sudo dnf install pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel meson fmt-devel(optional)`\
-ubuntu: `sudo apt install libpipewire0.3-dev libsndfile1-dev libncurses-dev libfmt-dev(optional)`
+fedora: `sudo dnf install cmake pipewire0.2-devel pipewire-devel ncurses-devel libsndfile-devel # fmt-devel(optional)`\
+ubuntu: `sudo apt install cmake libpipewire0.3-dev libsndfile1-dev libncurses-dev # libfmt-dev(optional)`
 
 ### Install:
 ```
