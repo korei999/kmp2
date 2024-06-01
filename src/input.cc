@@ -1,4 +1,4 @@
-#ifdef MPRIS
+#ifdef MPRIS_LIB
 #include "mpris.hh"
 #endif
 #include "input.hh"
@@ -248,7 +248,7 @@ read(app::PipeWirePlayer* p)
                 break;
         }
 
-#ifdef MPRIS
+#ifdef MPRIS_LIB
         mpris::process(p);
 #endif
 

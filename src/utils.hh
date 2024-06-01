@@ -6,7 +6,7 @@
 #include <vector>
 #include <iostream>
 
-#if __has_include(<fmt/format.h>)
+#ifdef FMT_LIB
 #    include <fmt/format.h>
 #    define COUT std::cout << fmt::format
 #    define CERR std::cerr << fmt::format

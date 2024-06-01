@@ -35,17 +35,17 @@ if fmt.found()
   deps += [fmt]
 endif
 
-systemd = dependency('libsystemd ', required : false)
+systemd = dependency('libsystemd', required : false)
 if systemd.found()
   deps += [systemd]
   sources += ['src/mpris.cc']
-  add_global_arguments('-DMPRIS', language : 'cpp')
+  add_global_arguments('-DMPRIS_LIB', language : 'cpp')
 else
   basu = dependency('basu ', required : false)
   if basu.found()
     deps += [basu]
     sources += ['src/mpris.cc']
-    add_global_arguments('-DMPRIS', '-DBASU', language : 'cpp')
+    add_global_arguments('-DMPRIS_LIB', '-DBASU_LIB', language : 'cpp')
   endif
 endif
 

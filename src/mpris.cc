@@ -2,7 +2,7 @@
 
 #include "mpris.hh"
 
-#ifdef BASU
+#ifdef BASU_LIB
 #include <basu/sd-bus.h>
 #else
 #include <systemd/sd-bus.h>
