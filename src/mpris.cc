@@ -24,10 +24,10 @@
 namespace mpris
 {
 
-static sd_bus *pBus {};
-static int fdMpris = -1;
-static bool ready = false;
-std::mutex mtx {};
+static sd_bus *fl_pBus {};
+static int fl_fdMpris = -1;
+static bool fl_ready = false;
+std::mutex fl_mtx {};
 
 static int
 msgAppendDictSAS(sd_bus_message* m, const char* a, const char* b)
@@ -64,32 +64,32 @@ msgAppendDictSS(sd_bus_message* m, const char* a, const char* b)
 
 static int
 msgIgnore([[maybe_unused]] sd_bus_message* m,
-          [[maybe_unused]] void* _data,
-          [[maybe_unused]] sd_bus_error* _retError)
+          [[maybe_unused]] void* data,
+          [[maybe_unused]] sd_bus_error* retError)
 {
     return sd_bus_reply_method_return(m, "");
 }
 
 static int
-writeIgnore([[maybe_unused]] sd_bus* _bus,
-                   [[maybe_unused]] const char* _path,
-                   [[maybe_unused]] const char* _interface,
-                   [[maybe_unused]] const char* _property,
+writeIgnore([[maybe_unused]] sd_bus* bus,
+                   [[maybe_unused]] const char* path,
+                   [[maybe_unused]] const char* interface,
+                   [[maybe_unused]] const char* property,
                    [[maybe_unused]] sd_bus_message* value,
-                   [[maybe_unused]] void* _data,
-                   [[maybe_unused]] sd_bus_error* _retError)
+                   [[maybe_unused]] void* data,
+                   [[maybe_unused]] sd_bus_error* retError)
 {
     return sd_bus_reply_method_return(value, "");
 }
 
 static int
-readFalse([[maybe_unused]] sd_bus* _bus,
-          [[maybe_unused]] const char* _path,
-          [[maybe_unused]] const char* _interface,
-          [[maybe_unused]] const char* _property,
+readFalse([[maybe_unused]] sd_bus* bus,
+          [[maybe_unused]] const char* path,
+          [[maybe_unused]] const char* interface,
+          [[maybe_unused]] const char* property,
           [[maybe_unused]] sd_bus_message* reply,
-          [[maybe_unused]] void* _data,
-          [[maybe_unused]] sd_bus_error* _retError)
+          [[maybe_unused]] void* data,
+          [[maybe_unused]] sd_bus_error* retError)
 {
     u32 b = 0;
     return sd_bus_message_append_basic(reply, 'b', &b);
@@ -97,40 +97,40 @@ readFalse([[maybe_unused]] sd_bus* _bus,
 
 static int
 togglePause([[maybe_unused]] sd_bus_message* m,
-            [[maybe_unused]] void* _data,
-            [[maybe_unused]] sd_bus_error* _retError)
+            [[maybe_unused]] void* data,
+            [[maybe_unused]] sd_bus_error* retError)
 {
-    auto p = (app::PipeWirePlayer*)_data;
+    auto p = (app::PipeWirePlayer*)data;
     p->togglePause();
     return sd_bus_reply_method_return(m, "");
 }
 
 static int
 next([[maybe_unused]] sd_bus_message* m,
-     [[maybe_unused]] void* _data,
-     [[maybe_unused]] sd_bus_error* _retError)
+     [[maybe_unused]] void* data,
+     [[maybe_unused]] sd_bus_error* retError)
 {
-    auto p = (app::PipeWirePlayer*)_data;
+    auto p = (app::PipeWirePlayer*)data;
     p->next();
     return sd_bus_reply_method_return(m, "");
 }
 
 static int
 prev([[maybe_unused]] sd_bus_message* m,
-     [[maybe_unused]] void* _data,
-     [[maybe_unused]] sd_bus_error* _retError)
+     [[maybe_unused]] void* data,
+     [[maybe_unused]] sd_bus_error* retError)
 {
-    auto p = (app::PipeWirePlayer*)_data;
+    auto p = (app::PipeWirePlayer*)data;
     p->prev();
     return sd_bus_reply_method_return(m, "");
 }
 
 static int
 pause([[maybe_unused]] sd_bus_message* m,
-      [[maybe_unused]] void* _data,
-      [[maybe_unused]] sd_bus_error* _retError)
+      [[maybe_unused]] void* data,
+      [[maybe_unused]] sd_bus_error* retError)
 {
-    auto p = (app::PipeWirePlayer*)_data;
+    auto p = (app::PipeWirePlayer*)data;
     p->pause();
     return sd_bus_reply_method_return(m, "");
 }
@@ -138,28 +138,28 @@ pause([[maybe_unused]] sd_bus_message* m,
 /* NOTE: same as pause */
 static int
 stop([[maybe_unused]] sd_bus_message* m,
-     [[maybe_unused]] void* _data,
-     [[maybe_unused]] sd_bus_error* _retError)
+     [[maybe_unused]] void* data,
+     [[maybe_unused]] sd_bus_error* retError)
 {
-    return pause(m, _data, _retError);
+    return pause(m, data, retError);
 }
 
 static int
 resume([[maybe_unused]] sd_bus_message* m,
-       [[maybe_unused]] void* _data,
-       [[maybe_unused]] sd_bus_error* _retError)
+       [[maybe_unused]] void* data,
+       [[maybe_unused]] sd_bus_error* retError)
 {
-    auto p = (app::PipeWirePlayer*)_data;
+    auto p = (app::PipeWirePlayer*)data;
     p->resume();
     return sd_bus_reply_method_return(m, "");
 }
 
 static int
 seek([[maybe_unused]] sd_bus_message* m,
-     [[maybe_unused]] void* _data,
-     [[maybe_unused]] sd_bus_error* _retError)
+     [[maybe_unused]] void* data,
+     [[maybe_unused]] sd_bus_error* retError)
 {
-    auto p = (app::PipeWirePlayer*)_data;
+    auto p = (app::PipeWirePlayer*)data;
 
     s64 val = 0;
     CK(sd_bus_message_read_basic(m, 'x', &val));
@@ -175,44 +175,44 @@ seek([[maybe_unused]] sd_bus_message* m,
 /* TODO: not sure how this can be called, and where to put `track id` */
 static int
 seekAbs([[maybe_unused]] sd_bus_message* m,
-        [[maybe_unused]] void* _data,
-        [[maybe_unused]] sd_bus_error* _retError)
+        [[maybe_unused]] void* data,
+        [[maybe_unused]] sd_bus_error* retError)
 {
-    [[maybe_unused]] auto p = (app::PipeWirePlayer*)_data;
+    [[maybe_unused]] auto p = (app::PipeWirePlayer*)data;
     return sd_bus_reply_method_return(m, "");
 }
 
 static int
-readTrue([[maybe_unused]] sd_bus* _bus,
-         [[maybe_unused]] const char* _path,
-         [[maybe_unused]] const char* _interface,
-         [[maybe_unused]] const char* _property,
+readTrue([[maybe_unused]] sd_bus* bus,
+         [[maybe_unused]] const char* path,
+         [[maybe_unused]] const char* interface,
+         [[maybe_unused]] const char* property,
          [[maybe_unused]] sd_bus_message* reply,
-         [[maybe_unused]] void* _data,
-         [[maybe_unused]] sd_bus_error* _retError)
+         [[maybe_unused]] void* data,
+         [[maybe_unused]] sd_bus_error* retError)
 {
     u32 b = 1;
     return sd_bus_message_append_basic(reply, 'b', &b);
 }
 
 static int
-identity([[maybe_unused]] sd_bus* _bus,
-         [[maybe_unused]] const char* _path,
-         [[maybe_unused]] const char* _interface,
-         [[maybe_unused]] const char* _property,
+identity([[maybe_unused]] sd_bus* bus,
+         [[maybe_unused]] const char* path,
+         [[maybe_unused]] const char* interface,
+         [[maybe_unused]] const char* property,
          [[maybe_unused]] sd_bus_message* reply,
-         [[maybe_unused]] void* _data,
-         [[maybe_unused]] sd_bus_error* _retError)
+         [[maybe_unused]] void* data,
+         [[maybe_unused]] sd_bus_error* retError)
 {
     const char* id = "kmp";
     return sd_bus_message_append_basic(reply, 's', id);
 }
 
 static int
-uriSchemes([[maybe_unused]] sd_bus* _bus,
-           [[maybe_unused]] const char* _path,
-           [[maybe_unused]] const char* _interface,
-           [[maybe_unused]] const char* _property,
+uriSchemes([[maybe_unused]] sd_bus* bus,
+           [[maybe_unused]] const char* path,
+           [[maybe_unused]] const char* interface,
+           [[maybe_unused]] const char* property,
            [[maybe_unused]] sd_bus_message* reply,
            [[maybe_unused]] void* _userdata,
            [[maybe_unused]] sd_bus_error* _ret_error)
@@ -221,56 +221,56 @@ uriSchemes([[maybe_unused]] sd_bus* _bus,
     return sd_bus_message_append_strv(reply, (char**)schemes);
 }
 static int
-mimeTypes([[maybe_unused]] sd_bus* _bus,
-          [[maybe_unused]] const char* _path,
-          [[maybe_unused]] const char* _interface,
-          [[maybe_unused]] const char* _property,
+mimeTypes([[maybe_unused]] sd_bus* bus,
+          [[maybe_unused]] const char* path,
+          [[maybe_unused]] const char* interface,
+          [[maybe_unused]] const char* property,
           [[maybe_unused]] sd_bus_message* reply,
-          [[maybe_unused]] void* _data,
-          [[maybe_unused]] sd_bus_error* _retError)
+          [[maybe_unused]] void* data,
+          [[maybe_unused]] sd_bus_error* retError)
 {
     static const char* const types[] {};
     return sd_bus_message_append_strv(reply, (char**)types);
 }
 
 static int
-playbackStatus([[maybe_unused]] sd_bus* _bus,
-               [[maybe_unused]] const char* _path,
-               [[maybe_unused]] const char* _interface,
-               [[maybe_unused]] const char* _property,
+playbackStatus([[maybe_unused]] sd_bus* bus,
+               [[maybe_unused]] const char* path,
+               [[maybe_unused]] const char* interface,
+               [[maybe_unused]] const char* property,
                [[maybe_unused]] sd_bus_message* reply,
-               [[maybe_unused]] void* _data,
-               [[maybe_unused]] sd_bus_error* _retError)
+               [[maybe_unused]] void* data,
+               [[maybe_unused]] sd_bus_error* retError)
 {
-    const auto p = (app::PipeWirePlayer*)_data;
+    const auto p = (app::PipeWirePlayer*)data;
     const char* s = p->m_bPaused ? "Paused" : "Playing"; /* NOTE: "Stopped" ignored */
     return sd_bus_message_append_basic(reply, 's', s);
 }
 
 static int
-loopStatus([[maybe_unused]] sd_bus* _bus,
-           [[maybe_unused]] const char* _path,
-           [[maybe_unused]] const char* _interface,
-           [[maybe_unused]] const char* _property,
+loopStatus([[maybe_unused]] sd_bus* bus,
+           [[maybe_unused]] const char* path,
+           [[maybe_unused]] const char* interface,
+           [[maybe_unused]] const char* property,
            [[maybe_unused]] sd_bus_message* reply,
-           [[maybe_unused]] void* _data,
-           [[maybe_unused]] sd_bus_error* _retError)
+           [[maybe_unused]] void* data,
+           [[maybe_unused]] sd_bus_error* retError)
 {
-    const auto p = (app::PipeWirePlayer*)_data;
+    const auto p = (app::PipeWirePlayer*)data;
     auto t = p->getRepeatMethod();
     return sd_bus_message_append_basic(reply, 's', t.data());
 }
 
 static int
-setLoopStatus([[maybe_unused]] sd_bus* _bus,
-              [[maybe_unused]] const char* _path,
-              [[maybe_unused]] const char* _interface,
-              [[maybe_unused]] const char* _property,
+setLoopStatus([[maybe_unused]] sd_bus* bus,
+              [[maybe_unused]] const char* path,
+              [[maybe_unused]] const char* interface,
+              [[maybe_unused]] const char* property,
               [[maybe_unused]] sd_bus_message* value,
-              [[maybe_unused]] void* _data,
-              [[maybe_unused]] sd_bus_error* _retError)
+              [[maybe_unused]] void* data,
+              [[maybe_unused]] sd_bus_error* retError)
 {
-    const auto p = (app::PipeWirePlayer*)_data;
+    const auto p = (app::PipeWirePlayer*)data;
 
     const char* t = nullptr;
     CK(sd_bus_message_read_basic(value, 's', &t));
@@ -288,29 +288,29 @@ setLoopStatus([[maybe_unused]] sd_bus* _bus,
 }
 
 static int
-volume([[maybe_unused]] sd_bus* _bus,
-       [[maybe_unused]] const char* _path,
-       [[maybe_unused]] const char* _interface,
-       [[maybe_unused]] const char* _property,
+volume([[maybe_unused]] sd_bus* bus,
+       [[maybe_unused]] const char* path,
+       [[maybe_unused]] const char* interface,
+       [[maybe_unused]] const char* property,
        [[maybe_unused]] sd_bus_message* reply,
-       [[maybe_unused]] void* _data,
-       [[maybe_unused]] sd_bus_error* _retError)
+       [[maybe_unused]] void* data,
+       [[maybe_unused]] sd_bus_error* retError)
 {
-    const auto p = (app::PipeWirePlayer*)_data;
+    const auto p = (app::PipeWirePlayer*)data;
     f64 vol = p->m_volume;
     return sd_bus_message_append_basic(reply, 'd', &vol);
 }
 
 static int
-setVolume([[maybe_unused]] sd_bus* _bus,
-          [[maybe_unused]] const char* _path,
-          [[maybe_unused]] const char* _interface,
-          [[maybe_unused]] const char* _property,
+setVolume([[maybe_unused]] sd_bus* bus,
+          [[maybe_unused]] const char* path,
+          [[maybe_unused]] const char* interface,
+          [[maybe_unused]] const char* property,
           [[maybe_unused]] sd_bus_message* value,
-          [[maybe_unused]] void* _data,
-          [[maybe_unused]] sd_bus_error* _retError)
+          [[maybe_unused]] void* data,
+          [[maybe_unused]] sd_bus_error* retError)
 {
-    auto p = (app::PipeWirePlayer*)_data;
+    auto p = (app::PipeWirePlayer*)data;
     f64 vol;
     CK(sd_bus_message_read_basic(value, 'd', &vol));
     p->setVolume(vol);
@@ -319,15 +319,15 @@ setVolume([[maybe_unused]] sd_bus* _bus,
 }
 
 static int
-position([[maybe_unused]] sd_bus* _bus,
-         [[maybe_unused]] const char* _path,
-         [[maybe_unused]] const char* _interface,
-         [[maybe_unused]] const char* _property,
+position([[maybe_unused]] sd_bus* bus,
+         [[maybe_unused]] const char* path,
+         [[maybe_unused]] const char* interface,
+         [[maybe_unused]] const char* property,
          [[maybe_unused]] sd_bus_message* reply,
-         [[maybe_unused]] void* _data,
-         [[maybe_unused]] sd_bus_error* _retError)
+         [[maybe_unused]] void* data,
+         [[maybe_unused]] sd_bus_error* retError)
 {
-    auto p = (app::PipeWirePlayer*)_data;
+    auto p = (app::PipeWirePlayer*)data;
     u64 t = (p->m_pcmPos/p->m_pw.channels) / p->m_pw.sampleRate;
     t *= 1000 * 1000;
 
@@ -335,70 +335,70 @@ position([[maybe_unused]] sd_bus* _bus,
 }
 
 static int
-rate([[maybe_unused]] sd_bus* _bus,
-     [[maybe_unused]] const char* _path,
-     [[maybe_unused]] const char* _interface,
-     [[maybe_unused]] const char* _property,
+rate([[maybe_unused]] sd_bus* bus,
+     [[maybe_unused]] const char* path,
+     [[maybe_unused]] const char* interface,
+     [[maybe_unused]] const char* property,
      [[maybe_unused]] sd_bus_message* reply,
-     [[maybe_unused]] void* _data,
-     [[maybe_unused]] sd_bus_error* _retError)
+     [[maybe_unused]] void* data,
+     [[maybe_unused]] sd_bus_error* retError)
 {
-    const auto p = (app::PipeWirePlayer*)_data;
+    const auto p = (app::PipeWirePlayer*)data;
     f64 mul = (f64)p->m_pw.sampleRate / (f64)p->m_pw.origSampleRate;
     return sd_bus_message_append_basic(reply, 'd', &mul);
 }
 
 static int
-minRate([[maybe_unused]] sd_bus* _bus,
-        [[maybe_unused]] const char* _path,
-        [[maybe_unused]] const char* _interface,
-        [[maybe_unused]] const char* _property,
+minRate([[maybe_unused]] sd_bus* bus,
+        [[maybe_unused]] const char* path,
+        [[maybe_unused]] const char* interface,
+        [[maybe_unused]] const char* property,
         [[maybe_unused]] sd_bus_message* reply,
-        [[maybe_unused]] void* _data,
-        [[maybe_unused]] sd_bus_error* _retError)
+        [[maybe_unused]] void* data,
+        [[maybe_unused]] sd_bus_error* retError)
 {
-    const auto p = (app::PipeWirePlayer*)_data;
+    const auto p = (app::PipeWirePlayer*)data;
     f64 mul = (f64)defaults::minSampleRate / (f64)p->m_pw.origSampleRate;
     return sd_bus_message_append_basic(reply, 'd', &mul);
 }
 
 static int
-maxRate([[maybe_unused]] sd_bus* _bus,
-        [[maybe_unused]] const char* _path,
-        [[maybe_unused]] const char* _interface,
-        [[maybe_unused]] const char* _property,
+maxRate([[maybe_unused]] sd_bus* bus,
+        [[maybe_unused]] const char* path,
+        [[maybe_unused]] const char* interface,
+        [[maybe_unused]] const char* property,
         [[maybe_unused]] sd_bus_message* reply,
-        [[maybe_unused]] void* _data,
-        [[maybe_unused]] sd_bus_error* _retError)
+        [[maybe_unused]] void* data,
+        [[maybe_unused]] sd_bus_error* retError)
 {
-    const auto p = (app::PipeWirePlayer*)_data;
+    const auto p = (app::PipeWirePlayer*)data;
     f64 mul = (f64)defaults::maxSampleRate / (f64)p->m_pw.origSampleRate;
     return sd_bus_message_append_basic(reply, 'd', &mul);
 }
 
 static int
-shuffle([[maybe_unused]] sd_bus* _bus,
-        [[maybe_unused]] const char* _path,
-        [[maybe_unused]] const char* _interface,
-        [[maybe_unused]] const char* _property,
+shuffle([[maybe_unused]] sd_bus* bus,
+        [[maybe_unused]] const char* path,
+        [[maybe_unused]] const char* interface,
+        [[maybe_unused]] const char* property,
         [[maybe_unused]] sd_bus_message* reply,
-        [[maybe_unused]] void* _data,
-        [[maybe_unused]] sd_bus_error* _retError)
+        [[maybe_unused]] void* data,
+        [[maybe_unused]] sd_bus_error* retError)
 {
     const uint32_t s = 0;
     return sd_bus_message_append_basic(reply, 'b', &s);
 }
 
 static int
-metadata([[maybe_unused]] sd_bus* _bus,
-         [[maybe_unused]] const char* _path,
-         [[maybe_unused]] const char* _interface,
-         [[maybe_unused]] const char* _property,
+metadata([[maybe_unused]] sd_bus* bus,
+         [[maybe_unused]] const char* path,
+         [[maybe_unused]] const char* interface,
+         [[maybe_unused]] const char* property,
          [[maybe_unused]] sd_bus_message* reply,
-         [[maybe_unused]] void* _data,
-         [[maybe_unused]] sd_bus_error* _retError)
+         [[maybe_unused]] void* data,
+         [[maybe_unused]] sd_bus_error* retError)
 {
-    const auto p = (app::PipeWirePlayer*)_data;
+    const auto p = (app::PipeWirePlayer*)data;
 
     CK(sd_bus_message_open_container(reply, 'a', "{sv}"));
 
@@ -462,15 +462,15 @@ static const sd_bus_vtable vtMediaPlayer2Player[] = {
 void
 init(app::PipeWirePlayer* p)
 {
-    std::lock_guard lock(mtx);
+    std::lock_guard lock(fl_mtx);
 
-    ready = false;
+    fl_ready = false;
     int res = 0;
 
-    res = sd_bus_default_user(&pBus);
+    res = sd_bus_default_user(&fl_pBus);
     if (res < 0) goto out;
 
-    res = sd_bus_add_object_vtable(pBus,
+    res = sd_bus_add_object_vtable(fl_pBus,
                                    nullptr,
                                    "/org/mpris/MediaPlayer2",
                                    "org.mpris.MediaPlayer2",
@@ -478,7 +478,7 @@ init(app::PipeWirePlayer* p)
                                    p);
     if (res < 0) goto out;
 
-    res = sd_bus_add_object_vtable(pBus,
+    res = sd_bus_add_object_vtable(fl_pBus,
                                    nullptr,
                                    "/org/mpris/MediaPlayer2",
                                    "org.mpris.MediaPlayer2.Player",
@@ -486,34 +486,34 @@ init(app::PipeWirePlayer* p)
                                    p);
     if (res < 0) goto out;
 
-    res = sd_bus_request_name(pBus, "org.mpris.MediaPlayer2.kmp", 0);
-    fdMpris = sd_bus_get_fd(pBus);
+    res = sd_bus_request_name(fl_pBus, "org.mpris.MediaPlayer2.kmp", 0);
+    fl_fdMpris = sd_bus_get_fd(fl_pBus);
 
 out:
     if (res < 0)
     {
-        sd_bus_unref(pBus);
-        pBus = nullptr;
-        fdMpris = -1;
-        ready = false;
+        sd_bus_unref(fl_pBus);
+        fl_pBus = nullptr;
+        fl_fdMpris = -1;
+        fl_ready = false;
 
         LOG_WARN("{}: {}\n", strerror(-res), "mpris::init error");
     }
     else
     {
-        ready = true;
+        fl_ready = true;
     }
 }
 
 void
 process(app::PipeWirePlayer* p)
 {
-    std::lock_guard lock(mtx);
+    std::lock_guard lock(fl_mtx);
 
-    if (pBus && ready)
+    if (fl_pBus && fl_ready)
     {
 
-        while (sd_bus_process(pBus, nullptr) > 0 && !p->m_bFinished)
+        while (sd_bus_process(fl_pBus, nullptr) > 0 && !p->m_bFinished)
             ;
     }
 }
@@ -521,12 +521,12 @@ process(app::PipeWirePlayer* p)
 void
 clean()
 {
-    std::lock_guard lock(mtx);
+    std::lock_guard lock(fl_mtx);
 
-    sd_bus_unref(pBus);
-    pBus = nullptr;
-    fdMpris = -1;
-    ready = false;
+    sd_bus_unref(fl_pBus);
+    fl_pBus = nullptr;
+    fl_fdMpris = -1;
+    fl_ready = false;
 }
 
 } /* namespace mpris */
