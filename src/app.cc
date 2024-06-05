@@ -152,8 +152,7 @@ CursesUI::resizeWindows()
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
     int visOff = 0;
-    if (m_bDrawVisualizer)
-        visOff = m_visualizerYSize;
+    if (m_bDrawVisualizer) visOff = m_visualizerYSize;
 
     m_vis.pBor = subwin(stdscr, m_visualizerYSize, maxx, m_listYPos, 0);
     m_vis.pCon = derwin(m_vis.pBor, getmaxy(m_vis.pBor), getmaxx(m_vis.pBor) - 2, 0, 1);
