@@ -10,17 +10,17 @@
 - Play each song in the directory: `kmp *`, or recursively: `kmp **/*`.
 - With no arguments, stdin with pipe can be used: `find /path -iname '*.mp3' | kmp` or whatever your shell can do.
 - Navigate with vim-like keybinds.
-- `h` and `l` seek back/forward.
-- `o` and `i` next/prev song.
+- `h` / `l` seek back/forward.
+- `o` / `i` next/prev song.
 - Searching: `/` or `?`, then `n` and `N` jump to next/prev found string.
-- `9` and `0` change volume, or `(`, `)` for smaller steps.
+- `9` / `0` change volume, or `(` / `)` for smaller steps.
 - `t` select time: `4:20`, `40` or `60%`.
 - `:` jump to selected number in the playlist.
 - `z` center around currently playing song.
-- `r` and 'R' cycle between repeat methods (None, Track, Playlist).
+- `r` / `R` cycle between repeat methods (None, Track, Playlist).
 - `m` mute.
 - `q` quit.
-- `[` and `]` playback speed shifting fun. `\` Set original speed back.
+- `[` / `]` playback speed shifting fun. `\` Set original speed back.
 - `v` toggle visualizer.
 - `ctrl-l` refresh screen.
 
