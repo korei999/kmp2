@@ -24,10 +24,10 @@
 namespace mpris
 {
 
-static sd_bus *fl_pBus {};
-static int fl_fdMpris = -1;
-static bool fl_ready = false;
-std::mutex fl_mtx {};
+static sd_bus *f_pBus {};
+static int f_fdMpris = -1;
+static bool f_ready = false;
+std::mutex f_mtx {};
 
 static int
 msgAppendDictSAS(sd_bus_message* m, const char* a, const char* b)
@@ -462,15 +462,15 @@ static const sd_bus_vtable vtMediaPlayer2Player[] = {
 void
 init(app::PipeWirePlayer* p)
 {
-    std::lock_guard lock(fl_mtx);
+    std::lock_guard lock(f_mtx);
 
-    fl_ready = false;
+    f_ready = false;
     int res = 0;
 
-    res = sd_bus_default_user(&fl_pBus);
+    res = sd_bus_default_user(&f_pBus);
     if (res < 0) goto out;
 
-    res = sd_bus_add_object_vtable(fl_pBus,
+    res = sd_bus_add_object_vtable(f_pBus,
                                    nullptr,
                                    "/org/mpris/MediaPlayer2",
                                    "org.mpris.MediaPlayer2",
@@ -478,7 +478,7 @@ init(app::PipeWirePlayer* p)
                                    p);
     if (res < 0) goto out;
 
-    res = sd_bus_add_object_vtable(fl_pBus,
+    res = sd_bus_add_object_vtable(f_pBus,
                                    nullptr,
                                    "/org/mpris/MediaPlayer2",
                                    "org.mpris.MediaPlayer2.Player",
@@ -486,34 +486,34 @@ init(app::PipeWirePlayer* p)
                                    p);
     if (res < 0) goto out;
 
-    res = sd_bus_request_name(fl_pBus, "org.mpris.MediaPlayer2.kmp", 0);
-    fl_fdMpris = sd_bus_get_fd(fl_pBus);
+    res = sd_bus_request_name(f_pBus, "org.mpris.MediaPlayer2.kmp", 0);
+    f_fdMpris = sd_bus_get_fd(f_pBus);
 
 out:
     if (res < 0)
     {
-        sd_bus_unref(fl_pBus);
-        fl_pBus = nullptr;
-        fl_fdMpris = -1;
-        fl_ready = false;
+        sd_bus_unref(f_pBus);
+        f_pBus = nullptr;
+        f_fdMpris = -1;
+        f_ready = false;
 
         LOG_WARN("{}: {}\n", strerror(-res), "mpris::init error");
     }
     else
     {
-        fl_ready = true;
+        f_ready = true;
     }
 }
 
 void
 process(app::PipeWirePlayer* p)
 {
-    std::lock_guard lock(fl_mtx);
+    std::lock_guard lock(f_mtx);
 
-    if (fl_pBus && fl_ready)
+    if (f_pBus && f_ready)
     {
 
-        while (sd_bus_process(fl_pBus, nullptr) > 0 && !p->m_bFinished)
+        while (sd_bus_process(f_pBus, nullptr) > 0 && !p->m_bFinished)
             ;
     }
 }
@@ -521,12 +521,12 @@ process(app::PipeWirePlayer* p)
 void
 clean()
 {
-    std::lock_guard lock(fl_mtx);
+    std::lock_guard lock(f_mtx);
 
-    sd_bus_unref(fl_pBus);
-    fl_pBus = nullptr;
-    fl_fdMpris = -1;
-    fl_ready = false;
+    sd_bus_unref(f_pBus);
+    f_pBus = nullptr;
+    f_fdMpris = -1;
+    f_ready = false;
 }
 
 } /* namespace mpris */
