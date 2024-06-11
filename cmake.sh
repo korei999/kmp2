@@ -32,7 +32,7 @@ debug()
 asan()
 {
     rm -rf build
-    if CC_LD=mold CXX_LD=mold cmake -G "Ninja" -S . -B build/ -DCMAKE_BUILD_TYPE=Asan
+    if CC=clang CXX=clang++ CC_LD=mold CXX_LD=mold cmake -G "Ninja" -S . -B build/ -DCMAKE_BUILD_TYPE=Asan
     then
         cmake --build build/ -j
     fi
