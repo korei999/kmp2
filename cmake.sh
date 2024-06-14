@@ -70,12 +70,13 @@ _uninstall()
 cd $(dirname $0)
 
 case "$1" in
-    build) build ;;
-    run) run "$@" ;;
+    default) default ;;
     debug) debug ;;
     asan) asan ;;
     release) release ;;
     install) _install ;;
     uninstall) _uninstall ;;
-    *) default ;;
+    run) run "$@" ;;
+    build) build ;;
+    *) build ;;
 esac

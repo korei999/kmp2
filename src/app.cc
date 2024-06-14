@@ -393,7 +393,8 @@ CursesUI::drawVisualizer()
     werase(m_vis.pBor);
 
     int maxy = getmaxy(m_vis.pCon), maxx = getmaxx(m_vis.pCon);
-    int lastNFrames = m_p->m_pw.lastNFrames;
+    int nChannels = m_p->m_pw.channels;
+    int lastNFrames = m_p->m_pw.lastNFrames; /* lastChunkSize == lastNFrames * nChannels */
 
     std::vector<u32> bars(maxx);
     f32* pChunk = m_p->m_chunk;
@@ -401,7 +402,7 @@ CursesUI::drawVisualizer()
     long chunkPos = 0;
 
     std::valarray<std::complex<f32>> aFreqDomain(lastNFrames);
-    for (size_t i = 0, j = 0; i < aFreqDomain.size(); i++, j += 2)
+    for (size_t i = 0, j = 0; i < aFreqDomain.size(); i++, j += nChannels)
         aFreqDomain[i] = std::complex(pChunk[j], 0.0f);
 
     utils::fft(aFreqDomain);
