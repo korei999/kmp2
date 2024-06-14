@@ -394,17 +394,15 @@ CursesUI::drawVisualizer()
 
     int maxy = getmaxy(m_vis.pCon), maxx = getmaxx(m_vis.pCon);
     int lastNFrames = m_p->m_pw.lastNFrames;
-    int lastChunkSize = lastNFrames;
 
     std::vector<u32> bars(maxx);
     f32* pChunk = m_p->m_chunk;
-    int accSize = lastChunkSize / bars.size();
+    f32 accSize = (f32)lastNFrames / (f32)bars.size();
     long chunkPos = 0;
-    // u32 sr = m_p->m_pw.sampleRate;
 
-    std::valarray<std::complex<f32>> aFreqDomain(lastChunkSize);
+    std::valarray<std::complex<f32>> aFreqDomain(lastNFrames);
     for (size_t i = 0, j = 0; i < aFreqDomain.size(); i++, j += 2)
-        aFreqDomain[i] = pChunk[j];
+        aFreqDomain[i] = std::complex(pChunk[j], 0.0f);
 
     utils::fft(aFreqDomain);
     if (aFreqDomain.size() > 0)
@@ -423,10 +421,11 @@ CursesUI::drawVisualizer()
         e.imag(e.imag() / maxAmp);
     }
 
+    long reducedAcc = std::ceil((f32)accSize / 6.0f); /* TODO: make some sort of non-linear sections, this simply cuts off most of frequencies */
+
     for (long i = 0; i < (long)bars.size(); i++)
     {
         f32 acc = 0;
-        long reducedAcc = accSize / 6; /* TODO: make some sort of non-linear sections, this simply cuts off most of frequencies */
         for (long j = 0; j < reducedAcc; j++)
         {
             auto real = aFreqDomain[chunkPos].real();

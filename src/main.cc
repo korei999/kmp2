@@ -9,7 +9,7 @@ main(int argc, char* argv[])
     std::locale::global(std::locale(""));
 
 #ifdef NDEBUG
-    close(STDERR_FILENO); /* hide libmpg123 errors */
+    // close(STDERR_FILENO); /* hide libmpg123 errors */
 #endif
 
     bool newArgv = false;
