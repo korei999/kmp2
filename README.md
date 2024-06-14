@@ -1,4 +1,4 @@
-![kmp9](https://github.com/korei999/kmp2/assets/93387739/c9f11af2-64b5-40d5-93b3-b0b1bd2bc4f9)
+![kmp11](https://github.com/korei999/kmp2/assets/93387739/dd188b61-cde7-46df-a409-c75281dd9fbc)
 
 ### Features:
 - Formats: flac, opus, mp3, ogg, wav, caf, aif.
