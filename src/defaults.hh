@@ -14,12 +14,12 @@ constexpr long maxSampleRate = 666666; /* can be stupid big */
 constexpr long minSampleRate = 1000; /* should be > 0 */
 
 constexpr f64 step            = 5.0; /* seek step (in seconds) */
-constexpr u32 updateRate      = 100; /* time (ms) between input polls (affects visualizer updates for now) */
+constexpr u32 updateRate      = 200; /* time (ms) between input polls (affects visualizer updates for now) */
 constexpr u32 timeOut         = 5000; /* time (ms) to cancel input */
 constexpr bool bWrapSelection = true; /* jump to first after scrolling past the last element in the list */
 
 constexpr bool bDrawVisualizer        = true;
-constexpr f32 visualizerScalar        = 10.0; /* scale the height of each bar */
+constexpr f32 visualizerScalar        = 9.0; /* scale the height of each bar */
 constexpr wchar_t visualizerSymbol[2] = L":";
 constexpr long visualizerHeight = 4;
 constexpr short barHeightColors[visualizerHeight] {
