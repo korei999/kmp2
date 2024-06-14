@@ -19,8 +19,15 @@ constexpr u32 timeOut         = 5000; /* time (ms) to cancel input */
 constexpr bool bWrapSelection = true; /* jump to first after scrolling past the last element in the list */
 
 constexpr bool bDrawVisualizer        = true;
-constexpr f32 visualizerScalar        = 5.0; /* scale the height of each bar */
+constexpr f32 visualizerScalar        = 10.0; /* scale the height of each bar */
 constexpr wchar_t visualizerSymbol[2] = L":";
+constexpr long visualizerHeight = 4;
+constexpr short barHeightColors[visualizerHeight] {
+    color::curses::red,
+    color::curses::yellow,
+    color::curses::green,
+    color::curses::green
+};
 
 constexpr bool bTransparentBg      = true;
 constexpr bool bCustomColorPallete = false; /* use custom colors below, otherwise use terminal defaults */

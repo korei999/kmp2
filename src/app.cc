@@ -151,6 +151,13 @@ CursesUI::resizeWindows()
 {
     int maxy = getmaxy(stdscr), maxx = getmaxx(stdscr);
 
+    if (m_visualizerYSize >= maxy)
+    {
+        endwin();
+        COUT("defaults::visualizerHeight: '{}', is abusurdly big\n", m_visualizerYSize);
+        exit(1);
+    }
+
     int visOff = 0;
     if (m_bDrawVisualizer) visOff = m_visualizerYSize;
 
@@ -386,30 +393,54 @@ CursesUI::drawVisualizer()
     werase(m_vis.pBor);
 
     int maxy = getmaxy(m_vis.pCon), maxx = getmaxx(m_vis.pCon);
-    int lastChunkSize = m_p->m_pw.lastNFrames * m_p->m_pw.channels;
+    int lastNFrames = m_p->m_pw.lastNFrames;
+    int lastChunkSize = lastNFrames;
 
     std::vector<u32> bars(maxx);
+    f32* pChunk = m_p->m_chunk;
     int accSize = lastChunkSize / bars.size();
     long chunkPos = 0;
+    // u32 sr = m_p->m_pw.sampleRate;
 
-    /* stupid simple time domain visualization. TODO: figure out dfft or something */
+    std::valarray<std::complex<f32>> aFreqDomain(lastChunkSize);
+    for (size_t i = 0, j = 0; i < aFreqDomain.size(); i++, j += 2)
+        aFreqDomain[i] = pChunk[j];
+
+    utils::fft(aFreqDomain);
+    if (aFreqDomain.size() > 0)
+        aFreqDomain[0] = std::complex(0.0f, 0.0f);
+
+    f32 maxAmp = 0.0f;
+    for (auto& e : aFreqDomain)
+    {
+        auto max = std::max(e.imag(), e.real());
+        if (max > maxAmp) maxAmp = max;
+    }
+
+    for (auto& e : aFreqDomain)
+    {
+        e.real(e.real() / maxAmp);
+        e.imag(e.imag() / maxAmp);
+    }
+
     for (long i = 0; i < (long)bars.size(); i++)
     {
         f32 acc = 0;
-        for (long j = 0; j < accSize; j++)
+        long reducedAcc = accSize / 6; /* TODO: make some sort of non-linear sections, this simply cuts off most of frequencies */
+        for (long j = 0; j < reducedAcc; j++)
         {
-            auto newAcc = std::abs((m_p->m_chunk[chunkPos++]));
+            auto real = aFreqDomain[chunkPos].real();
+            auto imag = aFreqDomain[chunkPos].imag();
+            auto newAcc = std::max(real, imag);
             if (newAcc > acc) acc = newAcc;
+
+            chunkPos++;
         }
 
         u32 h = std::round(acc * defaults::visualizerScalar); /* scale by some number to boost the bars heights */
         if (h > (u32)maxy) h = maxy;
         bars[i] = h;
     }
-
-    constexpr short barHeightColors[4] {
-        color::curses::red, color::curses::yellow, color::curses::green, color::curses::green
-    };
 
     for (int r = 0; r < maxx; r++)
     {
@@ -418,7 +449,7 @@ CursesUI::drawVisualizer()
         /* draw from bottom (maxy) upwards */
         for (int c = maxy - 1; c >= maxy - maxHeight; c--)
         {
-            short color = COLOR_PAIR(barHeightColors[c]);
+            short color = COLOR_PAIR(defaults::barHeightColors[c]);
 
             wattron(m_vis.pCon, color);
             mvwaddwstr(m_vis.pCon, c, r, defaults::visualizerSymbol);

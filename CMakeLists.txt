@@ -18,20 +18,19 @@ add_executable(
     src/play.cc
     src/search.cc
     src/song.cc
-    src/utils.cc
 )
 
-target_compile_options(kmp PRIVATE -Wall -Wextra)
+add_compile_options(-Wall -Wextra)
 
 if (CMAKE_BUILD_TYPE MATCHES "Asan")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0 -g3 -fsanitize=undefined -fsanitize=address")
-    target_link_options(kmp BEFORE PRIVATE -fsanitize=undefined PRIVATE -fsanitize=address)
+    add_link_options(-fsanitize=undefined -fsanitize=address)
 endif()
 
 message(STATUS "CMAKE_BUILD_TYPE: '${CMAKE_BUILD_TYPE}'")
 
 set_property(TARGET kmp PROPERTY CXX_STANDARD 20)
-target_compile_definitions(kmp PRIVATE "-DLOGS") # used for LOG_* macros
+add_definitions("-DLOGS") # used for LOG_* macros
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PKGS REQUIRED sndfile libpipewire-0.3 ncursesw)

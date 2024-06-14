@@ -65,7 +65,7 @@ public:
     long m_selected = 0;
     long m_firstInList = 0;
     const long m_listYPos = 6;
-    const long m_visualizerYSize = 4;
+    const long m_visualizerYSize = defaults::visualizerHeight;
     std::mutex m_mtx {};
     std::atomic<bool> m_bDrawVisualizer = defaults::bDrawVisualizer;
 
