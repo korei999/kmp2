@@ -31,6 +31,7 @@ message(STATUS "CMAKE_BUILD_TYPE: '${CMAKE_BUILD_TYPE}'")
 
 set_property(TARGET kmp PROPERTY CXX_STANDARD 20)
 add_definitions("-DLOGS") # used for LOG_* macros
+add_definitions("-DNCURSES_WIDECHAR")
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PKGS REQUIRED sndfile libpipewire-0.3 ncursesw)

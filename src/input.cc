@@ -71,7 +71,7 @@ read(app::PipeWirePlayer* p)
         input::readWString(L"time: ", wb, std::size(wb));
         timeout(defaults::updateRate);
 
-        if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
+        if (wcswidth((wchar_t*)wb, std::size(wb)) > 0)
         {
             auto n = input::parseTimeString((wchar_t*)wb, p);
             LOG_OK("value: {}\n", n.value());

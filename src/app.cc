@@ -677,7 +677,7 @@ PipeWirePlayer::subStringSearch(enum search::dir direction)
     input::readWString(prefix, wb, std::size(wb));
     timeout(defaults::updateRate);
 
-    if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
+    if (wcswidth((wchar_t*)wb, std::size(wb)) > 0)
         m_searchingNow = (wchar_t*)wb;
     else
         return false;
@@ -739,7 +739,7 @@ PipeWirePlayer::jumpTo()
     input::readWString(L"select: ", wb, std::size(wb));
     timeout(defaults::updateRate);
 
-    if (wcsnlen((wchar_t*)wb, std::size(wb)) > 0)
+    if (wcswidth((wchar_t*)wb, std::size(wb)) > 0)
     {
         wchar_t* end;
         long num = wcstol((wchar_t*)wb, &end, std::size(wb));
